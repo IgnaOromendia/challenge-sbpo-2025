@@ -17,7 +17,7 @@ def read_results(fileName):
     df['it'] = df.iloc[:,6]
     df['cplex'] = df['ordenes'] + df['pasillos'] + df['items']
 
-    print("Tiempo total de " + fileName + ": " + str(df['tiempo'].sum() / 60))
+    print("Tiempo total de " + fileName + ": " + str(int(df['tiempo'].sum() / 60)) + " mins")
 
     return df.sort_values(by='cplex')
 
