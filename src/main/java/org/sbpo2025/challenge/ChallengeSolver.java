@@ -2,11 +2,18 @@ package org.sbpo2025.challenge;
 
 import org.apache.commons.lang3.time.StopWatch;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import ilog.concert.*;
+import ilog.cplex.*;
 
 public class ChallengeSolver {
     private final long MAX_RUNTIME = 600000; // milliseconds; 10 minutes
@@ -16,6 +23,10 @@ public class ChallengeSolver {
     protected int nItems;
     protected int waveSizeLB;
     protected int waveSizeUB;
+    
+    private double tolerance = 1e-3;
+    private int lower = 1;
+    private int upper;
 
     public ChallengeSolver(
             List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
@@ -24,11 +35,160 @@ public class ChallengeSolver {
         this.nItems = nItems;
         this.waveSizeLB = waveSizeLB;
         this.waveSizeUB = waveSizeUB;
+        this.upper = orders.size();
     }
 
-    public ChallengeSolution solve(StopWatch stopWatch) {
-        // Implement your solution here
-        return null;
+    public ChallengeSolution solve(StopWatch stopWatch) {  
+        List<Integer> used_orders = new ArrayList<>();
+        List<Integer> used_aisles = new ArrayList<>();
+
+        setBinarySearchBounds();
+
+        int k = (lower + upper) / 2, maxIt = 5, it = 0;
+
+        while (it < maxIt && lower <= upper) {
+            k = (lower + upper) / 2;
+            
+            if (solveMIP(k, used_orders, used_aisles)) 
+                lower = k + 1;
+            else 
+                upper = k - 1;
+            
+            it++;
+        }
+
+        ChallengeSolution solution = new ChallengeSolution(Set.copyOf(used_orders), Set.copyOf(used_aisles));
+
+        writeResults(solution, it, maxIt, stopWatch);
+
+        return solution;
+    } 
+
+    private void setBinarySearchBounds() {
+        List<Integer> itemsInOrders = new ArrayList<>();
+
+        for (int o = 0; o < orders.size(); o++) {
+            Integer sum = 0;
+            for(int i = 0; i < nItems; i++) sum += orders.get(o).getOrDefault(i, 0);
+            itemsInOrders.add(sum);
+        }
+
+        itemsInOrders.sort(Integer::compareTo);
+
+        Integer cant_low = 0;
+        Integer cant_upp = 0;
+
+        for(int i = 0; i < itemsInOrders.size(); i++) {
+            cant_low += itemsInOrders.get(itemsInOrders.size() - 1 - i);
+            cant_upp += itemsInOrders.get(i);
+
+            if (cant_low > waveSizeLB && lower == 1) lower = i;
+            if (cant_upp > waveSizeUB && upper == itemsInOrders.size()) upper = i;
+
+            if (cant_low > waveSizeLB && cant_upp > waveSizeUB) break;
+        }
+    }
+    
+    private Boolean solveMIP(Integer k, List<Integer> used_orders, List<Integer> used_aisles) {
+        try (IloCplex cplex = new IloCplex()) {
+            cplex.setParam(IloCplex.Param.Simplex.Display, 0); 
+            cplex.setParam(IloCplex.Param.MIP.Display, 0);     
+            
+            cplex.setOut(null); 
+            cplex.setWarning(null); 
+
+            // Variables
+            
+            IloNumVar[] X = new IloNumVar[orders.size()]; // La orden o está completa
+            IloNumVar[] Y = new IloNumVar[aisles.size()]; // El pasillo a fue recorrido
+
+            for(int o = 0; o < orders.size(); o++) 
+                X[o] = cplex.intVar(0, 1, "X_" + o);
+
+            for (int a = 0; a < aisles.size(); a++) 
+                Y[a] = cplex.intVar(0, 1, "Y_" + a);
+
+            // Restricciónes
+
+            // Mayor que LB y menor que UB
+            IloLinearNumExpr exprLB = cplex.linearNumExpr();
+            IloLinearNumExpr exprUB = cplex.linearNumExpr();
+
+            for(int o = 0; o < orders.size(); o++)
+                for(int i = 0; i < nItems; i++) {
+                    int itemAmount = orders.get(o).getOrDefault(i, 0);
+                    exprLB.addTerm(itemAmount, X[o]); 
+                    exprUB.addTerm(itemAmount, X[o]);
+                }
+                    
+            cplex.addGe(exprLB, waveSizeLB);
+            cplex.addLe(exprUB, waveSizeUB);
+                                
+            // Si la orden O fue hecha con elementos de i entonces pasa por los pasillos _a_ donde se encuentra i
+            for(int i = 0; i < nItems; i++) {
+                IloLinearNumExpr exprX = cplex.linearNumExpr();
+                IloLinearNumExpr exprY = cplex.linearNumExpr();
+
+                for(int o = 0; o < orders.size(); o++) 
+                    exprX.addTerm(orders.get(o).getOrDefault(i, 0), X[o]);
+
+                for(int a = 0; a < aisles.size(); a++) 
+                    exprY.addTerm(aisles.get(a).getOrDefault(i, 0), Y[a]);
+
+                cplex.addLe(exprX, exprY);
+            }
+
+            // Exigimos que sea mayor a k|A|
+            IloLinearNumExpr exprX  = cplex.linearNumExpr();
+            IloLinearNumExpr exprkY = cplex.linearNumExpr();
+
+            for(int o = 0; o < orders.size(); o++) 
+                exprX.addTerm(1, X[o]);
+            
+            for(int a = 0; a < aisles.size(); a++) 
+                exprkY.addTerm(k, Y[a]);
+            
+            cplex.addGe(exprX, exprkY);
+
+            // Función objetivo
+            
+            // nada por ahora
+            
+            // Resolver
+
+            if (cplex.solve()) {
+                used_orders.clear();
+                used_aisles.clear();        
+
+                for(int o = 0; o < orders.size(); o++)
+                    if (cplex.getValue(X[o]) > tolerance) 
+                        used_orders.add(o);
+                        
+                for(int a = 0; a < aisles.size(); a++)
+                    if (cplex.getValue(Y[a]) > tolerance)
+                         used_aisles.add(a);
+
+            } else {
+                cplex.end();
+                return false;
+            }
+        
+            cplex.end();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return true;
+    }
+
+    private void writeResults(ChallengeSolution solution, Integer iterations, Integer maxIterations, StopWatch stopWatch) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("results_" + maxIterations + ".csv",  true))) {
+            writer.write(orders.size() + "," + aisles.size() + "," + nItems + "," + isSolutionFeasible(solution) + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
     }
 
     /*
