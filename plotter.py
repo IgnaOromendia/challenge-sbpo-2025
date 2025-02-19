@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 iterations  = [5,10,15]
-colors      = ['red', 'blue','green']
+colors      = [['red', 'blue','green'], ['purple', 'orange']]
+strategies  = ['binary', 'parametric']
 
 def read_results(fileName):
     df = pd.read_csv(fileName)
@@ -14,9 +15,11 @@ def read_results(fileName):
     df['obj'] = df.iloc[:,4]
     df['tiempo'] = df.iloc[:,5]
     df['it'] = df.iloc[:,6]
-    df['cplex_var'] = df.iloc[:,0] + df.iloc[:,1]
+    df['cplex'] = df['ordenes'] + df['pasillos'] + df['items']
 
-    return df.sort_values(by='cplex_var')
+    print("Tiempo total de " + fileName + ": " + str(df['tiempo'].sum() / 60))
+
+    return df.sort_values(by='cplex')
 
 def add_to_plot(plt, x, y, color, label):
     plt.plot(x, y, color=color, label=label, linestyle='-', marker='o')
@@ -30,39 +33,45 @@ def plot(plt, xlabel, ylabel, title, fileName):
     plt.show()
 
 def plot_time():
-    for i in range(len(iterations)):
-        it = iterations[i]
+    for s, strat in enumerate(strategies):
+        for i in range(len(iterations)):
+            if strat == 'parametric' and i > 1: continue
+            it = iterations[i]
 
-        df = read_results(f'results_{it}.csv')
+            df = read_results(f'results_{strat}_{it}.csv')
 
-        plt.grid(True)
-        add_to_plot(plt, df['cplex_var'], df['tiempo'], colors[i], '#Iter ' + str(it))
+            plt.grid(True)
+            add_to_plot(plt, df['cplex'], df['tiempo'], colors[s][i], strat + ' #Iter ' + str(it))
 
-    plot(plt, 'Variables', 'Tiempo (seg)', 'Tiempos', 'time')
+    plot(plt, 'Variables + restricciónes', 'Tiempo (seg)', 'Tiempos', 'time')
     plt.clf()
 
 def plot_it():
-    for i in range(len(iterations)):
-        it = iterations[i]
+    for s, strat in enumerate(strategies):
+        for i in range(len(iterations)):
+            if strat == 'parametric' and i > 1: continue
+            it = iterations[i]
 
-        df = read_results(f'results_{it}.csv')
+            df = read_results(f'results_{strat}_{it}.csv')
 
-        plt.grid(True)
-        add_to_plot(plt, df['cplex_var'], df['it'], colors[i], '#Iter ' + str(it))
+            plt.grid(True)
+            add_to_plot(plt, df['cplex'], df['it'], colors[s][i], strat + ' #Iter ' + str(it))
 
-    plot(plt, 'Variables', 'Iteraciones', 'Iteraciónes máximas', 'max_it')
+    plot(plt, 'Variables + restricciónes', 'Iteraciones', 'Iteraciónes máximas', 'max_it')
     plt.clf()
 
 def plot_obj():
-    for i in range(len(iterations)):
-        it = iterations[i]
+    for s, strat in enumerate(strategies):
+        for i in range(len(iterations)):
+            if strat == 'parametric' and i > 1: continue
+            it = iterations[i]
 
-        df = read_results(f'results_{it}.csv')
+            df = read_results(f'results_{strat}_{it}.csv')
 
-        plt.grid(True)
-        add_to_plot(plt, df['cplex_var'], df['obj'], colors[i], '#Iter ' + str(it))
+            plt.grid(True)
+            add_to_plot(plt, df['cplex'], df['obj'], colors[s][i], strat + ' #Iter ' + str(it))
 
-    plot(plt, 'Variables', 'Valor objetivo', 'Valores objetivos', 'val')
+    plot(plt, 'Variables + restricciónes', 'Valor objetivo', 'Valores objetivos', 'val')
     plt.clf()
 
 plot_it()
