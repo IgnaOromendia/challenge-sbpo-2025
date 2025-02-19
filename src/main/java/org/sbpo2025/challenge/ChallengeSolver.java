@@ -49,7 +49,7 @@ public class ChallengeSolver {
 
 
         if (useBinarySearchSolution) {
-            binarySearchSolution(used_orders, used_aisles, maxIterations);
+            iterations = binarySearchSolution(used_orders, used_aisles, maxIterations);
             strategy = "binary";
         } else if (useParametricAlgorithmMILFP) {
             iterations = parametricAlgorithmMILFP(used_orders, used_aisles, maxIterations);
@@ -174,7 +174,7 @@ public class ChallengeSolver {
 
     // Busqueda Binaria
     
-    private void binarySearchSolution(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
+    private int binarySearchSolution(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
         setBinarySearchBounds();
 
         int k = (lower + upper) / 2, it = 0;
@@ -190,6 +190,7 @@ public class ChallengeSolver {
             it++;
         }
 
+        return it;
     }
 
     private void setBinarySearchBounds() {
