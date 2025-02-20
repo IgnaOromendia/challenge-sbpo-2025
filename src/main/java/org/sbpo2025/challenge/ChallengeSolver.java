@@ -28,6 +28,7 @@ public class ChallengeSolver {
     private final double tolerance = 1e-6;
     private double lower = 0;
     private double upper;
+    private double curValue;
 
     public ChallengeSolver(
             List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
@@ -39,6 +40,7 @@ public class ChallengeSolver {
         this.upper = orders.stream()
                     .mapToInt(order -> order.values().stream().mapToInt(Integer::intValue).sum())
                     .sum();
+        this.curValue = 0;
     }
 
     public ChallengeSolution solve(StopWatch stopWatch) {  
@@ -48,7 +50,7 @@ public class ChallengeSolver {
         Boolean useBinarySearchSolution = true;
         Boolean useParametricAlgorithmMILFP = false;
         String strategy = "";
-        Integer maxIterations = 4, iterations = 1;
+        Integer maxIterations = 5, iterations = 1;
 
 
         if (useBinarySearchSolution) {
@@ -201,6 +203,8 @@ public class ChallengeSolver {
             it++;
         }
 
+        System.out.println("Binary search final gap: (" + lower + ", " + upper + ")");
+
         return it;
     }
 
@@ -301,16 +305,23 @@ public class ChallengeSolver {
             // Resolver
 
             if (cplex.solve()) {
-                used_orders.clear();
-                used_aisles.clear();        
 
-                for(int o = 0; o < orders.size(); o++)
-                    if (cplex.getValue(X[o]) > tolerance) 
-                        used_orders.add(o);
-                        
-                for(int a = 0; a < aisles.size(); a++)
-                    if (cplex.getValue(Y[a]) > tolerance)
-                         used_aisles.add(a);
+                double curSolutionValue = getSolutionValueFromCplex(cplex, X, Y);
+
+                if (curSolutionValue > this.curValue) {
+                    this.curValue = curSolutionValue;
+
+                    used_orders.clear();
+                    used_aisles.clear();        
+
+                    for(int o = 0; o < orders.size(); o++)
+                        if (cplex.getValue(X[o]) > tolerance) 
+                            used_orders.add(o);
+                            
+                    for(int a = 0; a < aisles.size(); a++)
+                        if (cplex.getValue(Y[a]) > tolerance)
+                            used_aisles.add(a);
+                }
 
             } else {
                 cplex.end();
@@ -325,6 +336,26 @@ public class ChallengeSolver {
         }
         
         return true;
+    }
+
+    private double getSolutionValueFromCplex(IloCplex cplex, IloNumVar[] X, IloNumVar[] Y) {
+        double pickedObjects = 0, usedColumns = 0;
+        
+        try {
+            for (int o=0; o < orders.size(); o++)
+                if (cplex.getValue(X[o]) > tolerance)
+                    for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) 
+                        pickedObjects += entry.getValue();
+        
+            for (int a=0; a < aisles.size(); a++)
+                if (cplex.getValue(Y[a]) > tolerance)
+                    usedColumns += 1;
+        
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        return pickedObjects / usedColumns;
     }
 
 
