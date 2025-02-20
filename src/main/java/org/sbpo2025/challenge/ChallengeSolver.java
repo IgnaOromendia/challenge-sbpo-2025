@@ -1,7 +1,5 @@
 package org.sbpo2025.challenge;
 
-import org.apache.commons.lang3.time.StopWatch;
-
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,8 +10,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import ilog.concert.*;
-import ilog.cplex.*;
+import org.apache.commons.lang3.time.StopWatch;
+
+import ilog.concert.IloLinearNumExpr;
+import ilog.concert.IloNumVar;
+import ilog.cplex.IloCplex;
 
 public class ChallengeSolver {
     private final long MAX_RUNTIME = 600000; // milliseconds; 10 minutes
@@ -24,9 +25,9 @@ public class ChallengeSolver {
     protected int waveSizeLB;
     protected int waveSizeUB;
     
-    private double tolerance = 1e-6;
-    private int lower = 1;
-    private int upper;
+    private final double tolerance = 1e-6;
+    private double lower = 0;
+    private double upper;
 
     public ChallengeSolver(
             List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
@@ -35,17 +36,19 @@ public class ChallengeSolver {
         this.nItems = nItems;
         this.waveSizeLB = waveSizeLB;
         this.waveSizeUB = waveSizeUB;
-        this.upper = orders.size();
+        this.upper = orders.stream()
+                    .mapToInt(order -> order.values().stream().mapToInt(Integer::intValue).sum())
+                    .sum();
     }
 
     public ChallengeSolution solve(StopWatch stopWatch) {  
         List<Integer> used_orders = new ArrayList<>();
         List<Integer> used_aisles = new ArrayList<>();
 
-        Boolean useBinarySearchSolution = false;
-        Boolean useParametricAlgorithmMILFP = true;
+        Boolean useBinarySearchSolution = true;
+        Boolean useParametricAlgorithmMILFP = false;
         String strategy = "";
-        Integer maxIterations = 10, iterations = 1;
+        Integer maxIterations = 4, iterations = 1;
 
 
         if (useBinarySearchSolution) {
@@ -85,7 +88,10 @@ public class ChallengeSolver {
 
     private double solveParametricMILFP(double q, List<Integer> used_orders, List<Integer> used_aisles) {
         double objValue = -1;
-        try (IloCplex cplex = new IloCplex()) {
+        IloCplex cplex = null;
+        try {
+            cplex = new IloCplex();
+
             cplex.setParam(IloCplex.Param.Simplex.Display, 0); 
             cplex.setParam(IloCplex.Param.MIP.Display, 0);     
             cplex.setParam(IloCplex.Param.TimeLimit, 60);
@@ -110,12 +116,12 @@ public class ChallengeSolver {
             IloLinearNumExpr exprLB = cplex.linearNumExpr();
             IloLinearNumExpr exprUB = cplex.linearNumExpr();
 
-            for(int o = 0; o < orders.size(); o++)
-                for(int i = 0; i < nItems; i++) {
-                    int itemAmount = orders.get(o).getOrDefault(i, 0);
-                    exprLB.addTerm(itemAmount, X[o]); 
-                    exprUB.addTerm(itemAmount, X[o]);
+            for(int o = 0; o < orders.size(); o++) {
+                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
+                    exprLB.addTerm(entry.getKey(), X[o]);
+                    exprUB.addTerm(entry.getKey(), X[o]);
                 }
+            }
                     
             cplex.addGe(exprLB, waveSizeLB);
             cplex.addLe(exprUB, waveSizeUB);
@@ -137,8 +143,11 @@ public class ChallengeSolver {
             // Función objetivo
             
             IloLinearNumExpr obj = cplex.linearNumExpr();
-            for(int o = 0; o < orders.size(); o++) 
-                obj.addTerm(1, X[o]);
+            for(int o = 0; o < orders.size(); o++) {
+                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
+                    obj.addTerm(entry.getKey(), X[o]);
+                }
+            }
             
             for(int a = 0; a < aisles.size(); a++) 
                 obj.addTerm(-q, Y[a]);
@@ -167,6 +176,8 @@ public class ChallengeSolver {
             cplex.end();
         } catch (Exception e) {
             System.out.println(e.getMessage());
+        } finally {
+            if (cplex != null) cplex.end();
         }
         
         return objValue;
@@ -177,15 +188,15 @@ public class ChallengeSolver {
     private int binarySearchSolution(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
         setBinarySearchBounds();
 
-        int k = (lower + upper) / 2, it = 0;
+        double k; int it = 0;
 
-        while (it < maxIterations && lower <= upper) {
+        while (it < maxIterations && tolerance <= upper - lower) {
             k = (lower + upper) / 2;
             
             if (solveMIP(k, used_orders, used_aisles)) 
-                lower = k + 1;
+                lower = k;
             else 
-                upper = k - 1;
+                upper = k;
             
             it++;
         }
@@ -218,8 +229,11 @@ public class ChallengeSolver {
         }
     }
     
-    private Boolean solveMIP(Integer k, List<Integer> used_orders, List<Integer> used_aisles) {
-        try (IloCplex cplex = new IloCplex()) {
+    private Boolean solveMIP(double k, List<Integer> used_orders, List<Integer> used_aisles) {
+        IloCplex cplex = null;
+        try {
+            cplex = new IloCplex();
+
             cplex.setParam(IloCplex.Param.Simplex.Display, 0); 
             cplex.setParam(IloCplex.Param.MIP.Display, 0);     
             
@@ -243,12 +257,12 @@ public class ChallengeSolver {
             IloLinearNumExpr exprLB = cplex.linearNumExpr();
             IloLinearNumExpr exprUB = cplex.linearNumExpr();
 
-            for(int o = 0; o < orders.size(); o++)
-                for(int i = 0; i < nItems; i++) {
-                    int itemAmount = orders.get(o).getOrDefault(i, 0);
-                    exprLB.addTerm(itemAmount, X[o]); 
-                    exprUB.addTerm(itemAmount, X[o]);
+            for(int o = 0; o < orders.size(); o++) {
+                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
+                    exprLB.addTerm(entry.getKey(), X[o]);
+                    exprUB.addTerm(entry.getKey(), X[o]);
                 }
+            }
                     
             cplex.addGe(exprLB, waveSizeLB);
             cplex.addLe(exprUB, waveSizeUB);
@@ -271,17 +285,18 @@ public class ChallengeSolver {
             IloLinearNumExpr exprX  = cplex.linearNumExpr();
             IloLinearNumExpr exprkY = cplex.linearNumExpr();
 
-            for(int o = 0; o < orders.size(); o++) 
-                exprX.addTerm(1, X[o]);
+            for(int o = 0; o < orders.size(); o++) {
+                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
+                    exprX.addTerm(entry.getKey(), X[o]);
+                }
+            }
             
             for(int a = 0; a < aisles.size(); a++) 
                 exprkY.addTerm(k, Y[a]);
             
             cplex.addGe(exprX, exprkY);
 
-            // Función objetivo
-            
-            // nada por ahora
+            // Función objetivo -> Nada por ahora
             
             // Resolver
 
@@ -305,6 +320,8 @@ public class ChallengeSolver {
             cplex.end();
         } catch (Exception e) {
             System.out.println(e.getMessage());
+        } finally {
+            if (cplex != null) cplex.end();
         }
         
         return true;
