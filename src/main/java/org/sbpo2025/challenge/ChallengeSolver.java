@@ -118,8 +118,8 @@ public class ChallengeSolver {
 
             for(int o = 0; o < orders.size(); o++) {
                 for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
-                    exprLB.addTerm(entry.getKey(), X[o]);
-                    exprUB.addTerm(entry.getKey(), X[o]);
+                    exprLB.addTerm(entry.getValue(), X[o]);
+                    exprUB.addTerm(entry.getValue(), X[o]);
                 }
             }
                     
@@ -145,7 +145,7 @@ public class ChallengeSolver {
             IloLinearNumExpr obj = cplex.linearNumExpr();
             for(int o = 0; o < orders.size(); o++) {
                 for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
-                    obj.addTerm(entry.getKey(), X[o]);
+                    obj.addTerm(entry.getValue(), X[o]);
                 }
             }
             
@@ -259,8 +259,8 @@ public class ChallengeSolver {
 
             for(int o = 0; o < orders.size(); o++) {
                 for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
-                    exprLB.addTerm(entry.getKey(), X[o]);
-                    exprUB.addTerm(entry.getKey(), X[o]);
+                    exprLB.addTerm(entry.getValue(), X[o]);
+                    exprUB.addTerm(entry.getValue(), X[o]);
                 }
             }
                     
@@ -287,7 +287,7 @@ public class ChallengeSolver {
 
             for(int o = 0; o < orders.size(); o++) {
                 for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
-                    exprX.addTerm(entry.getKey(), X[o]);
+                    exprX.addTerm(entry.getValue(), X[o]);
                 }
             }
             
