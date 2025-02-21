@@ -25,7 +25,7 @@ public class ChallengeSolver {
     protected int waveSizeLB;
     protected int waveSizeUB;
     
-    private final double tolerance = 1e-6;
+    private final double tolerance = 1e-3;
     private double lower = 0;
     private double upper;
     private double curValue;
@@ -50,7 +50,7 @@ public class ChallengeSolver {
         Boolean useBinarySearchSolution = true;
         Boolean useParametricAlgorithmMILFP = false;
         String strategy = "";
-        Integer maxIterations = 5, iterations = 1;
+        Integer maxIterations = 30, iterations = 1;
 
 
         if (useBinarySearchSolution) {
