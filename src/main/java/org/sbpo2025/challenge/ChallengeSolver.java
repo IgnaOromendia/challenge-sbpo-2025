@@ -108,17 +108,7 @@ public class ChallengeSolver {
 
             // Función objetivo
             
-            IloLinearNumExpr obj = cplex.linearNumExpr();
-            for(int o = 0; o < orders.size(); o++) {
-                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
-                    obj.addTerm(entry.getValue(), X[o]);
-                }
-            }
-            
-            for(int a = 0; a < aisles.size(); a++) 
-                obj.addTerm(-q, Y[a]);
-
-            cplex.addMaximize(obj);
+            setObjectiveFunction(cplex, X, Y, q);
                         
             // Resolver
 
@@ -183,7 +173,9 @@ public class ChallengeSolver {
             
             cplex.addGe(exprX, exprkY);
 
-            // Función objetivo -> Nada por ahora
+            // Función objetivo
+
+            setObjectiveFunction(cplex, X, Y, k);
 
             // Resolver
             if (cplex.solve()) 
@@ -223,7 +215,6 @@ public class ChallengeSolver {
         return pickedObjects / usedColumns;
     }
 
-
     // CPLEX
 
     // Agrega las variables y restricciónes compartidas entre modelos
@@ -240,6 +231,21 @@ public class ChallengeSolver {
 
         // Hay que elegir por lo menos un pasillo
         setAtLeastOneAisleConstraint(cplex, Y);
+    }
+
+    private void setObjectiveFunction(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y, double alfa) throws IloException {
+        IloLinearNumExpr obj = cplex.linearNumExpr();
+
+        for(int o = 0; o < orders.size(); o++) 
+            for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
+                obj.addTerm(entry.getValue(), X[o]);
+            }
+        
+        
+        for(int a = 0; a < aisles.size(); a++) 
+            obj.addTerm(-alfa, Y[a]);
+
+        cplex.addMaximize(obj);
     }
 
     private void setCPLEXParamsTo(IloCplex cplex) throws IloException {
