@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.time.StopWatch;
 
+import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
@@ -176,10 +177,10 @@ public class ChallengeSolver {
             }
 
             cplex.end();
-        } catch (Exception e) {
+        } catch (IloException e) {
             System.out.println(e.getMessage());
         } finally {
-            if (cplex != null) cplex.end();
+            if (null != cplex) cplex.end();
         }
         
         return objValue;
@@ -188,13 +189,13 @@ public class ChallengeSolver {
     // Busqueda Binaria
     
     private int binarySearchSolution(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
-        setBinarySearchBounds();
+        // setBinarySearchBounds();
 
         double k; int it = 0;
 
         while (it < maxIterations && tolerance <= upper - lower) {
             k = (lower + upper) / 2;
-            
+
             if (solveMIP(k, used_orders, used_aisles)) 
                 lower = k;
             else 
@@ -202,8 +203,6 @@ public class ChallengeSolver {
             
             it++;
         }
-
-        System.out.println("Binary search final gap: (" + lower + ", " + upper + ")");
 
         return it;
     }
@@ -245,7 +244,6 @@ public class ChallengeSolver {
             cplex.setWarning(null); 
 
             // Variables
-            
             IloNumVar[] X = new IloNumVar[orders.size()]; // La orden o está completa
             IloNumVar[] Y = new IloNumVar[aisles.size()]; // El pasillo a fue recorrido
 
@@ -255,7 +253,7 @@ public class ChallengeSolver {
             for (int a = 0; a < aisles.size(); a++) 
                 Y[a] = cplex.intVar(0, 1, "Y_" + a);
 
-            // Restricciónes
+            // Restricciones
 
             // Mayor que LB y menor que UB
             IloLinearNumExpr exprLB = cplex.linearNumExpr();
@@ -300,10 +298,17 @@ public class ChallengeSolver {
             
             cplex.addGe(exprX, exprkY);
 
-            // Función objetivo -> Nada por ahora
+            // Hay que elegir por lo menos un pasillo
+            IloLinearNumExpr exprY = cplex.linearNumExpr();
             
-            // Resolver
+            for(int a = 0; a < aisles.size(); a++) 
+                exprY.addTerm(1, Y[a]);
 
+            cplex.addGe(exprY, 1);
+
+            // Función objetivo -> Nada por ahora
+
+            // Resolver
             if (cplex.solve()) {
 
                 double curSolutionValue = getSolutionValueFromCplex(cplex, X, Y);
@@ -329,7 +334,7 @@ public class ChallengeSolver {
             }
         
             cplex.end();
-        } catch (Exception e) {
+        } catch (IloException e) {
             System.out.println(e.getMessage());
         } finally {
             if (cplex != null) cplex.end();
@@ -351,7 +356,7 @@ public class ChallengeSolver {
                 if (cplex.getValue(Y[a]) > tolerance)
                     usedColumns += 1;
         
-        } catch (Exception e) {
+        } catch (IloException e) {
             System.out.println(e.getMessage());
         }
 
@@ -361,6 +366,7 @@ public class ChallengeSolver {
 
     // Para experimentar
 
+    @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int maxIterations, int iterations) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("results_" + strategy + "_" + maxIterations + ".csv",  true))) {
             writer.write(orders.size() + "," + aisles.size() + "," + nItems + "," + isSolutionFeasible(solution) + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
