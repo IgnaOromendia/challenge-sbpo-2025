@@ -38,9 +38,9 @@ public class ChallengeSolver {
         this.nItems = nItems;
         this.waveSizeLB = waveSizeLB;
         this.waveSizeUB = waveSizeUB;
-        this.upper = orders.stream()
-                    .mapToInt(order -> order.values().stream().mapToInt(Integer::intValue).sum())
-                    .sum();
+        this.upper = Math.min(waveSizeUB, orders.stream()
+                                                .mapToInt(order -> order.values().stream().mapToInt(Integer::intValue).sum())
+                                                .sum());
         this.curValue = 0;
     }
 
@@ -189,8 +189,6 @@ public class ChallengeSolver {
     // Busqueda Binaria
     
     private int binarySearchSolution(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
-        // setBinarySearchBounds();
-
         double k; int it = 0;
 
         while (it < maxIterations && tolerance <= upper - lower) {
@@ -205,31 +203,6 @@ public class ChallengeSolver {
         }
 
         return it;
-    }
-
-    private void setBinarySearchBounds() {
-        List<Integer> itemsInOrders = new ArrayList<>();
-
-        for (int o = 0; o < orders.size(); o++) {
-            Integer sum = 0;
-            for(int i = 0; i < nItems; i++) sum += orders.get(o).getOrDefault(i, 0);
-            itemsInOrders.add(sum);
-        }
-
-        itemsInOrders.sort(Integer::compareTo);
-
-        Integer cant_low = 0;
-        Integer cant_upp = 0;
-
-        for(int i = 0; i < itemsInOrders.size(); i++) {
-            cant_low += itemsInOrders.get(itemsInOrders.size() - 1 - i);
-            cant_upp += itemsInOrders.get(i);
-
-            if (cant_low > waveSizeLB && lower == 1) lower = i;
-            if (cant_upp > waveSizeUB && upper == itemsInOrders.size()) upper = i;
-
-            if (cant_low > waveSizeLB && cant_upp > waveSizeUB) break;
-        }
     }
     
     private Boolean solveMIP(double k, List<Integer> used_orders, List<Integer> used_aisles) {
@@ -368,7 +341,7 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int maxIterations, int iterations) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("results_" + strategy + "_" + maxIterations + ".csv",  true))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("./results/results_" + strategy + "_" + maxIterations + ".csv",  true))) {
             writer.write(orders.size() + "," + aisles.size() + "," + nItems + "," + isSolutionFeasible(solution) + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
         } catch (IOException e) {
             e.printStackTrace();
