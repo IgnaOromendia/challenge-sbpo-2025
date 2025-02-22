@@ -83,4 +83,3 @@ with open(solution_path, "w+") as solution_file:
         solution_file.write(f'{best_value}')
     else:
         solution_file.write("Unfeasible")
-    

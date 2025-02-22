@@ -65,6 +65,3 @@ for filename in os.listdir(instance_dir):
         continue
 
     print(f'Success at {filename}!')
-
-    ## Check solution is optimal
-    

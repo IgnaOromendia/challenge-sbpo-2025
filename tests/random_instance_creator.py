@@ -37,7 +37,3 @@ for i in range(num_tests):
         LB = 0
         UB = random.randint(20, 40)
         file.write(f'{LB} {UB}\n')
-
-
-
-    
