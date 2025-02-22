@@ -3,6 +3,8 @@ package org.sbpo2025.challenge;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,8 +15,9 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.time.StopWatch;
 
 import ilog.concert.IloException;
+import ilog.concert.IloIntVar;
+import ilog.concert.IloLinearIntExpr;
 import ilog.concert.IloLinearNumExpr;
-import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
 public class ChallengeSolver {
@@ -95,53 +98,13 @@ public class ChallengeSolver {
         try {
             cplex = new IloCplex();
 
-            cplex.setParam(IloCplex.Param.Simplex.Display, 0); 
-            cplex.setParam(IloCplex.Param.MIP.Display, 0);     
-            cplex.setParam(IloCplex.Param.TimeLimit, 60);
-            
-            cplex.setOut(null); 
-            cplex.setWarning(null); 
+            setCPLEXParamsTo(cplex);
 
             // Variables
-            
-            IloNumVar[] X = new IloNumVar[orders.size()]; // La orden o está completa
-            IloNumVar[] Y = new IloNumVar[aisles.size()]; // El pasillo a fue recorrido
+            IloIntVar[] X = new IloIntVar[orders.size()]; // La orden o está completa
+            IloIntVar[] Y = new IloIntVar[aisles.size()]; // El pasillo a fue recorrido
 
-            for(int o = 0; o < orders.size(); o++) 
-                X[o] = cplex.intVar(0, 1, "X_" + o);
-
-            for (int a = 0; a < aisles.size(); a++) 
-                Y[a] = cplex.intVar(0, 1, "Y_" + a);
-
-            // Restricciónes
-
-            // Mayor que LB y menor que UB
-            IloLinearNumExpr exprLB = cplex.linearNumExpr();
-            IloLinearNumExpr exprUB = cplex.linearNumExpr();
-
-            for(int o = 0; o < orders.size(); o++) {
-                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
-                    exprLB.addTerm(entry.getValue(), X[o]);
-                    exprUB.addTerm(entry.getValue(), X[o]);
-                }
-            }
-                    
-            cplex.addGe(exprLB, waveSizeLB);
-            cplex.addLe(exprUB, waveSizeUB);
-                                
-            // Si la orden O fue hecha con elementos de i entonces pasa por los pasillos _a_ donde se encuentra i
-            for(int i = 0; i < nItems; i++) {
-                IloLinearNumExpr exprX = cplex.linearNumExpr();
-                IloLinearNumExpr exprY = cplex.linearNumExpr();
-
-                for(int o = 0; o < orders.size(); o++) 
-                    exprX.addTerm(orders.get(o).getOrDefault(i, 0), X[o]);
-
-                for(int a = 0; a < aisles.size(); a++) 
-                    exprY.addTerm(aisles.get(a).getOrDefault(i, 0), Y[a]);
-
-                cplex.addLe(exprX, exprY);
-            }
+            setVariablesAndConstraints(cplex, X, Y);
 
             // Función objetivo
             
@@ -160,17 +123,7 @@ public class ChallengeSolver {
             // Resolver
 
             if (cplex.solve()) {
-                used_orders.clear();
-                used_aisles.clear();        
-
-                for(int o = 0; o < orders.size(); o++)
-                    if (cplex.getValue(X[o]) > tolerance) 
-                        used_orders.add(o);
-                        
-                for(int a = 0; a < aisles.size(); a++)
-                    if (cplex.getValue(Y[a]) > tolerance)
-                         used_aisles.add(a);
-                
+                extractSolutionFrom(cplex, X, Y, used_orders, used_aisles);
                 objValue = cplex.getObjValue();
             } else {
                 System.out.println("Infactible - q: " + q);
@@ -210,51 +163,10 @@ public class ChallengeSolver {
         try {
             cplex = new IloCplex();
 
-            cplex.setParam(IloCplex.Param.Simplex.Display, 0); 
-            cplex.setParam(IloCplex.Param.MIP.Display, 0);     
-            
-            cplex.setOut(null); 
-            cplex.setWarning(null); 
+            IloIntVar[] X = new IloIntVar[orders.size()]; // La orden o está completa
+            IloIntVar[] Y = new IloIntVar[aisles.size()]; // El pasillo a fue recorrido
 
-            // Variables
-            IloNumVar[] X = new IloNumVar[orders.size()]; // La orden o está completa
-            IloNumVar[] Y = new IloNumVar[aisles.size()]; // El pasillo a fue recorrido
-
-            for(int o = 0; o < orders.size(); o++) 
-                X[o] = cplex.intVar(0, 1, "X_" + o);
-
-            for (int a = 0; a < aisles.size(); a++) 
-                Y[a] = cplex.intVar(0, 1, "Y_" + a);
-
-            // Restricciones
-
-            // Mayor que LB y menor que UB
-            IloLinearNumExpr exprLB = cplex.linearNumExpr();
-            IloLinearNumExpr exprUB = cplex.linearNumExpr();
-
-            for(int o = 0; o < orders.size(); o++) {
-                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
-                    exprLB.addTerm(entry.getValue(), X[o]);
-                    exprUB.addTerm(entry.getValue(), X[o]);
-                }
-            }
-                    
-            cplex.addGe(exprLB, waveSizeLB);
-            cplex.addLe(exprUB, waveSizeUB);
-                                
-            // Si la orden O fue hecha con elementos de i entonces pasa por los pasillos _a_ donde se encuentra i
-            for(int i = 0; i < nItems; i++) {
-                IloLinearNumExpr exprX = cplex.linearNumExpr();
-                IloLinearNumExpr exprY = cplex.linearNumExpr();
-
-                for(int o = 0; o < orders.size(); o++) 
-                    exprX.addTerm(orders.get(o).getOrDefault(i, 0), X[o]);
-
-                for(int a = 0; a < aisles.size(); a++) 
-                    exprY.addTerm(aisles.get(a).getOrDefault(i, 0), Y[a]);
-
-                cplex.addLe(exprX, exprY);
-            }
+            setVariablesAndConstraints(cplex, X, Y);
 
             // Exigimos que sea mayor a k|A|
             IloLinearNumExpr exprX  = cplex.linearNumExpr();
@@ -271,37 +183,12 @@ public class ChallengeSolver {
             
             cplex.addGe(exprX, exprkY);
 
-            // Hay que elegir por lo menos un pasillo
-            IloLinearNumExpr exprY = cplex.linearNumExpr();
-            
-            for(int a = 0; a < aisles.size(); a++) 
-                exprY.addTerm(1, Y[a]);
-
-            cplex.addGe(exprY, 1);
-
             // Función objetivo -> Nada por ahora
 
             // Resolver
-            if (cplex.solve()) {
-
-                double curSolutionValue = getSolutionValueFromCplex(cplex, X, Y);
-
-                if (curSolutionValue > this.curValue) {
-                    this.curValue = curSolutionValue;
-
-                    used_orders.clear();
-                    used_aisles.clear();        
-
-                    for(int o = 0; o < orders.size(); o++)
-                        if (cplex.getValue(X[o]) > tolerance) 
-                            used_orders.add(o);
-                            
-                    for(int a = 0; a < aisles.size(); a++)
-                        if (cplex.getValue(Y[a]) > tolerance)
-                            used_aisles.add(a);
-                }
-
-            } else {
+            if (cplex.solve()) 
+                extractSolutionFrom(cplex, X, Y, used_orders, used_aisles);
+            else {
                 cplex.end();
                 return false;
             }
@@ -316,7 +203,7 @@ public class ChallengeSolver {
         return true;
     }
 
-    private double getSolutionValueFromCplex(IloCplex cplex, IloNumVar[] X, IloNumVar[] Y) {
+    private double getSolutionValueFromCplex(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) {
         double pickedObjects = 0, usedColumns = 0;
         
         try {
@@ -337,11 +224,107 @@ public class ChallengeSolver {
     }
 
 
+    // CPLEX
+
+    // Agrega las variables y restricciónes compartidas entre modelos
+    private void setVariablesAndConstraints(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
+        setCPLEXParamsTo(cplex);
+
+        initializeVariables(cplex, X, Y);
+
+        // Mayor que LB y menor que UB
+        setBoundsConstraints(cplex, X, Y);
+                            
+        // Si la orden O fue hecha con elementos de i entonces pasa por los pasillos _a_ donde se encuentra i
+        setOrderSelectionConstraints(cplex, X, Y);
+
+        // Hay que elegir por lo menos un pasillo
+        setAtLeastOneAisleConstraint(cplex, Y);
+    }
+
+    private void setCPLEXParamsTo(IloCplex cplex) throws IloException {
+        cplex.setParam(IloCplex.Param.Simplex.Display, 0); 
+        cplex.setParam(IloCplex.Param.MIP.Display, 0);     
+        
+        cplex.setOut(null); 
+        cplex.setWarning(null); 
+    }
+
+    private void initializeVariables(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
+        for(int o = 0; o < orders.size(); o++) 
+            X[o] = cplex.intVar(0, 1, "X_" + o);
+
+        for (int a = 0; a < aisles.size(); a++) 
+            Y[a] = cplex.intVar(0, 1, "Y_" + a);
+    }
+
+    private void setBoundsConstraints(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
+        IloLinearIntExpr exprLB = cplex.linearIntExpr();
+        IloLinearIntExpr exprUB = cplex.linearIntExpr();
+
+        for(int o = 0; o < orders.size(); o++) 
+            for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
+                exprLB.addTerm(entry.getValue(), X[o]);
+                exprUB.addTerm(entry.getValue(), X[o]);
+            }
+        
+        cplex.addGe(exprLB, waveSizeLB);
+        cplex.addLe(exprUB, waveSizeUB);
+    }
+
+    private void setOrderSelectionConstraints(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
+        for(int i = 0; i < nItems; i++) {
+            IloLinearIntExpr exprX = cplex.linearIntExpr();
+            IloLinearIntExpr exprY = cplex.linearIntExpr();
+
+            for(int o = 0; o < orders.size(); o++) 
+                exprX.addTerm(orders.get(o).getOrDefault(i, 0), X[o]);
+
+            for(int a = 0; a < aisles.size(); a++) 
+                exprY.addTerm(aisles.get(a).getOrDefault(i, 0), Y[a]);
+
+            cplex.addLe(exprX, exprY);
+        }
+    }
+
+    private void setAtLeastOneAisleConstraint(IloCplex cplex, IloIntVar[] Y) throws IloException {
+        IloLinearIntExpr exprY = cplex.linearIntExpr();
+            
+        for(int a = 0; a < aisles.size(); a++) 
+            exprY.addTerm(1, Y[a]);
+
+        cplex.addGe(exprY, 1);
+    }
+
+    private void extractSolutionFrom(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y, List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
+        double curSolutionValue = getSolutionValueFromCplex(cplex, X, Y);
+
+        if (curSolutionValue > this.curValue) {
+            this.curValue = curSolutionValue;
+
+            used_orders.clear();
+            used_aisles.clear();      
+            
+            fillSolutionList(cplex, X, used_orders, orders.size());
+            fillSolutionList(cplex, Y, used_aisles, aisles.size());
+           
+        }
+    }
+
+    private void fillSolutionList(IloCplex cplex, IloIntVar[] V, List<Integer> solution, Integer size) throws IloException {
+        for(int i = 0; i < size; i++)
+            if (cplex.getValue(V[i]) > tolerance) 
+                solution.add(i);
+    }
+
     // Para experimentar
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int maxIterations, int iterations) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("./results/results_" + strategy + "_" + maxIterations + ".csv",  true))) {
+        String filePath = "./results/results_" + strategy + "_" + maxIterations + ".csv";
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
+            if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,pasillos,items,factibilidad,obj,tiempo,it\n");
             writer.write(orders.size() + "," + aisles.size() + "," + nItems + "," + isSolutionFeasible(solution) + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
         } catch (IOException e) {
             e.printStackTrace();
