@@ -13,7 +13,7 @@
 
 ## Cómo se hace un benchmark
 
-Se correr todos los casos, con tolerancia 10^{-3}.
+Se correr todos los casos, con tolerancia $10^{-3}$.
 
 ## Resultados actuales
 
