@@ -5,10 +5,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.time.StopWatch;
 
@@ -26,7 +28,7 @@ public class ChallengeSolver {
     protected int waveSizeLB;
     protected int waveSizeUB;
     
-    private final double tolerance = 1e-3;
+    private final double tolerance = 1e-2;
     private double lower = 0;
     private double upper;
     private double curValue;
@@ -38,9 +40,8 @@ public class ChallengeSolver {
         this.nItems = nItems;
         this.waveSizeLB = waveSizeLB;
         this.waveSizeUB = waveSizeUB;
-        this.upper = orders.stream()
-                    .mapToInt(order -> order.values().stream().mapToInt(Integer::intValue).sum())
-                    .sum();
+        this.lower = waveSizeLB;
+        this.upper = waveSizeUB;
         this.curValue = 0;
     }
 
@@ -51,7 +52,7 @@ public class ChallengeSolver {
         Boolean useBinarySearchSolution = true;
         Boolean useParametricAlgorithmMILFP = false;
         String strategy = "";
-        Integer maxIterations = 30, iterations = 1;
+        Integer maxIterations = 6, iterations = 1;
 
 
         if (useBinarySearchSolution) {
@@ -189,22 +190,57 @@ public class ChallengeSolver {
     // Busqueda Binaria
     
     private int binarySearchSolution(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
-        // setBinarySearchBounds();
+        if (!solveMIP(0, used_orders, used_aisles)) {
+            return -1; // There is no solution
+        }
+        
+        this.lower = this.curValue;
+        this.upper = Math.min(this.upper, findAnotherUpperBound());
+        double k;
+        int it = 0;
 
-        double k; int it = 0;
+        while (it < maxIterations && tolerance <= this.upper - this.lower) {
+            k = (this.lower + this.upper) / 2;
 
-        while (it < maxIterations && tolerance <= upper - lower) {
-            k = (lower + upper) / 2;
+            System.out.println("Current range: (" + this.lower + ", " + this.upper + ")");
 
             if (solveMIP(k, used_orders, used_aisles)) 
-                lower = k;
+                this.lower = k;
             else 
-                upper = k;
+                this.upper = k;
             
             it++;
         }
 
         return it;
+    }
+
+    // We find upper bounds using the following observation: the best solution with
+    // k aisles has is bounded by L_k / k where L_k is the sum of elements in the k aisles
+    // with more elements.
+    private double findAnotherUpperBound() {
+        // Get number of elements per aisle sorted increasingly
+        List<Double> sortedElementsPerAisle = this.aisles.stream()
+                                .mapToDouble(aisle -> aisle.values().stream()
+                                                .mapToDouble(Integer::doubleValue)
+                                                .sum())
+                                .sorted()
+                                .boxed()
+                                .collect(Collectors.toList());
+        
+        Collections.reverse(sortedElementsPerAisle);
+
+        double acum = 0;
+        double upper_bound = 0;
+        double iter = 1;
+
+        for (double value : sortedElementsPerAisle) {
+            acum += value;
+            upper_bound = Math.max(upper_bound, acum / iter);
+            iter++;
+        }
+
+        return upper_bound;
     }
 
     private void setBinarySearchBounds() {
