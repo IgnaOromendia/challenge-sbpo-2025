@@ -137,6 +137,8 @@ public class ChallengeSolver {
         while (it < maxIterations && tolerance <= upper - lower) {
             k = (lower + upper) / 2;
 
+            System.out.println("it: " + it + " " + lower + " - " + k + " - " + upper);
+
             if (solveMIP(k, used_orders, used_aisles)) 
                 lower = k;
             else 
@@ -250,7 +252,8 @@ public class ChallengeSolver {
 
     private void setCPLEXParamsTo(IloCplex cplex) throws IloException {
         cplex.setParam(IloCplex.Param.Simplex.Display, 0); 
-        cplex.setParam(IloCplex.Param.MIP.Display, 0);     
+        cplex.setParam(IloCplex.Param.MIP.Display, 0);    
+        cplex.setParam(IloCplex.Param.TimeLimit, 60);
         
         cplex.setOut(null); 
         cplex.setWarning(null); 
@@ -327,7 +330,7 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int maxIterations, int iterations) {
-        String filePath = "./results/results_" + strategy + "_" + maxIterations + ".csv";
+        String filePath = "./results/results_" + strategy + "_" + maxIterations + "_error.csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,pasillos,items,factibilidad,obj,tiempo,it\n");
