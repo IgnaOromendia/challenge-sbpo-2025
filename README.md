@@ -10,6 +10,7 @@
 - Revisar esto https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6858622 **a futuro**
 - Jugar con los parámetros de Simplex **a futuro**
 - Formato de salida: hay que imprimir las órdenes y pasillos en orden?
+- Resolver la relajación lineal para encontrar una cota superior. Hay que implementar el método de Cooper.
 
 ## Cómo se hace un benchmark
 

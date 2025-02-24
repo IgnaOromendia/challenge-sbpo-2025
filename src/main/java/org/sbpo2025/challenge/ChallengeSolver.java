@@ -55,7 +55,7 @@ public class ChallengeSolver {
         Boolean useBinarySearchSolution = true;
         Boolean useParametricAlgorithmMILFP = false;
         String strategy = "";
-        Integer maxIterations = 6, iterations = 1;
+        Integer maxIterations = 4, iterations = 1;
 
 
         if (useBinarySearchSolution) {
@@ -138,7 +138,7 @@ public class ChallengeSolver {
         }
         
         this.lower = this.curValue;
-        this.upper = Math.min(this.upper, findAnotherUpperBound());
+        this.upper = Math.min(this.upper, Math.min(findAnotherUpperBound(), relaxationUpperBound()));
         double k;
         int it = 0;
 
@@ -147,10 +147,10 @@ public class ChallengeSolver {
 
             System.out.println("Current range: (" + this.lower + ", " + this.upper + ")");
 
-            System.out.println("it: " + it + " " + lower + " - " + k + " - " + upper);
+            //System.out.println("it: " + it + " " + lower + " - " + k + " - " + upper);
 
             if (solveMIP(k, used_orders, used_aisles)) 
-                this.lower = k;
+                this.lower = this.curValue;
             else 
                 this.upper = k;
             
@@ -186,6 +186,11 @@ public class ChallengeSolver {
         }
 
         return upper_bound;
+    }
+
+    // Solve the linear relaxation of the problem using the Charnes-Cooper transformation
+    private double relaxationUpperBound() {
+        return 1e9;
     }
 
     private void setBinarySearchBounds() {
