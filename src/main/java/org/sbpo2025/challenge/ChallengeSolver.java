@@ -52,10 +52,10 @@ public class ChallengeSolver {
         List<Integer> used_orders = new ArrayList<>();
         List<Integer> used_aisles = new ArrayList<>();
 
-        Boolean useBinarySearchSolution = true;
-        Boolean useParametricAlgorithmMILFP = false;
+        Boolean useBinarySearchSolution = false;
+        Boolean useParametricAlgorithmMILFP = true;
         String strategy = "";
-        Integer maxIterations = 4, iterations = 1;
+        Integer maxIterations = 30, iterations = 1;
 
 
         if (useBinarySearchSolution) {
@@ -76,16 +76,27 @@ public class ChallengeSolver {
     // Parametric algorithm MILFP
 
     private int parametricAlgorithmMILFP(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
-        double q = 0;
-        double objValue = 1;
+        double q = 0, objValue = 1;
         int it = 0;
 
-        while (objValue >= tolerance && it < maxIterations) {
-            System.out.println("it: " + it + " q: " + q + " obj: " + objValue);
-
+        while (objValue >= 1e-3 && it < maxIterations) {
             objValue = solveParametricMILFP(q, used_orders, used_aisles);
 
-            if (objValue != -1) q = (double) used_orders.size() / used_aisles.size();
+            System.out.println("it: " + it + " q: " + q + " obj: " + objValue);
+
+            if (objValue != -1) {
+                int used_items = 0;
+
+                for(int o = 0; o < used_orders.size(); o++) 
+                    for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet())
+                        used_items += entry.getValue();
+
+                double last_q = q;
+                
+                q = (double) used_items / used_aisles.size();
+
+                if (last_q == q) break;
+            }
             
             it++;
         }
@@ -283,9 +294,9 @@ public class ChallengeSolver {
         IloLinearNumExpr obj = cplex.linearNumExpr();
 
         for(int o = 0; o < orders.size(); o++) 
-            for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
+            for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) 
                 obj.addTerm(entry.getValue(), X[o]);
-            }
+            
         
         
         for(int a = 0; a < aisles.size(); a++) 
@@ -374,7 +385,7 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int maxIterations, int iterations) {
-        String filePath = "./results/results_" + strategy + "_" + maxIterations + "_error.csv";
+        String filePath = "./results/results_" + strategy + "_" + maxIterations + ".csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,pasillos,items,factibilidad,obj,tiempo,it\n");
