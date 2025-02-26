@@ -193,30 +193,6 @@ public class ChallengeSolver {
         return 1e9;
     }
 
-    private void setBinarySearchBounds() {
-        List<Integer> itemsInOrders = new ArrayList<>();
-
-        for (int o = 0; o < orders.size(); o++) {
-            Integer sum = 0;
-            for(int i = 0; i < nItems; i++) sum += orders.get(o).getOrDefault(i, 0);
-            itemsInOrders.add(sum);
-        }
-
-        itemsInOrders.sort(Integer::compareTo);
-
-        Integer cant_low = 0;
-        Integer cant_upp = 0;
-
-        for(int i = 0; i < itemsInOrders.size(); i++) {
-            cant_low += itemsInOrders.get(itemsInOrders.size() - 1 - i);
-            cant_upp += itemsInOrders.get(i);
-
-            if (cant_low > waveSizeLB && lower == 1) lower = i;
-            if (cant_upp > waveSizeUB && upper == itemsInOrders.size()) upper = i;
-
-            if (cant_low > waveSizeLB && cant_upp > waveSizeUB) break;
-        }
-    }
     
     private Boolean solveMIP(double k, List<Integer> used_orders, List<Integer> used_aisles) {
         IloCplex cplex = null;
