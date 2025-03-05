@@ -20,6 +20,7 @@ import ilog.concert.IloException;
 import ilog.concert.IloIntVar;
 import ilog.concert.IloLinearIntExpr;
 import ilog.concert.IloLinearNumExpr;
+import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
 public class ChallengeSolver {
@@ -164,7 +165,88 @@ public class ChallengeSolver {
 
     // Solve the linear relaxation of the problem using the Charnes-Cooper transformation
     private double relaxationUpperBound() {
-        return 1e9;
+        IloCplex cplex = null;
+        double result = 1e9;
+        try {
+            cplex = new IloCplex();
+
+            setCPLEXParamsTo(cplex);
+            
+            IloNumVar[] X = new IloNumVar[orders.size()]; // La orden o está completa
+            IloNumVar[] Y = new IloNumVar[aisles.size()]; // El pasillo a fue recorrido
+            IloNumVar T = cplex.numVar(0, Double.MAX_VALUE, "T");
+
+            IloLinearNumExpr obj = cplex.linearNumExpr();
+
+            for(int o = 0; o < orders.size(); o++) 
+                X[o] = cplex.numVar(0, 1, "X_" + o);
+
+            for (int a = 0; a < aisles.size(); a++) 
+                Y[a] = cplex.numVar(0, 1, "Y_" + a);
+
+            for(int o = 0; o < orders.size(); o++) 
+                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) 
+                    obj.addTerm(entry.getValue(), X[o]);
+
+            cplex.addMaximize(obj);
+
+            // Denominador igual a 1
+            IloLinearNumExpr exprD = cplex.linearNumExpr();
+
+            for(int a = 0; a < aisles.size(); a++) 
+                exprD.addTerm(1, Y[a]);
+
+            cplex.addEq(1, exprD);
+
+            // Mayor que LB y menor que UB
+            IloLinearNumExpr exprLB = cplex.linearNumExpr();
+            IloLinearNumExpr exprUB = cplex.linearNumExpr();
+
+            for(int o = 0; o < orders.size(); o++)
+                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
+                    exprLB.addTerm(-entry.getValue(), X[o]);
+                    exprUB.addTerm(entry.getValue(), X[o]);
+                }
+
+            exprUB.addTerm(-waveSizeUB, T);
+            exprLB.setConstant(waveSizeLB);
+            
+            cplex.addLe(exprLB, 0);
+            cplex.addLe(exprUB, 0);
+            
+            // Si la orden O fue hecha con elementos de i entonces pasa por los pasillos _a_ donde se encuentra i
+            for(int i = 0; i < nItems; i++) {
+                IloLinearNumExpr exprX = cplex.linearNumExpr();
+    
+                for(int o = 0; o < orders.size(); o++) 
+                    exprX.addTerm(orders.get(o).getOrDefault(i, 0), X[o]);
+    
+                for(int a = 0; a < aisles.size(); a++) 
+                    exprX.addTerm(-aisles.get(a).getOrDefault(i, 0), Y[a]);
+    
+                cplex.addLe(exprX, 0);
+            }
+
+            // Hay que elegir por lo menos un pasillo
+            IloLinearNumExpr exprY = cplex.linearNumExpr();
+            
+            for(int a = 0; a < aisles.size(); a++) 
+                exprY.addTerm(-1, Y[a]);
+            
+            exprY.setConstant(1);
+
+            cplex.addLe(exprY, 0);
+
+            if (cplex.solve()) 
+                result = cplex.getObjValue();
+        
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            if (cplex != null) cplex.end();
+        }
+
+        return result;
     }
 
     // Binary Solution
@@ -273,8 +355,6 @@ public class ChallengeSolver {
         for(int o = 0; o < orders.size(); o++) 
             for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) 
                 obj.addTerm(entry.getValue(), X[o]);
-            
-        
         
         for(int a = 0; a < aisles.size(); a++) 
             obj.addTerm(-alfa, Y[a]);
@@ -362,7 +442,7 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int maxIterations, int iterations) {
-        String filePath = "./results/results_" + strategy + "_" + maxIterations + ".csv";
+        String filePath = "./results/results_" + strategy + "_" + maxIterations + "_cooper.csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,pasillos,items,factibilidad,obj,tiempo,it\n");
