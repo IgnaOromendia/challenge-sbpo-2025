@@ -52,8 +52,8 @@ public class ChallengeSolver {
         List<Integer> used_orders = new ArrayList<>();
         List<Integer> used_aisles = new ArrayList<>();
 
-        Boolean useBinarySearchSolution = false;
-        Boolean useParametricAlgorithmMILFP = true;
+        Boolean useBinarySearchSolution = true;
+        Boolean useParametricAlgorithmMILFP = false;
         String strategy = "";
         Integer maxIterations = 30, iterations = 1;
 
@@ -105,48 +105,13 @@ public class ChallengeSolver {
     }
 
     private double solveParametricMILFP(double q, List<Integer> used_orders, List<Integer> used_aisles) {
-        double objValue = -1;
-        IloCplex cplex = null;
-        try {
-            cplex = new IloCplex();
-
-            setCPLEXParamsTo(cplex);
-
-            // Variables
-            IloIntVar[] X = new IloIntVar[orders.size()]; // La orden o está completa
-            IloIntVar[] Y = new IloIntVar[aisles.size()]; // El pasillo a fue recorrido
-
-            setVariablesAndConstraints(cplex, X, Y);
-
-            // Función objetivo
-            
-            setObjectiveFunction(cplex, X, Y, q);
-                        
-            // Resolver
-
-            if (cplex.solve()) {
-                extractSolutionFrom(cplex, X, Y, used_orders, used_aisles);
-                objValue = cplex.getObjValue();
-            } else {
-                System.out.println("Infactible - q: " + q);
-            }
-
-            cplex.end();
-        } catch (IloException e) {
-            System.out.println(e.getMessage());
-        } finally {
-            if (null != cplex) cplex.end();
-        }
-        
-        return objValue;
+        return solveMIP(q, used_orders, used_aisles, null);
     }
 
     // Busqueda Binaria
     
     private int binarySearchSolution(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
-        if (!solveMIP(0, used_orders, used_aisles)) {
-            return -1; // There is no solution
-        }
+        if (binaryMIP(0, used_orders, used_aisles) == -1) return -1; // There is no solution
         
         this.lower = this.curValue;
         this.upper = Math.min(this.upper, Math.min(findAnotherUpperBound(), relaxationUpperBound()));
@@ -158,9 +123,7 @@ public class ChallengeSolver {
 
             System.out.println("Current range: (" + this.lower + ", " + this.upper + ")");
 
-            //System.out.println("it: " + it + " " + lower + " - " + k + " - " + upper);
-
-            if (solveMIP(k, used_orders, used_aisles)) 
+            if (binaryMIP(k, used_orders, used_aisles) != -1) 
                 this.lower = this.curValue;
             else 
                 this.upper = k;
@@ -204,9 +167,40 @@ public class ChallengeSolver {
         return 1e9;
     }
 
+    // Binary Solution
+
+    private double binaryMIP(double k, List<Integer> used_orders, List<Integer> used_aisles) {
+        return solveMIP(k, used_orders, used_aisles, (cplex,X,Y) -> {
+            try {
+                // Exigimos que sea mayor a k|A|
+                IloLinearNumExpr exprX  = cplex.linearNumExpr();
+                IloLinearNumExpr exprkY = cplex.linearNumExpr();
+
+                for(int o = 0; o < orders.size(); o++) {
+                    for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
+                        exprX.addTerm(entry.getValue(), X[o]);
+                    }
+                }
+                
+                for(int a = 0; a < aisles.size(); a++) 
+                    exprkY.addTerm(k, Y[a]);
+                
+                cplex.addGe(exprX, exprkY);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+            
+        });
+    }
+
+    @FunctionalInterface
+    private interface RunnableCode {
+        void run(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y);
+    }
     
-    private Boolean solveMIP(double k, List<Integer> used_orders, List<Integer> used_aisles) {
+    private double solveMIP(double k, List<Integer> used_orders, List<Integer> used_aisles, RunnableCode extraCode) {
         IloCplex cplex = null;
+        double result = -1;
         try {
             cplex = new IloCplex();
 
@@ -215,41 +209,24 @@ public class ChallengeSolver {
 
             setVariablesAndConstraints(cplex, X, Y);
 
-            // Exigimos que sea mayor a k|A|
-            IloLinearNumExpr exprX  = cplex.linearNumExpr();
-            IloLinearNumExpr exprkY = cplex.linearNumExpr();
-
-            for(int o = 0; o < orders.size(); o++) {
-                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
-                    exprX.addTerm(entry.getValue(), X[o]);
-                }
-            }
-            
-            for(int a = 0; a < aisles.size(); a++) 
-                exprkY.addTerm(k, Y[a]);
-            
-            cplex.addGe(exprX, exprkY);
+            extraCode.run(cplex, X,Y);            
 
             // Función objetivo
-
             setObjectiveFunction(cplex, X, Y, k);
 
             // Resolver
-            if (cplex.solve()) 
+            if (cplex.solve())  {
                 extractSolutionFrom(cplex, X, Y, used_orders, used_aisles);
-            else {
-                cplex.end();
-                return false;
+                result = cplex.getObjValue();
             }
         
-            cplex.end();
         } catch (IloException e) {
             System.out.println(e.getMessage());
         } finally {
             if (cplex != null) cplex.end();
         }
         
-        return true;
+        return result;
     }
 
     private double getSolutionValueFromCplex(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) {
