@@ -29,6 +29,8 @@ import ilog.cplex.IloCplex;
 public class ChallengeSolver {
     private final long MAX_RUNTIME = 600000; // milliseconds; 10 minutes
 
+    protected int ordersArray[][];
+    protected int aislesArray[][];
     protected List<Map<Integer, Integer>> orders;
     protected List<Map<Integer, Integer>> aisles;
     protected int nItems;
@@ -50,16 +52,29 @@ public class ChallengeSolver {
         this.lower = waveSizeLB;
         this.upper = waveSizeUB;
         this.curValue = 0;
+
+        this.ordersArray = new int[orders.size()][nItems]; // Todos se inicializan en 0
+        this.aislesArray = new int[aisles.size()][nItems];
+        
+        for(int o = 0; o < orders.size(); o++) 
+            for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet())
+                this.ordersArray[o][entry.getKey()] = entry.getValue();
+        
+        for(int a = 0; a < aisles.size(); a++) 
+            for (Map.Entry<Integer, Integer> entry : aisles.get(a).entrySet())
+                this.aislesArray[a][entry.getKey()] = entry.getValue();
+                
+        
     }
 
     public ChallengeSolution solve(StopWatch stopWatch) {  
         List<Integer> used_orders = new ArrayList<>();
         List<Integer> used_aisles = new ArrayList<>();
 
-        Boolean useBinarySearchSolution = true;
-        Boolean useParametricAlgorithmMILFP = false;
+        Boolean useBinarySearchSolution = false;
+        Boolean useParametricAlgorithmMILFP = true;
         String strategy = "";
-        Integer maxIterations = 30, iterations = 1;
+        Integer maxIterations = 10, iterations = 1;
 
         List<Integer> greedySolutionOrders = new ArrayList<>();
         List<Integer> greedySolutionAisles = new ArrayList<>();
@@ -91,7 +106,7 @@ public class ChallengeSolver {
 
     private int parametricAlgorithmMILFP(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
         double q = 0, objValue = 1;
-        int it = 0;
+        int it = 1;
 
         while (objValue >= 1e-3 && it < maxIterations) {
             objValue = solveParametricMILFP(q, used_orders, used_aisles);
@@ -101,9 +116,9 @@ public class ChallengeSolver {
             if (objValue != -1) {
                 int used_items = 0;
 
-                for(int o = 0; o < used_orders.size(); o++) 
-                    for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet())
-                        used_items += entry.getValue();
+                for(Integer o : used_orders) 
+                    for (int i = 0; i < nItems; i++)
+                        used_items += ordersArray[o][i];
 
                 double last_q = q;
                 
@@ -119,7 +134,7 @@ public class ChallengeSolver {
     }
 
     private double solveParametricMILFP(double q, List<Integer> used_orders, List<Integer> used_aisles) {
-        return solveMIP(q, used_orders, used_aisles, null);
+        return solveMIP(q, used_orders, used_aisles, null );
     }
 
     // Busqueda Binaria
@@ -127,11 +142,10 @@ public class ChallengeSolver {
     private int binarySearchSolution(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
         if (binaryMIP(0, used_orders, used_aisles) == -1) return -1; // There is no solution
         
-        this.lower = Math.max(this.curValue, (double) this.waveSizeLB / (double) this.aisles.size()); // LB / |A| es una lower bound
+        this.lower = Math.max(this.curValue, (double) this.waveSizeLB / (double) this.aislesArray.length); // LB / |A| es una lower bound
         this.upper = Math.min(this.upper, Math.min(findAnotherUpperBound(), relaxationUpperBound()));
-        System.out.println(relaxationUpperBound());
         double k;
-        int it = 0;
+        int it = 1;
 
         while (it < maxIterations && tolerance <= this.upper - this.lower) {
             k = (this.lower + this.upper) / 2;
@@ -186,28 +200,30 @@ public class ChallengeSolver {
 
             setCPLEXParamsTo(cplex);
             
-            IloNumVar[] X = new IloNumVar[orders.size()]; // La orden o está completa
-            IloNumVar[] Y = new IloNumVar[aisles.size()]; // El pasillo a fue recorrido
+            IloNumVar[] X = new IloNumVar[ordersArray.length]; // La orden o está completa
+            IloNumVar[] Y = new IloNumVar[aislesArray.length]; // El pasillo a fue recorrido
             IloNumVar T = cplex.numVar(0, Double.MAX_VALUE, "T");
 
             IloLinearNumExpr obj = cplex.linearNumExpr();
 
-            for(int o = 0; o < orders.size(); o++) 
+            for(int o = 0; o < ordersArray.length; o++) 
                 X[o] = cplex.numVar(0, 1, "X_" + o);
 
-            for (int a = 0; a < aisles.size(); a++) 
+            for (int a = 0; a < aislesArray.length; a++) 
                 Y[a] = cplex.numVar(0, 1, "Y_" + a);
 
-            for(int o = 0; o < orders.size(); o++) 
-                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) 
-                    obj.addTerm(entry.getValue(), X[o]);
+            // Funcion obj
+
+            for(int o = 0; o < ordersArray.length; o++) 
+                for(int i = 0; i < nItems; i++)
+                    obj.addTerm(ordersArray[o][i], X[o]);
 
             cplex.addMaximize(obj);
 
-            // Denominador igual a 1
+            // Denominador igual a 1 (Cooper)
             IloLinearNumExpr exprD = cplex.linearNumExpr();
 
-            for(int a = 0; a < aisles.size(); a++) 
+            for(int a = 0; a < aislesArray.length; a++) 
                 exprD.addTerm(1, Y[a]);
 
             cplex.addEq(1, exprD);
@@ -216,27 +232,27 @@ public class ChallengeSolver {
             IloLinearNumExpr exprLB = cplex.linearNumExpr();
             IloLinearNumExpr exprUB = cplex.linearNumExpr();
 
-            for(int o = 0; o < orders.size(); o++)
-                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
-                    exprLB.addTerm(-entry.getValue(), X[o]);
-                    exprUB.addTerm(entry.getValue(), X[o]);
+            for(int o = 0; o < ordersArray.length; o++)
+                for(int i = 0; i < nItems; i++) {
+                    exprLB.addTerm(ordersArray[o][i], X[o]);
+                    exprUB.addTerm(ordersArray[o][i], X[o]);
                 }
 
+            exprLB.addTerm(-waveSizeLB, T);
             exprUB.addTerm(-waveSizeUB, T);
-            exprLB.setConstant(waveSizeLB);
             
-            cplex.addLe(exprLB, 0);
+            cplex.addGe(exprLB, 0);
             cplex.addLe(exprUB, 0);
             
             // Si la orden O fue hecha con elementos de i entonces pasa por los pasillos _a_ donde se encuentra i
             for(int i = 0; i < nItems; i++) {
                 IloLinearNumExpr exprX = cplex.linearNumExpr();
     
-                for(int o = 0; o < orders.size(); o++) 
-                    exprX.addTerm(orders.get(o).getOrDefault(i, 0), X[o]);
+                for(int o = 0; o < ordersArray.length; o++) 
+                    exprX.addTerm(ordersArray[o][i], X[o]);
     
-                for(int a = 0; a < aisles.size(); a++) 
-                    exprX.addTerm(-aisles.get(a).getOrDefault(i, 0), Y[a]);
+                for(int a = 0; a < aislesArray.length; a++) 
+                    exprX.addTerm(-aislesArray[a][i], Y[a]);
     
                 cplex.addLe(exprX, 0);
             }
@@ -244,12 +260,12 @@ public class ChallengeSolver {
             // Hay que elegir por lo menos un pasillo
             IloLinearNumExpr exprY = cplex.linearNumExpr();
             
-            for(int a = 0; a < aisles.size(); a++) 
-                exprY.addTerm(-1, Y[a]);
-            
-            exprY.setConstant(1);
+            for(int a = 0; a < aislesArray.length; a++) 
+                exprY.addTerm(1, Y[a]);
 
-            cplex.addLe(exprY, 0);
+            exprY.addTerm(-1, T);
+
+            cplex.addGe(exprY, 0);
 
             if (cplex.solve()) 
                 result = cplex.getObjValue();
@@ -272,13 +288,13 @@ public class ChallengeSolver {
                 IloLinearNumExpr exprX  = cplex.linearNumExpr();
                 IloLinearNumExpr exprkY = cplex.linearNumExpr();
 
-                for(int o = 0; o < orders.size(); o++) {
-                    for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
-                        exprX.addTerm(entry.getValue(), X[o]);
+                for(int o = 0; o < ordersArray.length; o++) {
+                    for(int i = 0; i < nItems; i++) {
+                        exprX.addTerm(ordersArray[o][i], X[o]);
                     }
                 }
                 
-                for(int a = 0; a < aisles.size(); a++) 
+                for(int a = 0; a < aislesArray.length; a++) 
                     exprkY.addTerm(k, Y[a]);
                 
                 cplex.addGe(exprX, exprkY);
@@ -300,12 +316,12 @@ public class ChallengeSolver {
         try {
             cplex = new IloCplex();
 
-            IloIntVar[] X = new IloIntVar[orders.size()]; // La orden o está completa
-            IloIntVar[] Y = new IloIntVar[aisles.size()]; // El pasillo a fue recorrido
+            IloIntVar[] X = new IloIntVar[ordersArray.length]; // La orden o está completa
+            IloIntVar[] Y = new IloIntVar[aislesArray.length]; // El pasillo a fue recorrido
 
             setVariablesAndConstraints(cplex, X, Y);
 
-            extraCode.run(cplex, X,Y);            
+            if (extraCode != null) extraCode.run(cplex, X,Y);            
 
             // Función objetivo
             setObjectiveFunction(cplex, X, Y, k);
@@ -329,12 +345,12 @@ public class ChallengeSolver {
         double pickedObjects = 0, usedColumns = 0;
         
         try {
-            for (int o=0; o < orders.size(); o++)
+            for (int o=0; o < ordersArray.length; o++)
                 if (cplex.getValue(X[o]) > tolerance)
-                    for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) 
-                        pickedObjects += entry.getValue();
+                    for(int i = 0; i < nItems; i++)
+                        pickedObjects += ordersArray[o][i];
         
-            for (int a=0; a < aisles.size(); a++)
+            for (int a=0; a < aislesArray.length; a++)
                 if (cplex.getValue(Y[a]) > tolerance)
                     usedColumns += 1;
         
@@ -366,11 +382,11 @@ public class ChallengeSolver {
     private void setObjectiveFunction(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y, double alfa) throws IloException {
         IloLinearNumExpr obj = cplex.linearNumExpr();
 
-        for(int o = 0; o < orders.size(); o++) 
-            for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) 
-                obj.addTerm(entry.getValue(), X[o]);
+        for(int o = 0; o < ordersArray.length; o++) 
+            for(int i = 0; i < nItems; i++)
+                obj.addTerm(ordersArray[o][i], X[o]);
         
-        for(int a = 0; a < aisles.size(); a++) 
+        for(int a = 0; a < aislesArray.length; a++) 
             obj.addTerm(-alfa, Y[a]);
 
         cplex.addMaximize(obj);
@@ -386,10 +402,10 @@ public class ChallengeSolver {
     }
 
     private void initializeVariables(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
-        for(int o = 0; o < orders.size(); o++) 
+        for(int o = 0; o < ordersArray.length; o++) 
             X[o] = cplex.intVar(0, 1, "X_" + o);
 
-        for (int a = 0; a < aisles.size(); a++) 
+        for (int a = 0; a < aislesArray.length; a++) 
             Y[a] = cplex.intVar(0, 1, "Y_" + a);
     }
 
@@ -397,10 +413,10 @@ public class ChallengeSolver {
         IloLinearIntExpr exprLB = cplex.linearIntExpr();
         IloLinearIntExpr exprUB = cplex.linearIntExpr();
 
-        for(int o = 0; o < orders.size(); o++) 
-            for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
-                exprLB.addTerm(entry.getValue(), X[o]);
-                exprUB.addTerm(entry.getValue(), X[o]);
+        for(int o = 0; o < ordersArray.length; o++) 
+            for(int i = 0; i < nItems; i++) {
+                exprLB.addTerm(ordersArray[o][i], X[o]);
+                exprUB.addTerm(ordersArray[o][i], X[o]);
             }
         
         cplex.addGe(exprLB, waveSizeLB);
@@ -412,11 +428,11 @@ public class ChallengeSolver {
             IloLinearIntExpr exprX = cplex.linearIntExpr();
             IloLinearIntExpr exprY = cplex.linearIntExpr();
 
-            for(int o = 0; o < orders.size(); o++) 
-                exprX.addTerm(orders.get(o).getOrDefault(i, 0), X[o]);
+            for(int o = 0; o < ordersArray.length; o++) 
+                exprX.addTerm(ordersArray[o][i], X[o]);
 
-            for(int a = 0; a < aisles.size(); a++) 
-                exprY.addTerm(aisles.get(a).getOrDefault(i, 0), Y[a]);
+            for(int a = 0; a < aislesArray.length; a++) 
+                exprY.addTerm(aislesArray[a][i], Y[a]);
 
             cplex.addLe(exprX, exprY);
         }
@@ -425,7 +441,7 @@ public class ChallengeSolver {
     private void setAtLeastOneAisleConstraint(IloCplex cplex, IloIntVar[] Y) throws IloException {
         IloLinearIntExpr exprY = cplex.linearIntExpr();
             
-        for(int a = 0; a < aisles.size(); a++) 
+        for(int a = 0; a < aislesArray.length; a++) 
             exprY.addTerm(1, Y[a]);
 
         cplex.addGe(exprY, 1);
@@ -440,8 +456,8 @@ public class ChallengeSolver {
             used_orders.clear();
             used_aisles.clear();      
             
-            fillSolutionList(cplex, X, used_orders, orders.size());
-            fillSolutionList(cplex, Y, used_aisles, aisles.size());
+            fillSolutionList(cplex, X, used_orders, ordersArray.length);
+            fillSolutionList(cplex, Y, used_aisles, aislesArray.length);
            
         }
     }
@@ -460,7 +476,7 @@ public class ChallengeSolver {
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,pasillos,items,factibilidad,obj,tiempo,it\n");
-            writer.write(orders.size() + "," + aisles.size() + "," + nItems + "," + isSolutionFeasible(solution) + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
+            writer.write(ordersArray.length + "," + aislesArray.length + "," + nItems + "," + isSolutionFeasible(solution) + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
