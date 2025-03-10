@@ -1,8 +1,8 @@
 ## Tareas pendientes
 
 - Potencialmente romper simetrías (ordenes iguales) unificandolas en una sola variable o dando un orden en el cual agregarlas a la solución
-- Hacer un algoritmo greedy para intentar encontrar una solución inicial que sea mejor que la que da Simplex con k=0. Una idea es tomar pasillos grandes y recorrer las ordenes de mas grandes a mas chicas intentando colocarlas. **Lu**
-- Cuando se resuelve el problema $\max(N(x) - qD(x))$ una cota superior $B$ a este problema se traduce a una cota al problema fraccional como $\frac{N(x)}{D(x)} \leq \frac{B}{D(x)} + q \leq B + q$. Usar. **Cifu**
+- Hacer un algoritmo greedy para intentar encontrar una solución inicial que sea mejor que la que da Simplex con k=0. Una idea es tomar pasillos grandes y recorrer las ordenes de mas grandes a mas chicas intentando colocarlas. **Cifu**
+- Cuando se resuelve el problema $\max(N(x) - qD(x))$ una cota superior $B$ a este problema se traduce a una cota al problema fraccional como $\frac{N(x)}{D(x)} \leq \frac{B}{D(x)} + q \leq B + q$. Usar. **Igna**
 - Formato de salida: hay que imprimir las órdenes y pasillos en orden?
 - Resolver la relajación lineal para encontrar una cota superior. Hay que implementar el método de Cooper. **Igna: Hecho!**
 - La binaria no puede resolver el llamado a simplex en instancias grandes donde el k está muy cerca del valor óptimo real. Considerar no usar la binaria en general (solo hacer paramétrico) o en particular (hacer binaria hasta cierto punto). **Cifu**
