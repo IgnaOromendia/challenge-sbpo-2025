@@ -5,9 +5,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +61,17 @@ public class ChallengeSolver {
         String strategy = "";
         Integer maxIterations = 30, iterations = 1;
 
+        List<Integer> greedySolutionOrders = new ArrayList<>();
+        List<Integer> greedySolutionAisles = new ArrayList<>();
 
+        double greedySolution = greedySolution(greedySolutionOrders, greedySolutionAisles);
+        
+        if (greedySolution != -1) {
+            this.curValue = greedySolution;
+            used_orders = greedySolutionOrders;
+            used_aisles = greedySolutionAisles;
+        }
+        
         if (useBinarySearchSolution) {
             iterations = binarySearchSolution(used_orders, used_aisles, maxIterations);
             strategy = "binary";
@@ -114,8 +127,9 @@ public class ChallengeSolver {
     private int binarySearchSolution(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
         if (binaryMIP(0, used_orders, used_aisles) == -1) return -1; // There is no solution
         
-        this.lower = this.curValue;
+        this.lower = Math.max(this.curValue, (double) this.waveSizeLB / (double) this.aisles.size()); // LB / |A| es una lower bound
         this.upper = Math.min(this.upper, Math.min(findAnotherUpperBound(), relaxationUpperBound()));
+        System.out.println(relaxationUpperBound());
         double k;
         int it = 0;
 
@@ -521,5 +535,83 @@ public class ChallengeSolver {
 
         // Objective function: total units picked / number of visited aisles
         return (double) totalUnitsPicked / numVisitedAisles;
+    }
+
+    private double greedySolution(List<Integer> ordersToSave, List<Integer> aislesToSave) {
+        List<Integer> aislesSortedByNumElements = getMapIndicesSortedByMapSumOfValues(this.aisles);
+        LinkedList<Integer> ordersSortedByNumElements = new LinkedList<>(getMapIndicesSortedByMapSumOfValues(this.orders)); // Linked list para remover en O(1) desde adentro
+        
+        int[] elementsPerType = new int[this.nItems]; // Inicializa a 0 automaticamente
+        double curElements = 0, bestRatio = -1;
+
+        // Guardo todas las ordenes elegidas en orden, y un indice que me dice donde termina la mejor
+        // encontrada hasta el momento (que debe ser un prefijo de las totales elegidas)
+        List<Integer> ordersChosen = new ArrayList<>();
+        int indexOrderSolution = 0, indexAisleSolution = 0;
+
+        for (int curAisleIndex = 0; curAisleIndex < aislesSortedByNumElements.size(); curAisleIndex++) {
+            
+            // Load elements from aisle
+            for (Map.Entry<Integer, Integer> entry : this.aisles.get(aislesSortedByNumElements.get(curAisleIndex)).entrySet())
+                elementsPerType[entry.getKey()] += entry.getValue();
+
+            // Iterate reminaing orders
+            Iterator<Integer> orderIndexIterator = ordersSortedByNumElements.iterator();
+            while (orderIndexIterator.hasNext()) {
+
+                int o = orderIndexIterator.next();
+                boolean fail = false;
+                
+                for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) {
+                    if (elementsPerType[entry.getKey()] < entry.getValue()) {
+                        fail = true;
+                        break;
+                    }
+                }
+
+                if (fail) continue;
+                
+                for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) {
+                    elementsPerType[entry.getKey()] -= entry.getValue();
+                    curElements += entry.getValue();
+                }
+
+                ordersChosen.add(o);
+                orderIndexIterator.remove();
+            }
+            
+            if (curElements > this.waveSizeUB) break;
+
+            if (this.waveSizeLB <= curElements && bestRatio < curElements / (curAisleIndex + 1)) {
+                bestRatio = curElements / (curAisleIndex + 1);
+                indexOrderSolution = ordersChosen.size();
+                indexAisleSolution = curAisleIndex + 1;
+            }
+        }
+
+        if (bestRatio != -1) { // Se encontro alguna solucion
+            ordersToSave.clear();
+            aislesToSave.clear();
+
+            for (int o=0; o<indexOrderSolution; o++) ordersToSave.add(ordersChosen.get(o));
+            for (int a=0; a<indexAisleSolution; a++) aislesToSave.add(aislesSortedByNumElements.get(a));  
+        }
+
+        return bestRatio;
+    }
+
+    private List<Integer> getMapIndicesSortedByMapSumOfValues(List<Map<Integer, Integer>> mapWithvalues) {
+        List<Map.Entry<Integer, Integer>> indicesAndSum = new ArrayList<>();
+
+        for (int i = 0; i < mapWithvalues.size(); i++) {
+            int sum = mapWithvalues.get(i).values().stream().mapToInt(Integer::intValue).sum();
+            indicesAndSum.add(new AbstractMap.SimpleEntry<>(i, sum));
+        }
+
+        indicesAndSum.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
+
+        return indicesAndSum.stream()
+                            .map(a -> a.getKey())
+                            .collect(Collectors.toList());
     }
 }
