@@ -4,7 +4,7 @@
 - Hacer un algoritmo greedy para intentar encontrar una solución inicial que sea mejor que la que da Simplex con k=0. Una idea es tomar pasillos grandes y recorrer las ordenes de mas grandes a mas chicas intentando colocarlas. **Lu**
 - Cuando se resuelve el problema $\max(N(x) - qD(x))$ una cota superior $B$ a este problema se traduce a una cota al problema fraccional como $\frac{N(x)}{D(x)} \leq \frac{B}{D(x)} + q \leq B + q$. Usar. **Cifu**
 - Formato de salida: hay que imprimir las órdenes y pasillos en orden?
-- Resolver la relajación lineal para encontrar una cota superior. Hay que implementar el método de Cooper. **Igna**
+- Resolver la relajación lineal para encontrar una cota superior. Hay que implementar el método de Cooper. **Igna: Hecho!**
 - La binaria no puede resolver el llamado a simplex en instancias grandes donde el k está muy cerca del valor óptimo real. Considerar no usar la binaria en general (solo hacer paramétrico) o en particular (hacer binaria hasta cierto punto). **Cifu**
 - Que la binaria vaya dividiendo por 4 hasta llegar a un rango factible. **a futuro**
 - Revisar esto https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6858622 **a futuro**
