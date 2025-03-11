@@ -102,6 +102,20 @@ public class ChallengeSolver {
         return solution;
     } 
 
+    // Para experimentar
+
+    @SuppressWarnings("CallToPrintStackTrace")
+    private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int maxIterations, int iterations) {
+        String filePath = "./results/results_" + strategy + "_" + maxIterations + ".csv";
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
+            if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,pasillos,items,factibilidad,obj,tiempo,it\n");
+            writer.write(ordersArray.length + "," + aislesArray.length + "," + nItems + "," + isSolutionFeasible(solution) + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     // Parametric algorithm MILFP
 
     private int parametricAlgorithmMILFP(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
@@ -109,7 +123,7 @@ public class ChallengeSolver {
         int it = 1;
 
         while (objValue >= 1e-3 && it < maxIterations) {
-            objValue = solveParametricMILFP(q, used_orders, used_aisles);
+            objValue = solveParametricMILFP(q, 0.25, used_orders, used_aisles);
 
             System.out.println("it: " + it + " q: " + q + " obj: " + objValue);
 
@@ -133,8 +147,14 @@ public class ChallengeSolver {
         return it;
     }
 
-    private double solveParametricMILFP(double q, List<Integer> used_orders, List<Integer> used_aisles) {
-        return solveMIP(q, used_orders, used_aisles, null );
+    private double solveParametricMILFP(double q, double gapTolerance,  List<Integer> used_orders, List<Integer> used_aisles) {
+        return solveMIP(q, used_orders, used_aisles, (cplex, X, Y) -> {
+            try {
+                cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, gapTolerance);
+            } catch (IloException e) {
+                System.out.println(e.getMessage());
+            }
+        } );
     }
 
     // Busqueda Binaria
@@ -466,20 +486,6 @@ public class ChallengeSolver {
         for(int i = 0; i < size; i++)
             if (cplex.getValue(V[i]) > tolerance) 
                 solution.add(i);
-    }
-
-    // Para experimentar
-
-    @SuppressWarnings("CallToPrintStackTrace")
-    private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int maxIterations, int iterations) {
-        String filePath = "./results/results_" + strategy + "_" + maxIterations + "_cooper.csv";
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
-            if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,pasillos,items,factibilidad,obj,tiempo,it\n");
-            writer.write(ordersArray.length + "," + aislesArray.length + "," + nItems + "," + isSolutionFeasible(solution) + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     /*
