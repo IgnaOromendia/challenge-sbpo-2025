@@ -1,6 +1,6 @@
 ## Tareas pendientes
 
-- Que el parametrico use ALGO de todo lo que hicimos (cota inferior greedy, )
+- Que el parametrico use ALGO de todo lo que hicimos (cota inferior greedy, ) **Igna: Hecho!**
 - Armar el array de pares por cada poder recorrer cada orden y pasillo en su tamaño. **Igna**
 - Factorizar en archivos distintos: Parametric, Binary, CPLEX runner, Greedy **Cifu**
 - En el run_solver agregar que se corra el checker.py contra las soluciones. **Cifu**
