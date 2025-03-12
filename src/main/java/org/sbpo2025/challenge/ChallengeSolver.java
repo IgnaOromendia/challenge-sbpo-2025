@@ -91,7 +91,7 @@ public class ChallengeSolver {
             iterations = binarySearchSolution(used_orders, used_aisles, maxIterations);
             strategy = "binary";
         } else if (useParametricAlgorithmMILFP) {
-            iterations = parametricAlgorithmMILFP(used_orders, used_aisles, maxIterations);
+            iterations = parametricAlgorithmMILFP(used_orders, used_aisles, maxIterations, stopWatch);
             strategy = "parametric";
         }
 
@@ -116,19 +116,44 @@ public class ChallengeSolver {
         }
     }
 
+    @SuppressWarnings("CallToPrintStackTrace")
+    private void writeParametricLog(double q, double objValue, double gapTolerance, int precision, StopWatch stopWatch) {
+        String filePath = "./log/log_" + gapTolerance + "_1e-" + precision + ".csv";
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
+            if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,q,obj,time,gap,precision\n");
+            writer.write(ordersArray.length + "," + q + "," + objValue + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + gapTolerance + "," + tolerance + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     // Parametric algorithm MILFP
 
-    private int parametricAlgorithmMILFP(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
-        double q = 0, objValue = 1;
-        int it = 1;
+    private int parametricAlgorithmMILFP(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations, StopWatch stopWatch) {
+        double objValue = 1, tolerance = 1e-2, gapTolerance = 0.25;
+        int it = 1, used_items = 0;
 
-        while (objValue >= 1e-3 && it < maxIterations) {
-            objValue = solveParametricMILFP(q, 0.25, used_orders, used_aisles);
+        List<Integer> greedySolutionOrders = new ArrayList<>();
+        List<Integer> greedySolutionAisles = new ArrayList<>();
+
+        double greedySolution = greedySolution(greedySolutionOrders, greedySolutionAisles);
+
+        for(Integer o : greedySolutionOrders) 
+            for (int i = 0; i < nItems; i++)
+                used_items += ordersArray[o][i];
+
+        double q = greedySolution != -1 ? (double) used_items / greedySolutionAisles.size() : 0;
+        
+
+        while (objValue >= tolerance && it < maxIterations) {
+            objValue = solveParametricMILFP(q, gapTolerance, used_orders, used_aisles);
 
             System.out.println("it: " + it + " q: " + q + " obj: " + objValue);
+            writeParametricLog(q, objValue, gapTolerance, 2, stopWatch); // Medio paja escribir cambiar el tol y esto pero para que quede bien en el archivo
 
             if (objValue != -1) {
-                int used_items = 0;
+                used_items = 0;
 
                 for(Integer o : used_orders) 
                     for (int i = 0; i < nItems; i++)
