@@ -4,3 +4,4 @@
 .vscode/
 __pycache__
 tests/outputs
+run_challenge.py
