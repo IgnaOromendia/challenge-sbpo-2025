@@ -5,3 +5,4 @@
 __pycache__
 tests/outputs
 run_challenge.py
+/output/
