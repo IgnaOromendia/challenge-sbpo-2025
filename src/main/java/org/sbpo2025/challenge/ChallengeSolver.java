@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,6 +43,7 @@ public class ChallengeSolver {
     private final GreedySolver greedySolver;
 
     private record Pair(int item, int amonut) {}
+    private static final long TIME_LIMIT_SEC = 10;
 
     public ChallengeSolver(
             List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
@@ -72,8 +74,8 @@ public class ChallengeSolver {
         List<Integer> used_orders = new ArrayList<>();
         List<Integer> used_aisles = new ArrayList<>();
 
-        Boolean useBinarySearchSolution = true;
-        Boolean useParametricAlgorithmMILFP = false;
+        Boolean useBinarySearchSolution = false;
+        Boolean useParametricAlgorithmMILFP = true;
         String strategy = "";
         Integer maxIterations = 10, iterations = 1;
 
@@ -89,7 +91,7 @@ public class ChallengeSolver {
         }
 
         if (useBinarySearchSolution) {
-            iterations = binarySearchSolution(used_orders, used_aisles, maxIterations);
+            iterations = binarySearchSolution(used_orders, used_aisles, maxIterations, stopWatch);
             strategy = "binary";
         } else if (useParametricAlgorithmMILFP) {
             iterations = parametricAlgorithmMILFP(used_orders, used_aisles, maxIterations, stopWatch);
@@ -123,7 +125,7 @@ public class ChallengeSolver {
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,q,obj,time,gap,precision\n");
-            writer.write(ordersArray.length + "," + q + "," + objValue + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + gapTolerance + "," + tolerance + "\n");
+            writer.write(ordersArray.length + "," + q + "," + objValue + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + gapTolerance + "," + precision + "\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -133,10 +135,13 @@ public class ChallengeSolver {
 
     private int parametricAlgorithmMILFP(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations, StopWatch stopWatch) {
         double objValue = 1, precision = 1e-2, gapTolerance = 0.25;
-        int it = 1, used_items = 0;
+        int it = 1;
 
         double q = this.curValue;
         
+
+        Duration startOfIteration = stopWatch.getDuration();
+
         while (objValue >= precision && it < maxIterations) {
             objValue = solveParametricMILFP(q, gapTolerance, used_orders, used_aisles);
 
@@ -149,7 +154,8 @@ public class ChallengeSolver {
             
             q = (double) objValue / used_aisles.size() + q; // Paper  
 
-            if (last_q == q) break;
+            if (Math.abs(last_q - q) < precision) break;
+            if (stopWatch.getDuration().getSeconds() - startOfIteration.getSeconds() > TIME_LIMIT_SEC) break;
             
             it++;
         }
@@ -169,7 +175,7 @@ public class ChallengeSolver {
 
     // Busqueda Binaria
     
-    private int binarySearchSolution(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations) {
+    private int binarySearchSolution(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations, StopWatch stopWatch) {
         if (binaryMIP(0, used_orders, used_aisles) == -1) return -1; // There is no solution
         
         this.lower = Math.max(this.curValue, (double) this.waveSizeLB / (double) this.aislesArray.length); // LB / |A| es una lower bound
@@ -177,7 +183,9 @@ public class ChallengeSolver {
         double k;
         int it = 1;
 
-        while (it < maxIterations && tolerance <= this.upper - this.lower) {
+        Duration startOfIteration = stopWatch.getDuration();
+
+        while (it < maxIterations && TOLERANCE <= this.upper - this.lower) {
             k = (this.lower + this.upper) / 2;
 
             System.out.println("Current range: (" + this.lower + ", " + this.upper + ")");
@@ -187,6 +195,8 @@ public class ChallengeSolver {
             else 
                 this.upper = k;
             
+            if (stopWatch.getDuration().getSeconds() - startOfIteration.getSeconds() > TIME_LIMIT_SEC) break;
+
             it++;
         }
 
@@ -334,6 +344,11 @@ public class ChallengeSolver {
             
         });
     }
+
+    @FunctionalInterface
+    private interface RunnableCode {
+        void run(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y);
+    }
     
     private double solveMIP(double k, List<Integer> used_orders, List<Integer> used_aisles, RunnableCode extraCode) {
         IloCplex cplex = null;
@@ -371,12 +386,12 @@ public class ChallengeSolver {
         
         try {
             for (int o=0; o < ordersArray.length; o++)
-                if (cplex.getValue(X[o]) > tolerance)
+                if (cplex.getValue(X[o]) > TOLERANCE)
                     for(int i = 0; i < nItems; i++)
                         pickedObjects += ordersArray[o][i];
         
             for (int a=0; a < aislesArray.length; a++)
-                if (cplex.getValue(Y[a]) > tolerance)
+                if (cplex.getValue(Y[a]) > TOLERANCE)
                     usedColumns += 1;
         
         } catch (IloException e) {
@@ -420,7 +435,7 @@ public class ChallengeSolver {
     private void setCPLEXParamsTo(IloCplex cplex) throws IloException {
         cplex.setParam(IloCplex.Param.Simplex.Display, 0); 
         cplex.setParam(IloCplex.Param.MIP.Display, 0);    
-        cplex.setParam(IloCplex.Param.TimeLimit, 60);
+        cplex.setParam(IloCplex.Param.TimeLimit, TIME_LIMIT_SEC);
         
         cplex.setOut(null); 
         cplex.setWarning(null); 
