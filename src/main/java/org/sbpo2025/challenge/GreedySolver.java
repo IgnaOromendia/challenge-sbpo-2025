@@ -66,15 +66,17 @@ public class GreedySolver {
 
                 ordersChosen.add(o);
                 orderIndexIterator.remove();
+
+                if (this.waveSizeLB <= curElements && bestRatio < curElements / (curAisleIndex + 1)) {
+                    bestRatio = curElements / (curAisleIndex + 1);
+                    indexOrderSolution = ordersChosen.size();
+                    indexAisleSolution = curAisleIndex + 1;
+                }
             }
             
             if (curElements > this.waveSizeUB) break;
 
-            if (this.waveSizeLB <= curElements && bestRatio < curElements / (curAisleIndex + 1)) {
-                bestRatio = curElements / (curAisleIndex + 1);
-                indexOrderSolution = ordersChosen.size();
-                indexAisleSolution = curAisleIndex + 1;
-            }
+            
         }
 
         if (bestRatio != -1) { // Se encontro alguna solucion
