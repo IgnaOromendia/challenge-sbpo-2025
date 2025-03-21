@@ -42,7 +42,6 @@ public class ChallengeSolver {
 
     private final GreedySolver greedySolver;
 
-    private record Pair(int item, int amonut) {}
     private static final long TIME_LIMIT_SEC = 10;
 
     public ChallengeSolver(
