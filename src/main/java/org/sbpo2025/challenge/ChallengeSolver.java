@@ -34,12 +34,14 @@ public class ChallengeSolver {
     protected int waveSizeLB;
     protected int waveSizeUB;
     
-    private final double tolerance = 1e-2;
+    private final double TOLERANCE = 1e-2;
     private double lower = 0;
     private double upper;
     private double curValue;
 
     private final GreedySolver greedySolver;
+
+    private record Pair(int item, int amonut) {}
 
     public ChallengeSolver(
             List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
@@ -130,40 +132,24 @@ public class ChallengeSolver {
     // Parametric algorithm MILFP
 
     private int parametricAlgorithmMILFP(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations, StopWatch stopWatch) {
-        double objValue = 1, tolerance = 1e-2, gapTolerance = 0.25;
+        double objValue = 1, precision = 1e-2, gapTolerance = 0.25;
         int it = 1, used_items = 0;
 
-        List<Integer> greedySolutionOrders = new ArrayList<>();
-        List<Integer> greedySolutionAisles = new ArrayList<>();
-
-        double greedySolution = this.greedySolver.solve(greedySolutionOrders, greedySolutionAisles);
-
-        for(Integer o : greedySolutionOrders) 
-            for (int i = 0; i < nItems; i++)
-                used_items += ordersArray[o][i];
-
-        double q = greedySolution != -1 ? (double) used_items / greedySolutionAisles.size() : 0;
+        double q = this.curValue;
         
-
-        while (objValue >= tolerance && it < maxIterations) {
+        while (objValue >= precision && it < maxIterations) {
             objValue = solveParametricMILFP(q, gapTolerance, used_orders, used_aisles);
 
             System.out.println("it: " + it + " q: " + q + " obj: " + objValue);
             writeParametricLog(q, objValue, gapTolerance, 2, stopWatch); // Medio paja escribir cambiar el tol y esto pero para que quede bien en el archivo
 
-            if (objValue != -1) {
-                used_items = 0;
+            if (objValue == -1) break;
 
-                for(Integer o : used_orders) 
-                    for (int i = 0; i < nItems; i++)
-                        used_items += ordersArray[o][i];
+            double last_q = q;
+            
+            q = (double) objValue / used_aisles.size() + q; // Paper  
 
-                double last_q = q;
-                
-                q = (double) used_items / used_aisles.size();
-
-                if (last_q == q) break;
-            }
+            if (last_q == q) break;
             
             it++;
         }
@@ -187,7 +173,7 @@ public class ChallengeSolver {
         if (binaryMIP(0, used_orders, used_aisles) == -1) return -1; // There is no solution
         
         this.lower = Math.max(this.curValue, (double) this.waveSizeLB / (double) this.aislesArray.length); // LB / |A| es una lower bound
-        this.upper = Math.min(this.upper, Math.min(findAnotherUpperBound(), relaxationUpperBound()));
+        this.upper = Math.min(this.upper, Math.min(greedyUpperBound(), relaxationUpperBound()));
         double k;
         int it = 1;
 
@@ -210,7 +196,7 @@ public class ChallengeSolver {
     // We find upper bounds using the following observation: the best solution with
     // k aisles has is bounded by L_k / k where L_k is the sum of elements in the k aisles
     // with more elements.
-    private double findAnotherUpperBound() {
+    private double greedyUpperBound() {
         // Get number of elements per aisle sorted increasingly
         List<Double> sortedElementsPerAisle = this.aisles.stream()
                                 .mapToDouble(aisle -> aisle.values().stream()
@@ -503,7 +489,7 @@ public class ChallengeSolver {
 
     private void fillSolutionList(IloCplex cplex, IloIntVar[] V, List<Integer> solution, Integer size) throws IloException {
         for(int i = 0; i < size; i++)
-            if (cplex.getValue(V[i]) > tolerance) 
+            if (cplex.getValue(V[i]) > TOLERANCE) 
                 solution.add(i);
     }
 
