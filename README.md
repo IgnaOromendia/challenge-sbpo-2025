@@ -1,13 +1,14 @@
 ## Tareas pendientes
 
-- Que el parametrico use ALGO de todo lo que hicimos (cota inferior greedy, ) **Igna: Hecho!**
-- Armar el array de pares por cada poder recorrer cada orden y pasillo en su tamaño. **Igna**
 - Factorizar en archivos distintos: Parametric, Binary, CPLEX runner, Greedy **Cifu**
-- En el run_solver agregar que se corra el checker.py contra las soluciones. **Cifu**
 - Potencialmente romper simetrías (ordenes iguales) unificandolas en una sola variable o dando un orden en el cual agregarlas a la solución
 - Que la binaria vaya dividiendo por 4 hasta llegar a un rango factible. 
-- Revisar esto https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6858622 
 - Jugar con los parámetros de Simplex 
+
+## Tareas Hechas
+- Revisar esto https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6858622 **Igna: Hecho!**
+- Que el parametrico use ALGO de todo lo que hicimos (cota inferior greedy, ) **Igna: Hecho!**
+- En el run_solver agregar que se corra el checker.py contra las soluciones. **Cifu: Hecho!**
 - Hacer un algoritmo greedy para intentar encontrar una solución inicial que sea mejor que la que da Simplex con k=0. Una idea es tomar pasillos grandes y recorrer las ordenes de mas grandes a mas chicas intentando colocarlas. **Cifu: Hecho!**
 - Cuando se resuelve el problema $\max(N(x) - qD(x))$ una cota superior $B$ a este problema se traduce a una cota al problema fraccional como $\frac{N(x)}{D(x)} \leq \frac{B}{D(x)} + q \leq B + q$. Usar.
 - Formato de salida: hay que imprimir las órdenes y pasillos en orden?
