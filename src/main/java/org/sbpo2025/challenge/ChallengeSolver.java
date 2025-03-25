@@ -42,7 +42,7 @@ public class ChallengeSolver {
 
     private final GreedySolver greedySolver;
 
-    private static final long TIME_LIMIT_SEC = 10;
+    private static final long TIME_LIMIT_SEC = 50;
 
     public ChallengeSolver(
             List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
@@ -145,7 +145,7 @@ public class ChallengeSolver {
             objValue = solveParametricMILFP(q, gapTolerance, used_orders, used_aisles);
 
             System.out.println("it: " + it + " q: " + q + " obj: " + objValue);
-            writeParametricLog(q, objValue, gapTolerance, 2, stopWatch); // Medio paja escribir cambiar el tol y esto pero para que quede bien en el archivo
+            // writeParametricLog(q, objValue, gapTolerance, 2, stopWatch); // Medio paja escribir cambiar el tol y esto pero para que quede bien en el archivo
 
             if (objValue == -1) break;
 
