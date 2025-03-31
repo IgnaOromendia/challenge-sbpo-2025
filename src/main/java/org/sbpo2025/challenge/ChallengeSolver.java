@@ -99,7 +99,7 @@ public class ChallengeSolver {
 
         ChallengeSolution solution = new ChallengeSolution(Set.copyOf(used_orders), Set.copyOf(used_aisles));
 
-        writeResults(strategy, solution, stopWatch, maxIterations, iterations);
+        // writeResults(strategy, solution, stopWatch, maxIterations, iterations);
 
         return solution;
     } 
