@@ -5,7 +5,8 @@ In this repository, you will find the base code for the framework, documentation
 
 ## Change Log
 
-- **16-04-2025**: [Sprint phase results](results/sprint_phase.pdf) updated.
+- **26-06-2025**: [Preliminary qualification phase results](results/qualification_phase.pdf) are now available. See section [Challenge Results Explanation](#challenge-results-explanation) for more details.
+- **16-04-2025**: [Sprint phase results](results/sprint_phase.pdf) updated. See section [Challenge Results Explanation](#challenge-results-explanation) for more details.
 - **15-04-2025**: [Sprint phase results](results/sprint_phase.pdf) are now available.
 - **15-04-2025**: Dataset `B` is now available.
 - **05-03-2025**: Updated the challenge rules to clarify that, due to allowing a multithread environment, no seed for random generation will be provided.
@@ -28,7 +29,7 @@ A positive score indicates successful submissions that produced valid solutions,
 Teams with a score of 0 could have encountered one or more of the following issues:
 
 - **Compilation Success, no valid solutions**: your code compiled successfully, but no solutions met the feasibility criteria across any test cases.
-- **Timeouts**: your program successfully compiled but exceeded the time limit (600 seconds) on all test instances.
+- **Timeouts**: your program successfully compiled but exceeded the time limit (600 seconds) on the test instances.
 - **Empty output files**: your program ran but produced empty output files or failed to generate any output.
 - **Invalid Format**: your outputs did not follow the required format and could not be processed by the evaluation system.
 
@@ -43,7 +44,7 @@ Teams with a negative score typically encountered:
     - References to libraries that weren't included in the submission
     - Dependency issues
 
-- **Runtime errors**:the program compiled but encountered errors during execution, such as:
+- **Runtime errors**: the program compiled but encountered errors during execution, such as:
     - Null pointer exceptions
     - Array index out of bounds
     - Class not found exceptions
@@ -122,11 +123,3 @@ python checker.py <input_file> <solution_file>
     ```sh
     python checker.py src/main/resources/instances/instance_001.txt output/instance_001.txt
     ```
-
-## Testing
-
-En ```tests/``` hay un conjunto de instancias para las cuales sabemos la solución. Para comparar los resultados del modelo actual con esos, correr
-
-    bash test_solver.sh
-
-El script reporta errores y trata de dar un motivo asociado al mismo.
