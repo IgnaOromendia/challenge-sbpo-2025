@@ -9,6 +9,8 @@
 - Cambiar el metodo de aproximacion (jugar con https://www.sciencedirect.com/science/article/pii/S0377221719305740)
 - Pensar cortes **Lu**
 - Pensar heuristicas que trabajen a partir de las soluciones del modelo.
+- Verificar las solución de CPLEX. Satura todos los pasillos? **Cifu**
+- Iniciar cada iteracion del parametrico con el resultado de la iteracion anterior. **Igna**
 
 ## Tareas Hechas
 - Revisar esto https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6858622 **Igna: Hecho!**
