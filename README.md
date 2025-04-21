@@ -3,7 +3,12 @@
 - Factorizar en archivos distintos: Parametric, Binary, CPLEX runner, Greedy **Cifu**
 - Potencialmente romper simetrías (ordenes iguales) unificandolas en una sola variable o dando un orden en el cual agregarlas a la solución
 - Que la binaria vaya dividiendo por 4 hasta llegar a un rango factible. 
-- Jugar con los parámetros de Simplex 
+- Jugar con los parámetros de Simplex **Igna**
+- Correr Dataset A con precision e-4 **Igna**
+- Correr Dataset B idem, para hacer los ground truths **Igna**
+- Cambiar el metodo de aproximacion (jugar con https://www.sciencedirect.com/science/article/pii/S0377221719305740)
+- Pensar cortes **Lu**
+- Pensar heuristicas que trabajen a partir de las soluciones del modelo.
 
 ## Tareas Hechas
 - Revisar esto https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6858622 **Igna: Hecho!**
