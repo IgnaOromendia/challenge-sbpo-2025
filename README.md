@@ -1,8 +1,6 @@
 ## Tareas pendientes
 
 - Factorizar en archivos distintos: Parametric, Binary, CPLEX runner, Greedy **Cifu**
-- Potencialmente romper simetrías (ordenes iguales) unificandolas en una sola variable o dando un orden en el cual agregarlas a la solución
-- Que la binaria vaya dividiendo por 4 hasta llegar a un rango factible. 
 - Jugar con los parámetros de Simplex **Igna**
 - Correr Dataset A con precision e-4 **Igna**
 - Correr Dataset B idem, para hacer los ground truths **Igna**
@@ -13,6 +11,7 @@
 - Iniciar cada iteracion del parametrico con el resultado de la iteracion anterior. **Igna**
 
 ## Tareas Hechas
+- Potencialmente romper simetrías (ordenes iguales) unificandolas en una sola variable o dando un orden en el cual agregarlas a la solución **No hay tales**
 - Revisar esto https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6858622 **Igna: Hecho!**
 - Que el parametrico use ALGO de todo lo que hicimos (cota inferior greedy, ) **Igna: Hecho!**
 - En el run_solver agregar que se corra el checker.py contra las soluciones. **Cifu: Hecho!**
