@@ -4,9 +4,9 @@
 - Jugar con los parámetros de Simplex **Igna**
 - Correr Dataset A con precision e-4 **Igna**
 - Correr Dataset B idem, para hacer los ground truths **Igna**
-- Cambiar el metodo de aproximacion (jugar con https://www.sciencedirect.com/science/article/pii/S0377221719305740)
+- Cambiar el metodo de aproximacion (jugar con https://www.sciencedirect.com/science/article/pii/S0377221719305740) **Lu**
 - Pensar cortes **Lu**
-- Pensar heuristicas que trabajen a partir de las soluciones del modelo.
+- Pensar heuristicas que trabajen a partir de las soluciones del modelo. **Cifu**
 - Verificar las solución de CPLEX. Satura todos los pasillos? **Cifu**
 - Iniciar cada iteracion del parametrico con el resultado de la iteracion anterior. **Igna**
 
