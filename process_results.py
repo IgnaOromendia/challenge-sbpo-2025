@@ -15,16 +15,23 @@ def amount_of_orders_instance():
                     result[int(match.group())] = filename.replace(".txt","")
     return result
 
-result_path = "./results/base_results_parametric_gap25prec4.csv"
+def lambda_gap(obj, real_obj):
+    error = abs(obj - real_obj)
+    return 0 if error < 1e-4 else error
+
+result_path = "./results/results_parametric_default.csv"
 
 instancias = amount_of_orders_instance()
 
-
 df = pd.read_csv(result_path)
+df_gt = pd.read_csv("./results/ground_truth_set_a.csv")
 
 df.insert(0, "instancia", df["ordenes"].apply(lambda x: instancias.get(int(x), "Total")))
 
-df = df.sort_values(by="instancia", ascending=True)
+df = df.sort_values(by="instancia", ascending=True, ignore_index=True)
+
+
+df.insert(3, "error", df.apply(lambda row: lambda_gap(row["obj"], df_gt.loc[row.name, "obj"]), axis=1))
 
 new_row = {"instancia": "Tiempo total", "tiempo": df["tiempo"].sum() / 60}
 df.loc[len(df)] = new_row
