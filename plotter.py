@@ -75,5 +75,5 @@ def plot_total_times():
     plt.show()
 
 
-# plot_errors()
+plot_errors()
 plot_total_times()
