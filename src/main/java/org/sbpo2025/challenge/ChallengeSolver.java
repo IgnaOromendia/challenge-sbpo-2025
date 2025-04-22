@@ -99,7 +99,7 @@ public class ChallengeSolver {
 
         ChallengeSolution solution = new ChallengeSolution(Set.copyOf(used_orders), Set.copyOf(used_aisles));
 
-        // writeResults(strategy, solution, stopWatch, maxIterations, iterations);
+        writeResults(strategy, solution, stopWatch, maxIterations, iterations);
 
         return solution;
     } 
@@ -108,23 +108,11 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int maxIterations, int iterations) {
-        String filePath = "./results/results_" + strategy + "_" + maxIterations + ".csv";
+        String filePath = "./results/results_" + strategy + "_default.csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
-            if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,pasillos,items,factibilidad,obj,tiempo,it\n");
-            writer.write(ordersArray.length + "," + aislesArray.length + "," + nItems + "," + isSolutionFeasible(solution) + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @SuppressWarnings("CallToPrintStackTrace")
-    private void writeParametricLog(double q, double objValue, double gapTolerance, int precision, StopWatch stopWatch) {
-        String filePath = "./log/log_" + gapTolerance + "_1e-" + precision + ".csv";
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
-            if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,q,obj,time,gap,precision\n");
-            writer.write(ordersArray.length + "," + q + "," + objValue + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + gapTolerance + "," + precision + "\n");
+            if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,obj,tiempo,it\n");
+            writer.write(ordersArray.length + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -133,7 +121,7 @@ public class ChallengeSolver {
     // Parametric algorithm MILFP
 
     private int parametricAlgorithmMILFP(List<Integer> used_orders, List<Integer> used_aisles, int maxIterations, StopWatch stopWatch) {
-        double objValue = 1, precision = 1e-2, gapTolerance = 0.25;
+        double objValue = 1, precision = 1e-4, gapTolerance = 0.25;
         int it = 1;
 
         double q = this.curValue;
@@ -145,7 +133,6 @@ public class ChallengeSolver {
             objValue = solveParametricMILFP(q, gapTolerance, used_orders, used_aisles);
 
             System.out.println("it: " + it + " q: " + q + " obj: " + objValue);
-            // writeParametricLog(q, objValue, gapTolerance, 2, stopWatch); // Medio paja escribir cambiar el tol y esto pero para que quede bien en el archivo
 
             if (objValue == -1) break;
 
@@ -165,7 +152,24 @@ public class ChallengeSolver {
     private double solveParametricMILFP(double q, double gapTolerance,  List<Integer> used_orders, List<Integer> used_aisles) {
         return solveMIP(q, used_orders, used_aisles, (cplex, X, Y) -> {
             try {
+                int cutValue = 0;
+
                 cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, gapTolerance);
+                // Preprocesamiento
+                cplex.setParam(IloCplex.Param.Preprocessing.Presolve, true);
+                // Planos de corte
+                cplex.setParam(IloCplex.Param.MIP.Cuts.Cliques, cutValue);
+                cplex.setParam(IloCplex.Param.MIP.Cuts.Covers, cutValue);
+                cplex.setParam(IloCplex.Param.MIP.Cuts.Disjunctive, cutValue);
+                cplex.setParam(IloCplex.Param.MIP.Cuts.FlowCovers, cutValue);
+                cplex.setParam(IloCplex.Param.MIP.Cuts.Gomory, cutValue);
+                cplex.setParam(IloCplex.Param.MIP.Cuts.Implied, cutValue);
+                cplex.setParam(IloCplex.Param.MIP.Cuts.MIRCut, cutValue);
+                cplex.setParam(IloCplex.Param.MIP.Cuts.PathCut, cutValue);
+                cplex.setParam(IloCplex.Param.MIP.Cuts.LiftProj, cutValue);
+                cplex.setParam(IloCplex.Param.MIP.Cuts.ZeroHalfCut, cutValue);
+                // Heuristica primal
+                cplex.setParam(IloCplex.Param.MIP.Strategy.HeuristicFreq, 0); // 1 ejecuta solo en raiz, n > 1 ejecuta cada n nodos del árbol 
             } catch (IloException e) {
                 System.out.println(e.getMessage());
             }
