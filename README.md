@@ -1,8 +1,8 @@
 ## Tareas pendientes
 
 - Factorizar en archivos distintos: Parametric, Binary, CPLEX runner, Greedy **Cifu**
-- Jugar con los parámetros de Simplex **Igna**
-- Correr Dataset A con precision e-4 **Igna**
+- Jugar con los parámetros de Simplex **Igna: Hecho!**
+- Correr Dataset A con precision e-4 **Igna: Hecho!**
 - Correr Dataset B idem, para hacer los ground truths **Igna**
 - Cambiar el metodo de aproximacion (jugar con https://www.sciencedirect.com/science/article/pii/S0377221719305740) **Lu**
 - Pensar cortes **Lu**
