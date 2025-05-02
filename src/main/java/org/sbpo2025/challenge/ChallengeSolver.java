@@ -17,12 +17,9 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.time.StopWatch;
 
-import ilog.concert.IloException;
-import ilog.concert.IloIntVar;
-import ilog.concert.IloLinearIntExpr;
-import ilog.concert.IloLinearNumExpr;
-import ilog.concert.IloNumVar;
-import ilog.cplex.IloCplex;
+import ilog.cplex.*;
+import ilog.cplex.IloCplex.MIPStartEffort;
+import ilog.concert.*;
 
 public class ChallengeSolver {
     private final long MAX_RUNTIME = 600000; // milliseconds; 10 minutes
@@ -78,16 +75,16 @@ public class ChallengeSolver {
         String strategy = "";
         Integer maxIterations = 10, iterations = 1;
 
-        List<Integer> greedySolutionOrders = new ArrayList<>();
-        List<Integer> greedySolutionAisles = new ArrayList<>();
+        // List<Integer> greedySolutionOrders = new ArrayList<>();
+        // List<Integer> greedySolutionAisles = new ArrayList<>();
 
-        double greedySolution = this.greedySolver.solve(greedySolutionOrders, greedySolutionAisles);
+        // double greedySolution = this.greedySolver.solve(greedySolutionOrders, greedySolutionAisles);
         
-        if (greedySolution != -1) {
-            this.curValue = greedySolution;
-            used_orders = greedySolutionOrders;
-            used_aisles = greedySolutionAisles;
-        }
+        // if (greedySolution != -1) {
+        //     this.curValue = greedySolution;
+        //     used_orders = greedySolutionOrders;
+        //     used_aisles = greedySolutionAisles;
+        // }
 
         if (useBinarySearchSolution) {
             iterations = binarySearchSolution(used_orders, used_aisles, maxIterations, stopWatch);
@@ -108,7 +105,7 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int maxIterations, int iterations) {
-        String filePath = "./results/results_" + strategy + "_default.csv";
+        String filePath = "./results/results_" + strategy + "_fixed.csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,obj,tiempo,it\n");
@@ -124,8 +121,7 @@ public class ChallengeSolver {
         double objValue = 1, precision = 1e-4, gapTolerance = 0.25;
         int it = 1;
 
-        double q = this.curValue;
-        
+        double q = 0; //this.curValue;        
 
         Duration startOfIteration = stopWatch.getDuration();
 
@@ -362,12 +358,15 @@ public class ChallengeSolver {
             IloIntVar[] X = new IloIntVar[ordersArray.length]; // La orden o está completa
             IloIntVar[] Y = new IloIntVar[aislesArray.length]; // El pasillo a fue recorrido
 
-            setVariablesAndConstraints(cplex, X, Y);
+            setVariablesAndConstraints(cplex, X, Y, used_orders, used_aisles);
 
             if (extraCode != null) extraCode.run(cplex, X,Y);            
 
             // Función objetivo
             setObjectiveFunction(cplex, X, Y, k);
+            
+            // Inicializamos con el valor anterior
+            usePreviousSolution(cplex, X, Y, used_orders, used_aisles);
 
             // Resolver
             if (cplex.solve())  {
@@ -405,11 +404,39 @@ public class ChallengeSolver {
     }
 
     // CPLEX
+    private void usePreviousSolution(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y, List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
+        if (used_orders.size() != 0 || used_aisles.size() != 0) {
+            IloIntVar[] varsToSet = new IloIntVar[used_orders.size() + used_aisles.size()];
+
+            int index = 0;
+
+            for (int o: used_orders) {
+                varsToSet[index] = X[o];
+                index++;
+            }
+
+            for (int a: used_aisles) {
+                varsToSet[index] = Y[a];
+                index++;
+            }
+
+            double[] ones = new double[varsToSet.length];
+            Arrays.fill(ones, 1);
+
+            // Nivel 0 (cero) MIPStartAuto: Automático, deja que CPLEX decida.
+            // Nivel 1 (uno) MIPStartCheckFeas: CPLEX comprueba la viabilidad del inicio del PIM.
+            // Nivel 2 MIPStartSolveFixed: CPLEX resuelve el problema fijo especificado por el inicio MIP.
+            // Nivel 3 MIPStartSolveMIP: CPLEX resuelve un subMIP.
+            // Nivel 4 MIPStartRepair: CPLEX intenta reparar el inicio MIP si es inviable, según el parámetro que establece la frecuencia para intentar reparar el inicio MIP inviable, ' CPXPARAM_MIP_Limits_RepairTries (es decir, ' IloCplex::Param::MIP::Limits::RepairTries).
+            // Nivel 5 MIPStartNoCheck: CPLEX acepta el inicio del PIM sin ninguna comprobación. Es necesario completar el inicio de MIP.
+
+            cplex.addMIPStart(varsToSet, ones, IloCplex.MIPStartEffort.SolveFixed);
+        }
+    }
+
 
     // Agrega las variables y restricciónes compartidas entre modelos
-    private void setVariablesAndConstraints(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
-        setCPLEXParamsTo(cplex);
-
+    private void setVariablesAndConstraints(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y, List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
         initializeVariables(cplex, X, Y);
 
         // Mayor que LB y menor que UB
@@ -420,6 +447,9 @@ public class ChallengeSolver {
 
         // Hay que elegir por lo menos un pasillo
         setAtLeastOneAisleConstraint(cplex, Y);
+        
+        //
+        setCPLEXParamsTo(cplex);
     }
 
     private void setObjectiveFunction(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y, double alfa) throws IloException {
