@@ -8,7 +8,7 @@
 - Pensar cortes **Lu**
 - Pensar heuristicas que trabajen a partir de las soluciones del modelo. **Cifu**
 - Verificar las solución de CPLEX. Satura todos los pasillos? **Cifu**
-- Iniciar cada iteracion del parametrico con el resultado de la iteracion anterior. **Igna**
+- Iniciar cada iteracion del parametrico con el resultado de la iteracion anterior. **Igna: Hecho!**
 
 ## Tareas Hechas
 - Potencialmente romper simetrías (ordenes iguales) unificandolas en una sola variable o dando un orden en el cual agregarlas a la solución **No hay tales**
