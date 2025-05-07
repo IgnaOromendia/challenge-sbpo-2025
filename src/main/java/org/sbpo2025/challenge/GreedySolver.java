@@ -50,7 +50,9 @@ public class GreedySolver {
                 int o = orderIndexIterator.next();
                 boolean fail = false;
                 
+                int elementsInOrder = 0;
                 for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) {
+                    elementsInOrder += entry.getValue();
                     if (elementsPerType[entry.getKey()] < entry.getValue()) {
                         fail = true;
                         break;
@@ -59,24 +61,23 @@ public class GreedySolver {
 
                 if (fail) continue;
                 
-                for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) {
-                    elementsPerType[entry.getKey()] -= entry.getValue();
-                    curElements += entry.getValue();
+                if (elementsInOrder + curElements <= this.waveSizeUB) {
+
+                    for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) {
+                        elementsPerType[entry.getKey()] -= entry.getValue();
+                    }
+                    curElements += elementsInOrder;
+
+                    ordersChosen.add(o);
                 }
-
-                ordersChosen.add(o);
+                
                 orderIndexIterator.remove();
-
                 if (this.waveSizeLB <= curElements && bestRatio < curElements / (curAisleIndex + 1)) {
                     bestRatio = curElements / (curAisleIndex + 1);
                     indexOrderSolution = ordersChosen.size();
                     indexAisleSolution = curAisleIndex + 1;
                 }
             }
-            
-            if (curElements > this.waveSizeUB) break;
-
-            
         }
 
         if (bestRatio != -1) { // Se encontro alguna solucion

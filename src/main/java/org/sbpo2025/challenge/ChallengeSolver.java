@@ -88,7 +88,7 @@ public class ChallengeSolver {
             used_orders = greedySolutionOrders;
             used_aisles = greedySolutionAisles;
         }
-
+        return solution;
         if (useBinarySearchSolution) {
             iterations = binarySearchSolution(used_orders, used_aisles, maxIterations, stopWatch);
             strategy = "binary";
