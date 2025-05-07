@@ -26,31 +26,36 @@ bar_width = 0.2
 colors = plt.cm.tab20.colors 
 
 def plot_errors():
-    fig, axes = plt.subplots(2, 5, figsize=(13, 8))  # 4 filas, 5 columnas
+    fig, axes = plt.subplots(4, 5, figsize=(13, 7)) 
     
-    for i, (instance, ax) in enumerate(zip(instances, axes.flat)):  # `axes.flat` aplana la matriz de subplots
+    for i, (instance, ax) in enumerate(zip(instances, axes.flat)):
         errors = []
-        labels = []
-        
-        # Recopilar los valores de error para la instancia actual
-        for name, df in result.items():
+
+        for name in approach:  # Asegura el orden correcto
+            df = result[name]
             if instance in df["instancia"].values:
                 error = df[df["instancia"] == instance]["error"].values[0]
                 errors.append(error)
-                labels.append(name)
 
-        
-        # Crear el barplot para la instancia actual
         x = np.arange(len(errors))  # Posiciones en el eje X
         bar_colors = [colors[j % len(colors)] for j in range(len(errors))] 
         ax.bar(x, errors, bar_width, color=bar_colors)
         ax.set_title(instance)
         ax.set_xticks(x)
-        ax.set_xticklabels(labels, rotation=45)
+        ax.set_xticklabels([])
         ax.set_ylabel("Error")
 
+    # Crear la leyenda en la parte superior centrada
+    legend_handles = [plt.Line2D([0], [0], color=colors[i % len(colors)], lw=4, label=label) for i, label in enumerate(approach)]
+    fig.legend(
+        handles=legend_handles,
+        loc='center right',
+        title="Estrategias",
+        bbox_to_anchor=(1, 0.5)
+    )
+
     plt.suptitle("Errores por instancia")
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 0.9, 1])
     plt.savefig("./plots/plot_errores_dataset_a.png")
     plt.show()
 
