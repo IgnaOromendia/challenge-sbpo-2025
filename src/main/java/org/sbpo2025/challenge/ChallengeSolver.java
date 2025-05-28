@@ -71,7 +71,8 @@ public class ChallengeSolver {
         List<Integer> used_aisles = new ArrayList<>();
 
         Boolean useBinarySearchSolution = false;
-        Boolean useParametricAlgorithmMILFP = true;
+        Boolean useParametricAlgorithmMILFP = false;
+        Boolean useFixedAisles = true;
         String strategy = "";
         Integer maxIterations = 10, iterations = 1;
 
@@ -92,6 +93,9 @@ public class ChallengeSolver {
         } else if (useParametricAlgorithmMILFP) {
             iterations = parametricAlgorithmMILFP(used_orders, used_aisles, maxIterations, stopWatch);
             strategy = "parametric";
+        } else if (useFixedAisles) {
+            solveFixedAisles(used_orders, used_aisles);
+            strategy = "Fixed aisles"
         }
 
         ChallengeSolution solution = new ChallengeSolution(Set.copyOf(used_orders), Set.copyOf(used_aisles));
@@ -170,6 +174,13 @@ public class ChallengeSolver {
                 System.out.println(e.getMessage());
             }
         } );
+    }
+
+    private double solveFixedAisles(List<Integer> used_orders, List<Integer> used_aisles) {
+        fixedAislesBound = 40;
+        for (int k=1; i<=Math.min(this.aisles.size(), fixedAislesBound); k++) {
+            solveMIP2(k, used_orders, used_aisles);
+        }
     }
 
     // Busqueda Binaria
@@ -367,6 +378,55 @@ public class ChallengeSolver {
             
             // Inicializamos con el valor anterior
             usePreviousSolution(cplex, X, Y, used_orders, used_aisles);
+
+            // Resolver
+            if (cplex.solve())  {
+                extractSolutionFrom(cplex, X, Y, used_orders, used_aisles);
+                result = cplex.getObjValue();
+            }
+        
+        } catch (IloException e) {
+            System.out.println(e.getMessage());
+        } finally {
+            if (cplex != null) cplex.end();
+        }
+        
+        return result;
+    }
+
+    private double solveMIP2(Integer k, List<Integer> used_orders, List<Integer> used_aisles) {
+        IloCplex cplex = null;
+        double result = -1;
+        try {
+            cplex = new IloCplex();
+
+            IloIntVar[] X = new IloIntVar[ordersArray.length]; // La orden o está completa
+            IloIntVar[] Y = new IloIntVar[aislesArray.length]; // El pasillo a fue recorrido
+
+            initializeVariables(cplex, X, Y);
+
+            // Mayor que LB y menor que UB
+            setBoundsConstraints(cplex, X, Y);
+                                
+            // Si la orden O fue hecha con elementos de i entonces pasa por los pasillos _a_ donde se encuentra i
+            setOrderSelectionConstraints(cplex, X, Y);
+
+            // La solucion debe usar k pasillos
+            IloLinearIntExpr exprY = cplex.linearIntExpr();
+            for(int a = 0; a < aislesArray.length; a++) 
+                exprY.addTerm(1, Y[a]);
+            cplex.addEq(exprY, k);
+            
+            setCPLEXParamsTo(cplex);           
+
+            // Función objetivo
+            IloLinearNumExpr obj = cplex.linearNumExpr();
+
+            for(int o = 0; o < ordersArray.length; o++) 
+                for(int i = 0; i < nItems; i++)
+                    obj.addTerm(ordersArray[o][i], X[o]);
+            
+            cplex.addMaximize(obj);
 
             // Resolver
             if (cplex.solve())  {
