@@ -17,9 +17,12 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.time.StopWatch;
 
-import ilog.cplex.*;
-import ilog.cplex.IloCplex.MIPStartEffort;
-import ilog.concert.*;
+import ilog.concert.IloException;
+import ilog.concert.IloIntVar;
+import ilog.concert.IloLinearIntExpr;
+import ilog.concert.IloLinearNumExpr;
+import ilog.concert.IloNumVar;
+import ilog.cplex.IloCplex;
 
 public class ChallengeSolver {
     private final long MAX_RUNTIME = 600000; // milliseconds; 10 minutes
@@ -95,7 +98,7 @@ public class ChallengeSolver {
             strategy = "parametric";
         } else if (useFixedAisles) {
             solveFixedAisles(used_orders, used_aisles);
-            strategy = "Fixed aisles"
+            strategy = "Fixed aisles";
         }
 
         ChallengeSolution solution = new ChallengeSolution(Set.copyOf(used_orders), Set.copyOf(used_aisles));
@@ -109,7 +112,7 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int maxIterations, int iterations) {
-        String filePath = "./results/results_" + strategy + "_fixed.csv";
+        String filePath = "./results/results_" + strategy + ".csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,obj,tiempo,it\n");
@@ -177,10 +180,12 @@ public class ChallengeSolver {
     }
 
     private double solveFixedAisles(List<Integer> used_orders, List<Integer> used_aisles) {
-        fixedAislesBound = 40;
-        for (int k=1; i<=Math.min(this.aisles.size(), fixedAislesBound); k++) {
-            solveMIP2(k, used_orders, used_aisles);
+        double best_value = -1;
+        int fixedAislesBound = 40;
+        for (int k=1; k<=Math.min(this.aisles.size(), fixedAislesBound); k++) {
+            best_value = Math.max(best_value, solveMIP2(k, used_orders, used_aisles));
         }
+        return best_value;
     }
 
     // Busqueda Binaria

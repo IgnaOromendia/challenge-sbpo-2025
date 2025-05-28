@@ -30,7 +30,7 @@ public class GreedySolver {
         LinkedList<Integer> ordersSortedByNumElements = new LinkedList<>(getMapIndicesSortedByMapSumOfValues(this.orders)); // Linked list para remover en O(1) desde adentro
         
         int[] elementsPerType = new int[this.nItems]; // Inicializa a 0 automaticamente
-        double curElements = 0, bestRatio = -1;
+        int curElements = 0; double bestRatio = -1;
 
         // Guardo todas las ordenes elegidas en orden, y un indice que me dice donde termina la mejor
         // encontrada hasta el momento (que debe ser un prefijo de las totales elegidas)
@@ -72,8 +72,8 @@ public class GreedySolver {
                 }
                 
                 orderIndexIterator.remove();
-                if (this.waveSizeLB <= curElements && bestRatio < curElements / (curAisleIndex + 1)) {
-                    bestRatio = curElements / (curAisleIndex + 1);
+                if (this.waveSizeLB <= curElements && bestRatio < (double) curElements / (curAisleIndex + 1)) {
+                    bestRatio = (double) curElements / (curAisleIndex + 1);
                     indexOrderSolution = ordersChosen.size();
                     indexAisleSolution = curAisleIndex + 1;
                 }
