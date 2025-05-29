@@ -32,13 +32,13 @@ public class FixedAisleSolver extends MIPSolver {
             IloIntVar[] X = new IloIntVar[ordersArray.length]; // La orden o está completa
             IloIntVar[] Y = new IloIntVar[aislesArray.length]; // El pasillo a fue recorrido
 
-            initializeVariables(cplex, X, Y);
+            initializeVariables(cplex);
 
             // Mayor que LB y menor que UB
-            setBoundsConstraints(cplex, X, Y);
+            setBoundsConstraints(cplex);
                                 
             // Si la orden O fue hecha con elementos de i entonces pasa por los pasillos _a_ donde se encuentra i
-            setOrderSelectionConstraints(cplex, X, Y);
+            setOrderSelectionConstraints(cplex);
 
             // La solucion debe usar k pasillos
             IloLinearIntExpr exprY = cplex.linearIntExpr();
@@ -59,7 +59,7 @@ public class FixedAisleSolver extends MIPSolver {
 
             // Resolver
             if (cplex.solve())  {
-                extractSolutionFrom(cplex, X, Y, used_orders, used_aisles);
+                extractSolutionFrom(cplex, used_orders, used_aisles);
                 result = cplex.getObjValue();
             }
         

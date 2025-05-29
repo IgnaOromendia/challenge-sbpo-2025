@@ -18,6 +18,10 @@ public abstract class MIPSolver {
     protected final int waveSizeLB;
     protected final int waveSizeUB;
 
+    // CPLEX
+    protected final IloIntVar[] X; // La orden o está completa
+    protected final IloIntVar[] Y; // El pasillo a fue recorrido
+
     // Constants
     protected final double TOLERANCE      = 1e-2;
     protected final long TIME_LIMIT_SEC   = 50;
@@ -34,6 +38,9 @@ public abstract class MIPSolver {
         this.waveSizeUB     = waveSizeUB;
 
         this.currentBest = 0;
+
+        X = new IloIntVar[this.ordersArray.length];
+        Y = new IloIntVar[this.aislesArray.length];
     }
 
     @FunctionalInterface
@@ -47,34 +54,31 @@ public abstract class MIPSolver {
         try {
             cplex = new IloCplex();
 
-            IloIntVar[] X = new IloIntVar[this.ordersArray.length]; // La orden o está completa
-            IloIntVar[] Y = new IloIntVar[this.aislesArray.length]; // El pasillo a fue recorrido
-
-            initializeVariables(cplex, X, Y);
+            initializeVariables(cplex);
 
             // Mayor que LB y menor que UB
-            setBoundsConstraints(cplex, X, Y);
+            setBoundsConstraints(cplex);
                                 
             // Si la orden O fue hecha con elementos de i entonces pasa por los pasillos _a_ donde se encuentra i
-            setOrderSelectionConstraints(cplex, X, Y);
+            setOrderSelectionConstraints(cplex);
 
             // Hay que elegir por lo menos un pasillo
-            setAtLeastOneAisleConstraint(cplex, Y);
+            setAtLeastOneAisleConstraint(cplex);
             
             // Cplex Params
             setCPLEXParamsTo(cplex);
 
-            if (extraCode != null) extraCode.run(cplex, X,Y);            
+            if (extraCode != null) extraCode.run(cplex, this.X, this.Y);            
 
             // Función objetivo
-            setObjectiveFunction(cplex, X, Y, k);
+            setObjectiveFunction(cplex, k);
             
             // Inicializamos con el valor anterior
-            usePreviousSolution(cplex, X, Y, used_orders, used_aisles);
+            usePreviousSolution(cplex, used_orders, used_aisles);
 
             // Resolver
             if (cplex.solve())  {
-                extractSolutionFrom(cplex, X, Y, used_orders, used_aisles);
+                extractSolutionFrom(cplex, used_orders, used_aisles);
                 result = cplex.getObjValue();
             }
         
@@ -88,63 +92,63 @@ public abstract class MIPSolver {
     }
 
     // Variables
-    protected void initializeVariables(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
+    protected void initializeVariables(IloCplex cplex) throws IloException {
         for(int o = 0; o < ordersArray.length; o++) 
-            X[o] = cplex.intVar(0, 1, "X_" + o);
+            this.X[o] = cplex.intVar(0, 1, "X_" + o);
 
         for (int a = 0; a < aislesArray.length; a++) 
-            Y[a] = cplex.intVar(0, 1, "Y_" + a);
+            this.Y[a] = cplex.intVar(0, 1, "Y_" + a);
     }
 
     // Constraints
-    protected void setBoundsConstraints(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
+    protected void setBoundsConstraints(IloCplex cplex) throws IloException {
         IloLinearIntExpr exprLB = cplex.linearIntExpr();
         IloLinearIntExpr exprUB = cplex.linearIntExpr();
 
         for(int o = 0; o < ordersArray.length; o++) 
             for(int i = 0; i < nItems; i++) {
-                exprLB.addTerm(ordersArray[o][i], X[o]);
-                exprUB.addTerm(ordersArray[o][i], X[o]);
+                exprLB.addTerm(ordersArray[o][i], this.X[o]);
+                exprUB.addTerm(ordersArray[o][i], this.X[o]);
             }
         
         cplex.addGe(exprLB, this.waveSizeLB);
         cplex.addLe(exprUB, this.waveSizeUB);
     }
 
-    protected void setOrderSelectionConstraints(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
+    protected void setOrderSelectionConstraints(IloCplex cplex) throws IloException {
         for(int i = 0; i < nItems; i++) {
             IloLinearIntExpr exprX = cplex.linearIntExpr();
             IloLinearIntExpr exprY = cplex.linearIntExpr();
 
             for(int o = 0; o < ordersArray.length; o++) 
-                exprX.addTerm(ordersArray[o][i], X[o]);
+                exprX.addTerm(ordersArray[o][i], this.X[o]);
 
             for(int a = 0; a < aislesArray.length; a++) 
-                exprY.addTerm(aislesArray[a][i], Y[a]);
+                exprY.addTerm(aislesArray[a][i], this.Y[a]);
 
             cplex.addLe(exprX, exprY);
         }
     }
     
-    private void setAtLeastOneAisleConstraint(IloCplex cplex, IloIntVar[] Y) throws IloException {
+    private void setAtLeastOneAisleConstraint(IloCplex cplex) throws IloException {
         IloLinearIntExpr exprY = cplex.linearIntExpr();
             
         for(int a = 0; a < aislesArray.length; a++) 
-            exprY.addTerm(1, Y[a]);
+            exprY.addTerm(1, this.Y[a]);
 
         cplex.addGe(exprY, 1);
     }
 
     // Objective function
-    private void setObjectiveFunction(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y, double alfa) throws IloException {
+    private void setObjectiveFunction(IloCplex cplex, double alpha) throws IloException {
         IloLinearNumExpr obj = cplex.linearNumExpr();
 
         for(int o = 0; o < ordersArray.length; o++) 
             for(int i = 0; i < nItems; i++)
-                obj.addTerm(ordersArray[o][i], X[o]);
+                obj.addTerm(ordersArray[o][i], this.X[o]);
         
         for(int a = 0; a < aislesArray.length; a++) 
-            obj.addTerm(-alfa, Y[a]);
+            obj.addTerm(-alpha, this.Y[a]);
 
         cplex.addMaximize(obj);
     }
@@ -184,19 +188,19 @@ public abstract class MIPSolver {
         cplex.setParam(IloCplex.Param.MIP.Strategy.HeuristicFreq, 0); // 1 ejecuta solo en raiz, n > 1 ejecuta cada n nodos del árbol 
     }
 
-    private void usePreviousSolution(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y, List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
+    private void usePreviousSolution(IloCplex cplex, List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
         if (used_orders.size() != 0 || used_aisles.size() != 0) {
             IloIntVar[] varsToSet = new IloIntVar[used_orders.size() + used_aisles.size()];
 
             int index = 0;
 
             for (int o: used_orders) {
-                varsToSet[index] = X[o];
+                varsToSet[index] = this.X[o];
                 index++;
             }
 
             for (int a: used_aisles) {
-                varsToSet[index] = Y[a];
+                varsToSet[index] = this.Y[a];
                 index++;
             }
 
@@ -215,8 +219,8 @@ public abstract class MIPSolver {
     }
 
     // Soltuion
-    protected void extractSolutionFrom(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y, List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
-        double curSolutionValue = getSolutionValueFromCplex(cplex, X, Y);
+    protected void extractSolutionFrom(IloCplex cplex, List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
+        double curSolutionValue = getSolutionValueFromCplex(cplex);
 
         if (curSolutionValue > this.currentBest) {
             this.currentBest = curSolutionValue;
@@ -224,8 +228,8 @@ public abstract class MIPSolver {
             used_orders.clear();
             used_aisles.clear();      
             
-            fillSolutionList(cplex, X, used_orders, ordersArray.length);
-            fillSolutionList(cplex, Y, used_aisles, aislesArray.length);
+            fillSolutionList(cplex, this.X, used_orders, ordersArray.length);
+            fillSolutionList(cplex, this.Y, used_aisles, aislesArray.length);
            
         }
     }
@@ -236,17 +240,17 @@ public abstract class MIPSolver {
                 solution.add(i);
     }
 
-    private double getSolutionValueFromCplex(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) {
+    private double getSolutionValueFromCplex(IloCplex cplex) {
         double pickedObjects = 0, usedColumns = 0;
         
         try {
             for (int o=0; o < ordersArray.length; o++)
-                if (cplex.getValue(X[o]) > TOLERANCE)
-                    for(int i = 0; i < nItems; i++)
+                if (cplex.getValue(this.X[o]) > TOLERANCE)
+                    for(int i = 0; i < this.nItems; i++)
                         pickedObjects += ordersArray[o][i];
         
             for (int a=0; a < aislesArray.length; a++)
-                if (cplex.getValue(Y[a]) > TOLERANCE)
+                if (cplex.getValue(this.Y[a]) > TOLERANCE)
                     usedColumns += 1;
         
         } catch (IloException e) {
