@@ -93,7 +93,7 @@ public class MIPSolver {
     }
 
     // Variables
-    private void initializeVariables(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
+    protected void initializeVariables(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
         for(int o = 0; o < ordersArray.length; o++) 
             X[o] = cplex.intVar(0, 1, "X_" + o);
 
@@ -102,7 +102,7 @@ public class MIPSolver {
     }
 
     // Constraints
-    private void setBoundsConstraints(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
+    protected void setBoundsConstraints(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
         IloLinearIntExpr exprLB = cplex.linearIntExpr();
         IloLinearIntExpr exprUB = cplex.linearIntExpr();
 
@@ -116,7 +116,7 @@ public class MIPSolver {
         cplex.addLe(exprUB, this.waveSizeUB);
     }
 
-    private void setOrderSelectionConstraints(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
+    protected void setOrderSelectionConstraints(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException {
         for(int i = 0; i < nItems; i++) {
             IloLinearIntExpr exprX = cplex.linearIntExpr();
             IloLinearIntExpr exprY = cplex.linearIntExpr();
@@ -155,7 +155,7 @@ public class MIPSolver {
     }
 
     // CPLEX conifig
-    private void setCPLEXParamsTo(IloCplex cplex) throws IloException {
+    protected void setCPLEXParamsTo(IloCplex cplex) throws IloException {
         int cutValue = 0;
 
         // Prints
@@ -220,7 +220,7 @@ public class MIPSolver {
     }
 
     // Soltuion
-    private void extractSolutionFrom(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y, List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
+    protected void extractSolutionFrom(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y, List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
         double curSolutionValue = getSolutionValueFromCplex(cplex, X, Y);
 
         if (curSolutionValue > this.currentBest) {
