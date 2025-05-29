@@ -11,11 +11,11 @@ import ilog.cplex.IloCplex;
 
 public class MIPSolver {
 
-    private final int[][] ordersArray;
-    private final int[][] aislesArray;
-    private final int nItems;
-    private final int waveSizeLB;
-    private final int waveSizeUB;
+    protected final int[][] ordersArray;
+    protected final int[][] aislesArray;
+    protected final int nItems;
+    protected final int waveSizeLB;
+    protected final int waveSizeUB;
 
     // Constants
     protected final double TOLERANCE      = 1e-2;
