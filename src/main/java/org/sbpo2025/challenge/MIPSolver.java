@@ -50,7 +50,19 @@ public abstract class MIPSolver {
             IloIntVar[] X = new IloIntVar[this.ordersArray.length]; // La orden o está completa
             IloIntVar[] Y = new IloIntVar[this.aislesArray.length]; // El pasillo a fue recorrido
 
-            setVariablesAndConstraints(cplex, X, Y, used_orders, used_aisles);
+            initializeVariables(cplex, X, Y);
+
+            // Mayor que LB y menor que UB
+            setBoundsConstraints(cplex, X, Y);
+                                
+            // Si la orden O fue hecha con elementos de i entonces pasa por los pasillos _a_ donde se encuentra i
+            setOrderSelectionConstraints(cplex, X, Y);
+
+            // Hay que elegir por lo menos un pasillo
+            setAtLeastOneAisleConstraint(cplex, Y);
+            
+            // Cplex Params
+            setCPLEXParamsTo(cplex);
 
             if (extraCode != null) extraCode.run(cplex, X,Y);            
 
@@ -73,23 +85,6 @@ public abstract class MIPSolver {
         }
         
         return result;
-    }
-
-    // Agrega las variables y restricciónes compartidas entre modelos
-    private void setVariablesAndConstraints(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y, List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
-        initializeVariables(cplex, X, Y);
-
-        // Mayor que LB y menor que UB
-        setBoundsConstraints(cplex, X, Y);
-                            
-        // Si la orden O fue hecha con elementos de i entonces pasa por los pasillos _a_ donde se encuentra i
-        setOrderSelectionConstraints(cplex, X, Y);
-
-        // Hay que elegir por lo menos un pasillo
-        setAtLeastOneAisleConstraint(cplex, Y);
-        
-        // Cplex Params
-        setCPLEXParamsTo(cplex);
     }
 
     // Variables
