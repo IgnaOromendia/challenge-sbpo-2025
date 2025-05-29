@@ -28,7 +28,7 @@ public class ChallengeSolver {
     private final GreedySolver greedySolver;
     private final ParametricSolver parametricSolver;
     private final BinarySolver binarySolver;
-    private final fixedAisleSolver fixedAisleSolver;
+    private final FixedAisleSolver fixedAisleSolver;
 
     public ChallengeSolver(
             List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
@@ -52,7 +52,7 @@ public class ChallengeSolver {
         this.greedySolver       = new GreedySolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.parametricSolver   = new ParametricSolver(ordersArray, aislesArray, nItems, waveSizeLB, waveSizeUB);
         this.binarySolver       = new BinarySolver(ordersArray, aislesArray, nItems, waveSizeLB, waveSizeUB);
-        this.fixedAisleSolver   = new fixedAisleSolver(ordersArray, aislesArray, nItems, waveSizeLB, waveSizeUB);
+        this.fixedAisleSolver   = new FixedAisleSolver(ordersArray, aislesArray, nItems, waveSizeLB, waveSizeUB);
     }
 
     public ChallengeSolution solve(StopWatch stopWatch) {  

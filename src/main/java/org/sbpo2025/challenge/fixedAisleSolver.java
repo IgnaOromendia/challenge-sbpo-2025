@@ -8,14 +8,11 @@ import ilog.concert.IloLinearIntExpr;
 import ilog.concert.IloLinearNumExpr;
 import ilog.cplex.IloCplex;
 
-public class fixedAisleSolver extends MIPSolver {
+public class FixedAisleSolver extends MIPSolver {
 
-
-    public fixedAisleSolver(int[][] ordersArray, int[][] aislesArray, int nItems, int waveSizeLB, int waveSizeUB) {
+    public FixedAisleSolver(int[][] ordersArray, int[][] aislesArray, int nItems, int waveSizeLB, int waveSizeUB) {
         super(ordersArray, aislesArray, nItems, waveSizeLB, waveSizeUB);
     }
-    
-    
     
     public double solveFixedAisles(List<Integer> used_orders, List<Integer> used_aisles) {
         double best_value = -1;
