@@ -60,8 +60,8 @@ public class ChallengeSolver {
         List<Integer> used_aisles = new ArrayList<>();
 
         Boolean useBinarySearchSolution = false;
-        Boolean useParametricAlgorithmMILFP = false;
-        Boolean useFixedAisles = true;
+        Boolean useParametricAlgorithmMILFP = true;
+        Boolean useFixedAisles = false;
         String strategy = "";
         Integer iterations = 1;
 
@@ -80,7 +80,7 @@ public class ChallengeSolver {
             iterations = binarySolver.binarySearchSolution(used_orders, used_aisles, aisles, stopWatch);
             strategy = "binary";
         } else if (useParametricAlgorithmMILFP) {
-            iterations = parametricSolver.solveMILFP(used_orders, used_aisles, stopWatch);
+            iterations = parametricSolver.solveMILFP(orders, used_orders, used_aisles, stopWatch);
             strategy = "parametric";
         } else if (useFixedAisles) {
             fixedAisleSolver.solveFixedAisles(used_orders, used_aisles);
@@ -98,7 +98,7 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int iterations) {
-        String filePath = "./results/results_" + strategy + "test_refactor.csv";
+        String filePath = "./results/results_" + strategy + ".csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,obj,tiempo,it\n");
