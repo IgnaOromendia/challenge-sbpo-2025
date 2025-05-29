@@ -10,7 +10,7 @@ import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
-public class MIPSolver {
+public abstract class MIPSolver {
 
     protected final int[][] ordersArray;
     protected final int[][] aislesArray;
