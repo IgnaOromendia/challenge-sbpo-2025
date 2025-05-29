@@ -7,6 +7,7 @@ import ilog.concert.IloException;
 import ilog.concert.IloIntVar;
 import ilog.concert.IloLinearIntExpr;
 import ilog.concert.IloLinearNumExpr;
+import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
 public class MIPSolver {
@@ -259,4 +260,94 @@ public class MIPSolver {
 
         return pickedObjects / usedColumns;
     }
+
+
+    // Solve the linear relaxation of the problem using the Charnes-Cooper transformation
+    protected double relaxationUpperBound() {
+        IloCplex cplex = null;
+        double result = 1e9;
+        try {
+            cplex = new IloCplex();
+
+            setCPLEXParamsTo(cplex);
+            
+            IloNumVar[] X = new IloNumVar[this.ordersArray.length]; // La orden o está completa
+            IloNumVar[] Y = new IloNumVar[this.aislesArray.length]; // El pasillo a fue recorrido
+            IloNumVar T = cplex.numVar(0, Double.MAX_VALUE, "T");
+
+            IloLinearNumExpr obj = cplex.linearNumExpr();
+
+            for(int o = 0; o < this.ordersArray.length; o++) 
+                X[o] = cplex.numVar(0, 1, "X_" + o);
+
+            for (int a = 0; a < this.aislesArray.length; a++) 
+                Y[a] = cplex.numVar(0, 1, "Y_" + a);
+
+            // Funcion obj
+
+            for(int o = 0; o < this.ordersArray.length; o++) 
+                for(int i = 0; i < nItems; i++)
+                    obj.addTerm(this.ordersArray[o][i], X[o]);
+
+            cplex.addMaximize(obj);
+
+            // Denominador igual a 1 (Cooper)
+            IloLinearNumExpr exprD = cplex.linearNumExpr();
+
+            for(int a = 0; a < this.aislesArray.length; a++) 
+                exprD.addTerm(1, Y[a]);
+
+            cplex.addEq(1, exprD);
+
+            // Mayor que LB y menor que UB
+            IloLinearNumExpr exprLB = cplex.linearNumExpr();
+            IloLinearNumExpr exprUB = cplex.linearNumExpr();
+
+            for(int o = 0; o < this.ordersArray.length; o++)
+                for(int i = 0; i < nItems; i++) {
+                    exprLB.addTerm(this.ordersArray[o][i], X[o]);
+                    exprUB.addTerm(this.ordersArray[o][i], X[o]);
+                }
+
+            exprLB.addTerm(-this.waveSizeLB, T);
+            exprUB.addTerm(-this.waveSizeUB, T);
+            
+            cplex.addGe(exprLB, 0);
+            cplex.addLe(exprUB, 0);
+            
+            // Si la orden O fue hecha con elementos de i entonces pasa por los pasillos _a_ donde se encuentra i
+            for(int i = 0; i < this.nItems; i++) {
+                IloLinearNumExpr exprX = cplex.linearNumExpr();
+    
+                for(int o = 0; o < this.ordersArray.length; o++) 
+                    exprX.addTerm(this.ordersArray[o][i], X[o]);
+    
+                for(int a = 0; a < this.aislesArray.length; a++) 
+                    exprX.addTerm(-this.aislesArray[a][i], Y[a]);
+    
+                cplex.addLe(exprX, 0);
+            }
+
+            // Hay que elegir por lo menos un pasillo
+            IloLinearNumExpr exprY = cplex.linearNumExpr();
+            
+            for(int a = 0; a < this.aislesArray.length; a++) 
+                exprY.addTerm(1, Y[a]);
+
+            exprY.addTerm(-1, T);
+
+            cplex.addGe(exprY, 0);
+
+            if (cplex.solve()) 
+                result = cplex.getObjValue();
+        
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            if (cplex != null) cplex.end();
+        }
+
+        return result;
+    }
+
 }
