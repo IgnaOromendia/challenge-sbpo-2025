@@ -60,8 +60,8 @@ public class ChallengeSolver {
         List<Integer> used_aisles = new ArrayList<>();
 
         Boolean useBinarySearchSolution = false;
-        Boolean useParametricAlgorithmMILFP = true;
-        Boolean useFixedAisles = false;
+        Boolean useParametricAlgorithmMILFP = false;
+        Boolean useFixedAisles = true;
         String strategy = "";
         Integer iterations = 1;
 
@@ -98,7 +98,7 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int iterations) {
-        String filePath = "./results/results_" + strategy + ".csv";
+        String filePath = "./results/results_" + strategy + "_fixed.csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,obj,tiempo,it\n");
