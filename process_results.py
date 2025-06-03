@@ -30,8 +30,8 @@ def process_file(result_path):
 
     df = df.sort_values(by="instancia", ascending=True, ignore_index=True)
 
-
-    df.insert(3, "error", df.apply(lambda row: lambda_gap(row["obj"], df_gt.loc[row.name, "obj"]), axis=1))
+    df.insert(3, "expected", df_gt["obj"]) 
+    df.insert(4, "error", df.apply(lambda row: lambda_gap(row["obj"], df_gt.loc[row.name, "obj"]), axis=1))
 
     new_row = {"instancia": "Tiempo total", "tiempo": df["tiempo"].sum() / 60}
     df.loc[len(df)] = new_row
