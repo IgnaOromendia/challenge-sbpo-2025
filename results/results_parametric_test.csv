@@ -1,0 +1,10 @@
+ordenes,obj,tiempo,it
+Ejecutado con TOL 1e-4 Gap 0.25 TL 80 
+2185,162.94117647058823,79,3
+12402,181.63636363636363,50,5
+2625,177.875,77,3
+Ejecutado con TOL 1e-4 Gap 0.25 TL 60 
+2185,159.94117647058823,62,1
+12402,181.63636363636363,50,5
+2625,177.875,79,2
+Seguramente haya un tema con el greedy xq dan de más
