@@ -24,28 +24,22 @@ public class ParametricSolver extends MIPSolver {
 
         while (objValue >= PRECISION && it < MAX_ITERATIONS) {
             objValue = solveMIPWith(q, used_orders, used_aisles);
+
+            if (solutionInfeasible) break;
             
             System.out.println("it: " + it + " q: " + q + " obj: " + objValue);
 
-            if (objValue == -1) break;
+            // System.out.println("Antes: " + used_orders.size());
 
-            System.out.println("Antes: " + used_orders.size());
+            // localSearch(orders, used_orders, used_aisles);
 
-            localSearch(orders, used_orders, used_aisles);
-
-            System.out.println("Después: " + used_orders.size());
-
-            double last_q = q;
+            // System.out.println("Después: " + used_orders.size());
             
-            int used_items = 0;
-
-            for(Integer o : used_orders) 
-                for(int i = 0; i < nItems; i++)
-                    used_items += this.ordersArray[o][i];
+            // Newton -> Qn+1 = Qn - F(Qn) / F'(Qn), F'(Qn) ≈ D(x^*)
+            // Qn+1 = Qn - F(Qn) / -D(x^*) = N(x^*) / D(x^*)
             
-            q = (double) used_items / used_aisles.size() + q; // Antes era objValue / used_aisles.size() 
+            q -= (objValue / -used_aisles.size()); // Antes era objValue / used_aisles.size() 
 
-            if (Math.abs(last_q - q) < PRECISION) break;
             if (stopWatch.getDuration().getSeconds() - startOfIteration.getSeconds() > TIME_LIMIT_SEC) break;
             
             it++;

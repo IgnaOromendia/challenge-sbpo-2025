@@ -26,9 +26,11 @@ public abstract class MIPSolver {
     protected final IloIntVar[] X; // La orden o está completa
     protected final IloIntVar[] Y; // El pasillo a fue recorrido
     protected IloRange aisleConstraintRange; // Rango de la pasillos
+    
+    protected Boolean solutionInfeasible = false;
 
     // Constants
-    protected final double TOLERANCE      = 1e-2;
+    protected final double TOLERANCE      = 1e-4;
     protected final long TIME_LIMIT_SEC   = 60;
     protected final double GAP_TOLERANCE  = 0.25;
     protected final int MAX_ITERATIONS    = 10;
@@ -71,6 +73,8 @@ public abstract class MIPSolver {
             if (this.cplex.solve())  {
                 extractSolutionFrom(used_orders, used_aisles);
                 return this.cplex.getObjValue();
+            } else {
+                solutionInfeasible = cplex.getStatus() == IloCplex.Status.Infeasible;
             }
         } catch (IloException e) {
             System.out.println(e.getMessage());
