@@ -22,10 +22,31 @@ public class BinarySolver extends MIPSolver {
     }
 
     public int binarySearchSolution(List<Integer> used_orders, List<Integer> used_aisles, List<Map<Integer, Integer>> aisles , StopWatch stopWatch) {
-        if (binaryMIP(0, used_orders, used_aisles) == -1) return -1; // There is no solution
+
+        generateMIP(used_orders, used_aisles, (cplex, X, Y) -> {
+            // Exigimos que sea mayor a k|A|
+            IloLinearNumExpr exprX  = cplex.linearNumExpr();
+            IloLinearNumExpr exprkY = cplex.linearNumExpr();
+
+            for(int o = 0; o < ordersArray.length; o++) {
+                for(int i = 0; i < nItems; i++) {
+                    exprX.addTerm(ordersArray[o][i], X[o]);
+                }
+            }
+            
+            for(int a = 0; a < aislesArray.length; a++) 
+                exprkY.addTerm(0, Y[a]);
+            
+            cplex.addGe(exprX, exprkY);
+        });
+
+        solveMIPWith(0, used_orders, used_aisles);
+
+        if (solutionInfeasible) return -1;
         
         this.lower = Math.max(this.currentBest, (double) this.waveSizeLB / (double) this.aislesArray.length); // LB / |A| es una lower bound
         this.upper = Math.min(this.upper, Math.min(greedyUpperBound(aisles), relaxationUpperBound()));
+
         double k;
         int it = 1;
 
@@ -36,7 +57,9 @@ public class BinarySolver extends MIPSolver {
 
             System.out.println("Current range: (" + this.lower + ", " + this.upper + ")");
 
-            if (binaryMIP(k, used_orders, used_aisles) != -1) 
+            solveMIPWith(k, used_orders, used_aisles);
+
+            if (solutionInfeasible) 
                 this.lower = this.currentBest;
             else 
                 this.upper = k;
@@ -47,30 +70,6 @@ public class BinarySolver extends MIPSolver {
         }
 
         return it;
-    }
-
-    private double binaryMIP(double k, List<Integer> used_orders, List<Integer> used_aisles) {
-        return solveMIP(k, used_orders, used_aisles, (cplex,X,Y) -> {
-            try {
-                // Exigimos que sea mayor a k|A|
-                IloLinearNumExpr exprX  = cplex.linearNumExpr();
-                IloLinearNumExpr exprkY = cplex.linearNumExpr();
-
-                for(int o = 0; o < ordersArray.length; o++) {
-                    for(int i = 0; i < nItems; i++) {
-                        exprX.addTerm(ordersArray[o][i], X[o]);
-                    }
-                }
-                
-                for(int a = 0; a < aislesArray.length; a++) 
-                    exprkY.addTerm(k, Y[a]);
-                
-                cplex.addGe(exprX, exprkY);
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
-            
-        });
     }
 
     // We find upper bounds using the following observation: the best solution with
