@@ -1,7 +1,7 @@
 #!/bin/bash
 
-directory="datasets/a"
-output="output/"
+directory="datasets/$1"
+output="output/output_$1"
 
 python3 run_challenge.py . $directory $output
 
