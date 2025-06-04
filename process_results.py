@@ -3,8 +3,8 @@ import os
 import re
 import sys
 
-def amount_of_orders_instance():
-    folder_path = "./datasets/a"
+def amount_of_orders_instance(dataset):
+    folder_path = "./datasets/" + dataset
     result = {}
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
@@ -20,11 +20,11 @@ def lambda_gap(obj, real_obj):
     error = abs(obj - real_obj)
     return 0 if error < 1e-4 else error
 
-def process_file(result_path):
-    instancias = amount_of_orders_instance()
+def process_file(result_path, dataset):
+    instancias = amount_of_orders_instance(dataset)
 
     df = pd.read_csv(result_path)
-    df_gt = pd.read_csv("./results/ground_truth_set_a.csv")
+    df_gt = pd.read_csv("./results/ground_truth_set_" + dataset + ".csv")
 
     df.insert(0, "instancia", df["ordenes"].apply(lambda x: instancias.get(int(x), "Total")))
 
@@ -39,9 +39,9 @@ def process_file(result_path):
     df.to_csv(result_path, index=False)
 
 if __name__ == "__main__":
-    if (len(sys.argv) < 2): 
-        print("Falta escribir el path del archivo a preocesar")
+    if (len(sys.argv) < 3): 
+        print("<path al archivo a procesar> <dataset>")
         exit()
     
-    process_file(sys.argv[1])
+    process_file(sys.argv[1], sys.argv[2])
     
