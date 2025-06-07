@@ -1,6 +1,5 @@
 package org.sbpo2025.challenge;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +8,6 @@ import ilog.concert.IloException;
 import ilog.concert.IloIntVar;
 import ilog.concert.IloLinearIntExpr;
 import ilog.concert.IloLinearNumExpr;
-import ilog.concert.IloNumVar;
 import ilog.concert.IloObjective;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
@@ -115,7 +113,7 @@ public abstract class MIPSolver {
             if (extraCode != null) extraCode.run(this.cplex, this.X, this.Y);            
             
             // Inicializamos con el valor anterior
-            // usePreviousSolution(used_orders, used_aisles);
+            usePreviousSolution(used_orders, used_aisles);
         
         } catch (IloException e) {
             System.out.println(e.getMessage());
