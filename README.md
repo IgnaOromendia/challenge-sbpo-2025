@@ -1,16 +1,14 @@
 ## Tareas pendientes
 
-- Factorizar en archivos distintos: Parametric, Binary, CPLEX runner, Greedy **Cifu**
-- Correr Dataset B idem, para hacer los ground truths **Igna**
+- Hacer hibrido **Cifu**
 - Cambiar el metodo de aproximacion (jugar con https://www.sciencedirect.com/science/article/pii/S0377221719305740) **Lu**
-- Pensar cortes **Lu**
-- Pensar heuristicas que trabajen a partir de las soluciones del modelo. **Cifu**
-- Verificar las solución de CPLEX. Satura todos los pasillos? **Cifu**
-- Testear local search
-- Correr tests de modelo que fija pasillos
+- Pensar heuristicas que trabajen a partir de las soluciones del modelo. **Lu e Igna**
+- cotas inferiores 
 
 
 ## Tareas Hechas
+- Correr Dataset B idem, para hacer los ground truths **Igna: Hecho!**
+- Factorizar en archivos distintos: Parametric, Binary, CPLEX runner, Greedy **Igna: Hecho!**
 - Iniciar cada iteracion del parametrico con el resultado de la iteracion anterior. **Igna: Hecho!**
 - Jugar con los parámetros de Simplex **Igna: Hecho!**
 - Correr Dataset A con precision e-4 **Igna: Hecho!**
