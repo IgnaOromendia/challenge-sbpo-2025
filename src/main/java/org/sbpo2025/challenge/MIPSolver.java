@@ -1,7 +1,9 @@
 package org.sbpo2025.challenge;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import ilog.concert.IloException;
 import ilog.concert.IloIntVar;
@@ -14,8 +16,8 @@ import ilog.cplex.IloCplex;
 
 public abstract class MIPSolver {
 
-    protected final int[][] ordersArray;
-    protected final int[][] aislesArray;
+    protected final List<Map<Integer, Integer>> orders;
+    protected final List<Map<Integer, Integer>> aisles;
     protected final int nItems;
     protected final int waveSizeLB;
     protected final int waveSizeUB;
@@ -30,19 +32,19 @@ public abstract class MIPSolver {
     protected Boolean solutionInfeasible = false;
 
     // Constants
-    protected final double TOLERANCE      = 1e-4;
+    protected final double TOLERANCE      = 1e-2;
     protected final long TIME_LIMIT_SEC   = 60;
     protected final double GAP_TOLERANCE  = 0.25;
     protected final int MAX_ITERATIONS    = 10;
 
     protected double currentBest;
 
-    public MIPSolver(int[][] ordersArray, int[][] aislesArray, int nItems, int waveSizeLB, int waveSizeUB) {
-        this.ordersArray    = ordersArray;
-        this.aislesArray    = aislesArray;
-        this.nItems         = nItems;
-        this.waveSizeLB     = waveSizeLB;
-        this.waveSizeUB     = waveSizeUB;
+    public MIPSolver(List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
+        this.orders     = orders;
+        this.aisles     = aisles;
+        this.nItems     = nItems;
+        this.waveSizeLB = waveSizeLB;
+        this.waveSizeUB = waveSizeUB;
 
         this.currentBest = 0;
 
@@ -53,8 +55,8 @@ public abstract class MIPSolver {
             this.cplex = null;
         } 
 
-        X = new IloIntVar[this.ordersArray.length];
-        Y = new IloIntVar[this.aislesArray.length];
+        X = new IloIntVar[this.orders.size()];
+        Y = new IloIntVar[this.aisles.size()];
     }
 
     protected void endCplex() {
@@ -113,7 +115,7 @@ public abstract class MIPSolver {
             if (extraCode != null) extraCode.run(this.cplex, this.X, this.Y);            
             
             // Inicializamos con el valor anterior
-            usePreviousSolution(used_orders, used_aisles);
+            // usePreviousSolution(used_orders, used_aisles);
         
         } catch (IloException e) {
             System.out.println(e.getMessage());
@@ -122,10 +124,10 @@ public abstract class MIPSolver {
     }
     // Variables
     protected void initializeVariables() throws IloException {
-        for(int o = 0; o < ordersArray.length; o++) 
+        for(int o = 0; o < this.orders.size(); o++) 
             this.X[o] = this.cplex.intVar(0, 1, "X_" + o);
 
-        for (int a = 0; a < aislesArray.length; a++) 
+        for (int a = 0; a < this.aisles.size(); a++) 
             this.Y[a] = this.cplex.intVar(0, 1, "Y_" + a);
     }
 
@@ -134,35 +136,51 @@ public abstract class MIPSolver {
         IloLinearIntExpr exprLB = this.cplex.linearIntExpr();
         IloLinearIntExpr exprUB = this.cplex.linearIntExpr();
 
-        for(int o = 0; o < ordersArray.length; o++) 
-            for(int i = 0; i < nItems; i++) {
-                exprLB.addTerm(ordersArray[o][i], this.X[o]);
-                exprUB.addTerm(ordersArray[o][i], this.X[o]);
-            }
+
+        for(int o = 0; o < this.orders.size(); o++) {
+            int sizeOfOrder = 0;
+            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) 
+                sizeOfOrder += entry.getValue();
+                
+            exprLB.addTerm(sizeOfOrder, this.X[o]);
+            exprUB.addTerm(sizeOfOrder, this.X[o]);
+        }
+            
         
         this.cplex.addGe(exprLB, this.waveSizeLB);
         this.cplex.addLe(exprUB, this.waveSizeUB);
     }
 
     protected void setOrderSelectionConstraints() throws IloException {
+        IloLinearIntExpr[] exprsY = new IloLinearIntExpr[nItems];
+        IloLinearIntExpr[] exprsX = new IloLinearIntExpr[nItems];
+
         for(int i = 0; i < nItems; i++) {
-            IloLinearIntExpr exprX = this.cplex.linearIntExpr();
-            IloLinearIntExpr exprY = this.cplex.linearIntExpr();
-
-            for(int o = 0; o < ordersArray.length; o++) 
-                exprX.addTerm(ordersArray[o][i], this.X[o]);
-
-            for(int a = 0; a < aislesArray.length; a++) 
-                exprY.addTerm(aislesArray[a][i], this.Y[a]);
-
-            this.cplex.addLe(exprX, exprY);
+            exprsX[i] = this.cplex.linearIntExpr();
+            exprsY[i] = this.cplex.linearIntExpr();
         }
+
+        for(int o = 0; o < this.orders.size(); o++) {
+            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) {
+                exprsX[entry.getKey()].addTerm(entry.getValue(), this.X[o]);
+            }
+        }
+
+        for(int a = 0; a < this.aisles.size(); a++) {
+            for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet()) {
+                exprsY[entry.getKey()].addTerm(entry.getValue(), this.Y[a]);
+            }
+        }
+
+        for(int i = 0; i < nItems; i++)
+            this.cplex.addLe(exprsX[i], exprsY[i]);
+
     }
     
     private void setAtLeastOneAisleConstraint() throws IloException {
         IloLinearIntExpr exprY = this.cplex.linearIntExpr();
             
-        for(int a = 0; a < aislesArray.length; a++) 
+        for(int a = 0; a < this.aisles.size(); a++) 
             exprY.addTerm(1, this.Y[a]);
 
         this.cplex.addGe(exprY, 1);
@@ -172,11 +190,16 @@ public abstract class MIPSolver {
     protected void setObjectiveFunction(double alpha) throws IloException {
         IloLinearNumExpr obj = this.cplex.linearNumExpr();
 
-        for(int o = 0; o < ordersArray.length; o++) 
-            for(int i = 0; i < nItems; i++)
-                obj.addTerm(ordersArray[o][i], this.X[o]);
+        for(int o = 0; o < this.orders.size(); o++) {
+            int sumOfOrder = 0;
+            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet())
+                sumOfOrder += entry.getValue();
+
+            obj.addTerm(sumOfOrder, this.X[o]);
+        }
+            
         
-        for(int a = 0; a < aislesArray.length; a++) 
+        for(int a = 0; a < this.aisles.size(); a++) 
             obj.addTerm(-alpha, this.Y[a]);
 
         if (this.objective != null) 
@@ -261,8 +284,8 @@ public abstract class MIPSolver {
             used_orders.clear();
             used_aisles.clear();      
             
-            fillSolutionList(this.X, used_orders, ordersArray.length);
-            fillSolutionList(this.Y, used_aisles, aislesArray.length);
+            fillSolutionList(this.X, used_orders, this.orders.size());
+            fillSolutionList(this.Y, used_aisles, this.aisles.size());
            
         }
     }
@@ -277,14 +300,14 @@ public abstract class MIPSolver {
         double pickedObjects = 0, usedColumns = 0;
         
         try {
-            for (int o=0; o < ordersArray.length; o++)
+            for (int o=0; o < this.orders.size(); o++)
                 if (this.cplex.getValue(this.X[o]) > TOLERANCE)
-                    for(int i = 0; i < this.nItems; i++)
-                        pickedObjects += ordersArray[o][i];
+                    for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet())        
+                        pickedObjects += entry.getValue();
         
-            for (int a=0; a < aislesArray.length; a++)
+            for (int a=0; a < this.aisles.size(); a++)
                 if (this.cplex.getValue(this.Y[a]) > TOLERANCE)
-                    usedColumns += 1;
+                    usedColumns++;
         
         } catch (IloException e) {
             System.out.println(e.getMessage());
@@ -293,6 +316,7 @@ public abstract class MIPSolver {
         return pickedObjects / usedColumns;
     }
 
+    /* 
     // Solve the linear relaxation of the problem using the Charnes-Cooper transformation
     protected double relaxationUpperBound() {
         IloCplex tempCplex = null;
@@ -380,5 +404,6 @@ public abstract class MIPSolver {
 
         return result;
     }
+    */
 
 }

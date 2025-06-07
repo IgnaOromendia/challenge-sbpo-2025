@@ -15,8 +15,8 @@ public class BinarySolver extends MIPSolver {
     private double lower = 0;
     private double upper;
 
-    public BinarySolver(int[][] ordersArray, int[][] aislesArray, int nItems, int waveSizeLB, int waveSizeUB) {
-        super(ordersArray, aislesArray, nItems, waveSizeLB, waveSizeUB);
+    public BinarySolver(List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
+        super(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.lower = waveSizeLB;
         this.upper = waveSizeUB;
     }
@@ -28,13 +28,13 @@ public class BinarySolver extends MIPSolver {
             IloLinearNumExpr exprX  = cplex.linearNumExpr();
             IloLinearNumExpr exprkY = cplex.linearNumExpr();
 
-            for(int o = 0; o < ordersArray.length; o++) {
-                for(int i = 0; i < nItems; i++) {
-                    exprX.addTerm(ordersArray[o][i], X[o]);
+            for(int o = 0; o < this.orders.size(); o++) {
+                for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) {
+                    exprX.addTerm(entry.getValue(), X[o]);
                 }
             }
             
-            for(int a = 0; a < aislesArray.length; a++) 
+            for(int a = 0; a < this.aisles.size(); a++) 
                 exprkY.addTerm(0, Y[a]);
             
             cplex.addGe(exprX, exprkY);
@@ -44,8 +44,8 @@ public class BinarySolver extends MIPSolver {
 
         if (solutionInfeasible) return -1;
         
-        this.lower = Math.max(this.currentBest, (double) this.waveSizeLB / (double) this.aislesArray.length); // LB / |A| es una lower bound
-        this.upper = Math.min(this.upper, Math.min(greedyUpperBound(aisles), relaxationUpperBound()));
+        // this.lower = Math.max(this.currentBest, (double) this.waveSizeLB / (double) this.aislesArray.length); // LB / |A| es una lower bound
+        // this.upper = Math.min(this.upper, Math.min(greedyUpperBound(aisles), relaxationUpperBound()));
 
         double k;
         int it = 1;

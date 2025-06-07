@@ -8,10 +8,10 @@ import org.apache.commons.lang3.time.StopWatch;
 
 public class ParametricSolver extends MIPSolver {
 
-    private final double PRECISION = 1e-5;
+    private final double PRECISION = 1e-4;
 
-    public ParametricSolver(int[][] ordersArray, int[][] aislesArray, int nItems, int waveSizeLB, int waveSizeUB) {
-        super(ordersArray, aislesArray, nItems, waveSizeLB, waveSizeUB);
+    public ParametricSolver(List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
+        super(orders, aisles, nItems, waveSizeLB, waveSizeUB);
     }
 
     public int solveMILFP(List<Map<Integer, Integer>> orders, List<Integer> used_orders, List<Integer> used_aisles, StopWatch stopWatch) {
@@ -22,12 +22,12 @@ public class ParametricSolver extends MIPSolver {
 
         generateMIP(used_orders, used_aisles, null);
 
-        while (objValue >= PRECISION && it < MAX_ITERATIONS) {
+        while (Math.abs(objValue + Math.abs(objValue) * GAP_TOLERANCE) >= PRECISION && it < MAX_ITERATIONS) {
             objValue = solveMIPWith(q, used_orders, used_aisles);
-
-            if (solutionInfeasible) break;
             
             System.out.println("it: " + it + " q: " + q + " obj: " + objValue);
+
+            if (solutionInfeasible) break;
 
             // System.out.println("Antes: " + used_orders.size());
 
@@ -38,9 +38,9 @@ public class ParametricSolver extends MIPSolver {
             // Newton -> Qn+1 = Qn - F(Qn) / F'(Qn), F'(Qn) ≈ D(x^*)
             // Qn+1 = Qn - F(Qn) / -D(x^*) = N(x^*) / D(x^*)
             
-            q -= (objValue / -used_aisles.size()); // Antes era objValue / used_aisles.size() 
+            q += (objValue / used_aisles.size()); // Antes era objValue / used_aisles.size() 
 
-            if (stopWatch.getDuration().getSeconds() - startOfIteration.getSeconds() > TIME_LIMIT_SEC) break;
+            // if (stopWatch.getDuration().getSeconds() - startOfIteration.getSeconds() > TIME_LIMIT_SEC) break;
             
             it++;
         }
@@ -57,26 +57,26 @@ public class ParametricSolver extends MIPSolver {
     private void localSearch(List<Map<Integer, Integer>> orders, List<Integer> used_orders, List<Integer> used_aisles) {
         // Dispoinibildad de items
         int[] availableItems = new int[this.nItems]; 
-        int[] availableOrders = new int[this.ordersArray.length];
+        int[] availableOrders = new int[this.orders.size()];
         int availableGap = this.waveSizeUB;
 
         for(Integer a : used_aisles) 
-            for(int i = 0; i < nItems; i++)
-                availableItems[i] += this.aislesArray[a][i];
+            for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet())
+                availableItems[entry.getKey()] += entry.getValue();
 
         for(Integer o : used_orders) 
-            for(int i = 0; i < nItems; i++) {
-                availableGap -= this.ordersArray[o][i];
-                availableItems[i] -= this.ordersArray[o][i];
+            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) {
+                availableGap -= entry.getValue();
+                availableItems[entry.getKey()] -= entry.getValue();
             }
                 
 
-        for(int o = 0; o < this.ordersArray.length; o++)
+        for(int o = 0; o < this.orders.size(); o++)
             if (!used_orders.contains(o)) 
                 availableOrders[o] = 1;
     
         // Por cada orden no usada intentar agregar en los pasillos usados
-        for(int o = 0; o < this.ordersArray.length; o++)
+        for(int o = 0; o < this.orders.size(); o++)
             if (availableOrders[o] == 1) {
                 boolean flag = false;
                 int availableGapCopy = availableGap;

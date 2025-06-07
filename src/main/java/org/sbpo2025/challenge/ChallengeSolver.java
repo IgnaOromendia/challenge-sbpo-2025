@@ -16,8 +16,6 @@ import org.apache.commons.lang3.time.StopWatch;
 public class ChallengeSolver {
     private final long MAX_RUNTIME = 600000; // milliseconds; 10 minutes
 
-    protected int ordersArray[][];
-    protected int aislesArray[][];
     protected List<Map<Integer, Integer>> orders;
     protected List<Map<Integer, Integer>> aisles;
     protected int nItems;
@@ -37,22 +35,11 @@ public class ChallengeSolver {
         this.nItems = nItems;
         this.waveSizeLB = waveSizeLB;
         this.waveSizeUB = waveSizeUB;
-
-        this.ordersArray = new int[orders.size()][nItems]; // Todos se inicializan en 0
-        this.aislesArray = new int[aisles.size()][nItems];
-        
-        for(int o = 0; o < orders.size(); o++) 
-            for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet())
-                this.ordersArray[o][entry.getKey()] = entry.getValue();
-        
-        for(int a = 0; a < aisles.size(); a++) 
-            for (Map.Entry<Integer, Integer> entry : aisles.get(a).entrySet())
-                this.aislesArray[a][entry.getKey()] = entry.getValue();
                 
         this.greedySolver       = new GreedySolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-        this.parametricSolver   = new ParametricSolver(ordersArray, aislesArray, nItems, waveSizeLB, waveSizeUB);
-        this.binarySolver       = new BinarySolver(ordersArray, aislesArray, nItems, waveSizeLB, waveSizeUB);
-        this.fixedAisleSolver   = new FixedAisleSolver(ordersArray, aislesArray, nItems, waveSizeLB, waveSizeUB);
+        this.parametricSolver   = new ParametricSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
+        this.binarySolver       = new BinarySolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
+        this.fixedAisleSolver   = new FixedAisleSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
     }
 
     public ChallengeSolution solve(StopWatch stopWatch) {  
@@ -98,11 +85,11 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int iterations) {
-        String filePath = "./results/results_" + strategy + ".csv";
+        String filePath = "./results/results_" + strategy + "_test.csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,obj,tiempo,it\n");
-            writer.write(ordersArray.length + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
+            writer.write(this.orders.size() + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
