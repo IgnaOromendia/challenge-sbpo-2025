@@ -31,9 +31,10 @@ public abstract class MIPSolver {
 
     // Constants
     protected final double TOLERANCE      = 1e-2;
+    protected final double PRECISION      = 1e-4;
     protected final long TIME_LIMIT_SEC   = 60;
     protected final double GAP_TOLERANCE  = 0.25;
-    protected final int MAX_ITERATIONS    = 10;
+    protected final int MAX_ITERATIONS    = 20;
 
     protected double currentBest;
 
@@ -313,95 +314,5 @@ public abstract class MIPSolver {
 
         return pickedObjects / usedColumns;
     }
-
-    /* 
-    // Solve the linear relaxation of the problem using the Charnes-Cooper transformation
-    protected double relaxationUpperBound() {
-        IloCplex tempCplex = null;
-        double result = 1e9;
-        try {
-            tempCplex = new IloCplex();
-
-            setCPLEXParamsTo();
-            
-            IloNumVar[] X = new IloNumVar[this.ordersArray.length]; // La orden o está completa
-            IloNumVar[] Y = new IloNumVar[this.aislesArray.length]; // El pasillo a fue recorrido
-            IloNumVar T = tempCplex.numVar(0, Double.MAX_VALUE, "T");
-
-            IloLinearNumExpr obj = tempCplex.linearNumExpr();
-
-            for(int o = 0; o < this.ordersArray.length; o++) 
-                X[o] = tempCplex.numVar(0, 1, "X_" + o);
-
-            for (int a = 0; a < this.aislesArray.length; a++) 
-                Y[a] = tempCplex.numVar(0, 1, "Y_" + a);
-
-            // Funcion obj
-
-            for(int o = 0; o < this.ordersArray.length; o++) 
-                for(int i = 0; i < nItems; i++)
-                    obj.addTerm(this.ordersArray[o][i], X[o]);
-
-            tempCplex.addMaximize(obj);
-
-            // Denominador igual a 1 (Cooper)
-            IloLinearNumExpr exprD = tempCplex.linearNumExpr();
-
-            for(int a = 0; a < this.aislesArray.length; a++) 
-                exprD.addTerm(1, Y[a]);
-
-            tempCplex.addEq(1, exprD);
-
-            // Mayor que LB y menor que UB
-            IloLinearNumExpr exprLB = tempCplex.linearNumExpr();
-            IloLinearNumExpr exprUB = tempCplex.linearNumExpr();
-
-            for(int o = 0; o < this.ordersArray.length; o++)
-                for(int i = 0; i < nItems; i++) {
-                    exprLB.addTerm(this.ordersArray[o][i], X[o]);
-                    exprUB.addTerm(this.ordersArray[o][i], X[o]);
-                }
-
-            exprLB.addTerm(-this.waveSizeLB, T);
-            exprUB.addTerm(-this.waveSizeUB, T);
-            
-            tempCplex.addGe(exprLB, 0);
-            tempCplex.addLe(exprUB, 0);
-            
-            // Si la orden O fue hecha con elementos de i entonces pasa por los pasillos _a_ donde se encuentra i
-            for(int i = 0; i < this.nItems; i++) {
-                IloLinearNumExpr exprX = tempCplex.linearNumExpr();
-    
-                for(int o = 0; o < this.ordersArray.length; o++) 
-                    exprX.addTerm(this.ordersArray[o][i], X[o]);
-    
-                for(int a = 0; a < this.aislesArray.length; a++) 
-                    exprX.addTerm(-this.aislesArray[a][i], Y[a]);
-    
-                tempCplex.addLe(exprX, 0);
-            }
-
-            // Hay que elegir por lo menos un pasillo
-            IloLinearNumExpr exprY = tempCplex.linearNumExpr();
-            
-            for(int a = 0; a < this.aislesArray.length; a++) 
-                exprY.addTerm(1, Y[a]);
-
-            exprY.addTerm(-1, T);
-
-            tempCplex.addGe(exprY, 0);
-
-            if (tempCplex.solve()) 
-                result = tempCplex.getObjValue();
-        
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        } finally {
-            if (tempCplex != null) tempCplex.end();
-        }
-
-        return result;
-    }
-    */
 
 }

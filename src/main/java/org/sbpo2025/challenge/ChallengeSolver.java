@@ -27,6 +27,7 @@ public class ChallengeSolver {
     private final ParametricSolver parametricSolver;
     private final BinarySolver binarySolver;
     private final FixedAisleSolver fixedAisleSolver;
+    private final HybridSolver hybridSolver;
 
     public ChallengeSolver(
             List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
@@ -40,6 +41,8 @@ public class ChallengeSolver {
         this.parametricSolver   = new ParametricSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.binarySolver       = new BinarySolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.fixedAisleSolver   = new FixedAisleSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
+        this.hybridSolver       = new HybridSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
+
     }
 
     public ChallengeSolution solve(StopWatch stopWatch) {  
@@ -47,8 +50,9 @@ public class ChallengeSolver {
         List<Integer> used_aisles = new ArrayList<>();
 
         Boolean useBinarySearchSolution = false;
-        Boolean useParametricAlgorithmMILFP = true;
+        Boolean useParametricAlgorithmMILFP = false;
         Boolean useFixedAisles = false;
+        Boolean useHybrid = true;
         String strategy = "";
         Integer iterations = 1;
 
@@ -72,6 +76,9 @@ public class ChallengeSolver {
         } else if (useFixedAisles) {
             fixedAisleSolver.solveFixedAisles(used_orders, used_aisles);
             strategy = "fixed_aisles";
+        } else if (useHybrid) {
+            iterations = hybridSolver.solveMILFP(orders, used_orders, used_aisles, greedySolutionValue, stopWatch);
+            strategy = "hybrid";
         }
 
         ChallengeSolution solution = new ChallengeSolution(Set.copyOf(used_orders), Set.copyOf(used_aisles));
@@ -85,7 +92,7 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int iterations) {
-        String filePath = "./results/results_" + strategy + "_test.csv";
+        String filePath = "./results/results_" + strategy + "_test_a.csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,obj,tiempo,it\n");

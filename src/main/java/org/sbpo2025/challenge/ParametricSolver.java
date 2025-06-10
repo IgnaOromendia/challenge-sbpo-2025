@@ -8,8 +8,6 @@ import org.apache.commons.lang3.time.StopWatch;
 
 public class ParametricSolver extends MIPSolver {
 
-    private final double PRECISION = 1e-4;
-
     public ParametricSolver(List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
         super(orders, aisles, nItems, waveSizeLB, waveSizeUB);
     }
