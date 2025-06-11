@@ -63,6 +63,7 @@ public class ChallengeSolver {
         
         if (greedySolutionValue != -1) {
             parametricSolver.startFromGreedySolution(greedySolutionValue);
+            hybridSolver.startFromGreedySolution(greedySolutionValue);
             used_orders = greedySolutionOrders;
             used_aisles = greedySolutionAisles;
         }
@@ -77,7 +78,7 @@ public class ChallengeSolver {
             fixedAisleSolver.solveFixedAisles(used_orders, used_aisles);
             strategy = "fixed_aisles";
         } else if (useHybrid) {
-            iterations = hybridSolver.solveMILFP(orders, used_orders, used_aisles, greedySolutionValue, stopWatch);
+            iterations = hybridSolver.solveMILFP(orders, used_orders, used_aisles, stopWatch);
             strategy = "hybrid";
         }
 
@@ -92,7 +93,7 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int iterations) {
-        String filePath = "./results/results_" + strategy + "_test_a.csv";
+        String filePath = "./results/results_" + strategy + "_test.csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,obj,tiempo,it\n");

@@ -48,10 +48,6 @@ public class ParametricSolver extends MIPSolver {
         return it;
     }
 
-    public void startFromGreedySolution(double greedySolutionValue) {
-        this.currentBest = greedySolutionValue;
-    }
-
     private void localSearch(List<Map<Integer, Integer>> orders, List<Integer> used_orders, List<Integer> used_aisles) {
         // Dispoinibildad de items
         int[] availableItems = new int[this.nItems]; 

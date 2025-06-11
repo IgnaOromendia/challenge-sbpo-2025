@@ -12,59 +12,42 @@ import ilog.concert.IloObjective;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
-public abstract class MIPSolver {
-
-    protected final List<Map<Integer, Integer>> orders;
-    protected final List<Map<Integer, Integer>> aisles;
-    protected final int nItems;
-    protected final int waveSizeLB;
-    protected final int waveSizeUB;
+public abstract class MIPSolver extends CPLEXSolver {
 
     // CPLEX
-    private IloCplex cplex;
     private IloObjective objective;
     protected final IloIntVar[] X; // La orden o está completa
     protected final IloIntVar[] Y; // El pasillo a fue recorrido
     protected IloRange aisleConstraintRange; // Rango de la pasillos
-    
-    protected Boolean solutionInfeasible = false;
-
-    // Constants
-    protected final double TOLERANCE      = 1e-2;
-    protected final double PRECISION      = 1e-4;
-    protected final long TIME_LIMIT_SEC   = 60;
-    protected final double GAP_TOLERANCE  = 0.25;
-    protected final int MAX_ITERATIONS    = 20;
 
     protected double currentBest;
 
     public MIPSolver(List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
-        this.orders     = orders;
-        this.aisles     = aisles;
-        this.nItems     = nItems;
-        this.waveSizeLB = waveSizeLB;
-        this.waveSizeUB = waveSizeUB;
+        super(orders, aisles, nItems, waveSizeLB, waveSizeUB);
 
         this.currentBest = 0;
-
-        try {
-            this.cplex = new IloCplex();
-        } catch (IloException e) {
-            System.out.println("Error!!!!!!" + e.getMessage());
-            this.cplex = null;
-        } 
 
         X = new IloIntVar[this.orders.size()];
         Y = new IloIntVar[this.aisles.size()];
     }
 
-    protected void endCplex() {
-        if (this.cplex != null) this.cplex.end();
-    }
 
     @FunctionalInterface
     protected interface RunnableCode {
         void run(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException;
+    }
+
+    public void startFromGreedySolution(double greedySolutionValue) {
+        this.currentBest = greedySolutionValue;
+    }
+
+    protected double getCplexUpperBound() {
+        try {
+            return this.cplex.getBestObjValue();
+        } catch (IloException e) {
+            System.out.println(e.getMessage());
+        }
+        return 0;
     }
 
     // Resovlemos acutalizando la función objetivo
@@ -97,6 +80,10 @@ public abstract class MIPSolver {
     // Generamos el modelo una única vez por instancia
     protected void generateMIP(List<Integer> used_orders, List<Integer> used_aisles, RunnableCode extraCode) {
         try {
+            // Cplex Params
+            setCPLEXParamsTo();
+            
+            // Variables
             initializeVariables();
 
             // Mayor que LB y menor que UB
@@ -107,9 +94,6 @@ public abstract class MIPSolver {
 
             // Hay que elegir por lo menos un pasillo
             setAtLeastOneAisleConstraint();
-            
-            // Cplex Params
-            setCPLEXParamsTo();
 
             if (extraCode != null) extraCode.run(this.cplex, this.X, this.Y);            
             
@@ -135,7 +119,6 @@ public abstract class MIPSolver {
         IloLinearIntExpr exprLB = this.cplex.linearIntExpr();
         IloLinearIntExpr exprUB = this.cplex.linearIntExpr();
 
-
         for(int o = 0; o < this.orders.size(); o++) {
             int sizeOfOrder = 0;
             for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) 
@@ -144,7 +127,6 @@ public abstract class MIPSolver {
             exprLB.addTerm(sizeOfOrder, this.X[o]);
             exprUB.addTerm(sizeOfOrder, this.X[o]);
         }
-            
         
         this.cplex.addGe(exprLB, this.waveSizeLB);
         this.cplex.addLe(exprUB, this.waveSizeUB);
@@ -176,7 +158,7 @@ public abstract class MIPSolver {
 
     }
     
-    private void setAtLeastOneAisleConstraint() throws IloException {
+    protected void setAtLeastOneAisleConstraint() throws IloException {
         IloLinearIntExpr exprY = this.cplex.linearIntExpr();
             
         for(int a = 0; a < this.aisles.size(); a++) 
@@ -208,40 +190,6 @@ public abstract class MIPSolver {
         this.objective = this.cplex.addMaximize(obj);
     }
 
-    // CPLEX conifig
-    protected void setCPLEXParamsTo() throws IloException {
-        int cutValue = 0;
-
-        // Prints
-        this.cplex.setParam(IloCplex.Param.Simplex.Display, 0); 
-        this.cplex.setParam(IloCplex.Param.MIP.Display, 0);    
-        this.cplex.setOut(null); 
-        this.cplex.setWarning(null); 
-
-        // Time
-        this.cplex.setParam(IloCplex.Param.TimeLimit, TIME_LIMIT_SEC);
-        
-        // GAP tolerance
-        this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, GAP_TOLERANCE);
-
-        // Preprocesamiento
-        this.cplex.setParam(IloCplex.Param.Preprocessing.Presolve, true);
-
-        // Planos de corte
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Cliques, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Covers, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Disjunctive, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.FlowCovers, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Gomory, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Implied, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.MIRCut, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.PathCut, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.LiftProj, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.ZeroHalfCut, cutValue);
-
-        // Heuristica primal
-        this.cplex.setParam(IloCplex.Param.MIP.Strategy.HeuristicFreq, 0); // 1 ejecuta solo en raiz, n > 1 ejecuta cada n nodos del árbol 
-    }
 
     private void usePreviousSolution(List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
         if (used_orders.size() != 0 || used_aisles.size() != 0) {

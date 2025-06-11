@@ -14,13 +14,13 @@ for filename in os.listdir(folder_path):
     file_path = os.path.join(folder_path, filename)
     if ("ground_truth" in filename): continue
     if os.path.isfile(file_path):
-        name = filename.replace(".csv", "").replace("results_parametric_", "")
+        name = filename.replace(".csv", "").replace("results_", "")
         df = pd.read_csv(file_path)
         total_times[name] = float(df.iloc[-1]["tiempo"])
         result[name] = df.drop(df.index[-1])
         approach.append(name)
 
-instances = result["default"]["instancia"].tolist()
+instances = result["parametric_default"]["instancia"].tolist()
   
 bar_width = 0.2  
 colors = plt.cm.tab20.colors 
