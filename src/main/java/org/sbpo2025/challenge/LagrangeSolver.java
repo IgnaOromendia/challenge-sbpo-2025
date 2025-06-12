@@ -1,6 +1,5 @@
 package org.sbpo2025.challenge;
 
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,7 @@ public class LagrangeSolver {
 
         int count = 0;
 
-        while(count < 75 && bestBound >= -1e-4) {
+        while(count < 75) {
             double current = solve(lambda, mu, psiL, psiU);
             
             // Mejoramos los mu
