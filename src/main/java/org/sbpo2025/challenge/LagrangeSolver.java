@@ -80,7 +80,7 @@ public class LagrangeSolver {
         usedOrders.clear();
         usedAisles.clear();
         
-        double sum = 0;
+        double sum = psiU * (double) this.waveSizeUB - psiL * (double) this.waveSizeLB;
 
         for(int o = 0; o < this.orders.size(); o++) {
             double acum = 0;
