@@ -35,7 +35,7 @@ public class HybridSolver extends MIPSolver {
         boolean onlyBinary = true;
         boolean mixWithBinary = true;
 
-        boolean useLagrange = false;
+        boolean useLagrange = true;
 
         while (Math.abs(objValue) > PRECISION && this.upperBound - this.lowerBound > BINARY_RANGE && it < MAX_ITERATIONS) {
             if (onlyBinary || (it % 2 == 0 && mixWithBinary)) {
@@ -50,7 +50,7 @@ public class HybridSolver extends MIPSolver {
 
             if (useLagrange) {
                 double lagrangeBound = lagrangeSolver.upperBounds(q);
-                if (lagrangeBound < 0) {
+                if (lagrangeBound < -PRECISION) {
                     System.out.println("Lagrange encontro cota " + lagrangeBound);
                     this.upperBound = q; 
                     continue;

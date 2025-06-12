@@ -1,5 +1,6 @@
 package org.sbpo2025.challenge;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,7 @@ public class LagrangeSolver {
 
         int count = 0;
 
-        while(count < 75 && bestBound >= 0) {
+        while(count < 75 && bestBound >= -1e-4) {
             double current = solve(lambda, mu, psiL, psiU);
             
             // Mejoramos los mu
@@ -72,10 +73,7 @@ public class LagrangeSolver {
             bestBound = Math.min(bestBound, current);
         }
 
-        System.out.println("Lagrange = " + bestBound);
-
-        return bestBound;
-        
+        return bestBound;   
     }
 
     private double solve(double lambda, double[] mu, double psiL, double psiU) {
@@ -85,10 +83,10 @@ public class LagrangeSolver {
         double sum = 0;
 
         for(int o = 0; o < this.orders.size(); o++) {
-            int acum = 0;
+            double acum = 0;
 
             for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) 
-                acum += entry.getValue() * (1 - mu[entry.getKey()] + psiL - psiU);
+                acum += (double) entry.getValue() * (1 - mu[entry.getKey()] + psiL - psiU);
             
             if (acum <= 0) continue;
 
@@ -97,10 +95,10 @@ public class LagrangeSolver {
         }
 
         int bestAisle = -1;
-        double bestAisleCost = -1e16;
+        double bestAisleCost = -1e9;
 
         for(int a = 0; a < this.aisles.size(); a++) {
-            int acum = 0;
+            double acum = 0;
 
             for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet()) 
                 acum += entry.getValue() * mu[entry.getKey()];
