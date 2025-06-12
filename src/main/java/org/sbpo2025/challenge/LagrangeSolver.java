@@ -28,48 +28,60 @@ public class LagrangeSolver {
     }
 
     public double upperBounds(double lambda) {
-        double phi = 1, psiL = 1, psiU = 1, bestBound = 0, learningRate = 2;
+        double psiL = 0, psiU = 0, bestBound = 1e9, learningRate = 2;
         double[] mu = new double[nItems];
+        for (int e=0; e<nItems; e++) mu[e] = 0;
+
         int count = 0;
 
-        while(count < 75) {
-            double current = solve(lambda, mu, phi, psiL, psiU);
-
+        while(count < 75 && bestBound >= 0) {
+            double current = solve(lambda, mu, psiL, psiU);
             
             // Mejoramos los mu
-            // REVISAR
-            for(int o: usedOrders) 
+            // Elementos en pasillos - Elementos en ordenes (ambas usadas)
+
+            double[] muGap = new double[nItems];
+            for (int e=0; e<nItems; e++) muGap[e] = 0;
+
+            double psiLGap = -waveSizeLB, psiUGap = waveSizeUB;
+            
+            for(int o: usedOrders) {
                 for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) {
-                    // Elementos en pasillos - Elementos en ordenes (ambas usadas)
-                    int usedItemAisles = 0, usedItemsOrders = 0;
-
-                    for(int i = 0; i < nItems; i++) {
-                        
-                    }
-
-                    // mu[entry.getKey()] = Math.max(0, mu[entry.getKey()])
+                    muGap[entry.getKey()] -= entry.getValue();
+                    psiLGap += entry.getValue();
+                    psiUGap -= entry.getValue();
                 }
+            }
 
+            for(int a: usedAisles) {
+                for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet()) {
+                    muGap[entry.getKey()] += entry.getValue();
+                }
+            }
 
+            for (int e=0; e<nItems; e++) {
+                mu[e] = Math.max(0, mu[e] - learningRate * muGap[e]);
+            }
             
-            
-            // Mejoramos phi
-
-            // Mejoramos psi LB
-
-            // Mejoramos psi UB
-
+            psiL = Math.max(0, psiL - learningRate * psiLGap);
+            psiU = Math.max(0, psiU - learningRate * psiUGap);
 
             learningRate *= 0.9;
 
             count++;
+            bestBound = Math.min(bestBound, current);
         }
+
+        System.out.println("Lagrange = " + bestBound);
 
         return bestBound;
         
     }
 
-    private double solve(double lambda, double[] mu, double phi, double psiL, double psiU) {
+    private double solve(double lambda, double[] mu, double psiL, double psiU) {
+        usedOrders.clear();
+        usedAisles.clear();
+        
         double sum = 0;
 
         for(int o = 0; o < this.orders.size(); o++) {
@@ -84,18 +96,31 @@ public class LagrangeSolver {
             sum += acum;
         }
 
+        int bestAisle = -1;
+        double bestAisleCost = -1e16;
+
         for(int a = 0; a < this.aisles.size(); a++) {
             int acum = 0;
 
             for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet()) 
                 acum += entry.getValue() * mu[entry.getKey()];
             
-            acum += phi - lambda;
+            acum -= lambda;
+
+            if (bestAisleCost < acum) {
+                bestAisle = a;
+                bestAisleCost = acum;
+            }
 
             if (acum <= 0) continue;
 
             usedAisles.add(a);
             sum += acum;
+        }
+
+        if (usedAisles.isEmpty()) {
+            usedAisles.add(bestAisle);
+            sum += bestAisleCost;
         }
 
         return sum;

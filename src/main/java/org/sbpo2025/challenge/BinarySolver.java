@@ -14,11 +14,13 @@ public class BinarySolver extends MIPSolver {
 
     private double lower = 0;
     private double upper;
+    private LagrangeSolver lagrangeSolver;
 
     public BinarySolver(List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
         super(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.lower = waveSizeLB;
         this.upper = waveSizeUB;
+        this.lagrangeSolver = new LagrangeSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
     }
 
     public int binarySearchSolution(List<Integer> used_orders, List<Integer> used_aisles, List<Map<Integer, Integer>> aisles , StopWatch stopWatch) {
@@ -35,7 +37,7 @@ public class BinarySolver extends MIPSolver {
             }
             
             for(int a = 0; a < this.aisles.size(); a++) 
-                exprkY.addTerm(0, Y[a]);
+                exprkY.addTerm(1, Y[a]);
             
             cplex.addGe(exprX, exprkY);
         });
@@ -51,6 +53,7 @@ public class BinarySolver extends MIPSolver {
         int it = 1;
 
         Duration startOfIteration = stopWatch.getDuration();
+        boolean useLagrange = true;
 
         while (it < MAX_ITERATIONS && TOLERANCE <= this.upper - this.lower) {
             k = (this.lower + this.upper) / 2;
