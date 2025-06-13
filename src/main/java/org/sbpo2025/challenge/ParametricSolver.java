@@ -48,49 +48,5 @@ public class ParametricSolver extends MIPSolver {
         return it;
     }
 
-    private void localSearch(List<Map<Integer, Integer>> orders, List<Integer> used_orders, List<Integer> used_aisles) {
-        // Dispoinibildad de items
-        int[] availableItems = new int[this.nItems]; 
-        int[] availableOrders = new int[this.orders.size()];
-        int availableGap = this.waveSizeUB;
-
-        for(Integer a : used_aisles) 
-            for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet())
-                availableItems[entry.getKey()] += entry.getValue();
-
-        for(Integer o : used_orders) 
-            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) {
-                availableGap -= entry.getValue();
-                availableItems[entry.getKey()] -= entry.getValue();
-            }
-                
-
-        for(int o = 0; o < this.orders.size(); o++)
-            if (!used_orders.contains(o)) 
-                availableOrders[o] = 1;
-    
-        // Por cada orden no usada intentar agregar en los pasillos usados
-        for(int o = 0; o < this.orders.size(); o++)
-            if (availableOrders[o] == 1) {
-                boolean flag = false;
-                int availableGapCopy = availableGap;
-
-                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
-                    availableGapCopy -= entry.getValue();
-                    if (availableItems[entry.getKey()] < entry.getValue() || availableGapCopy <= 0) flag = true;
-                    if (flag) break;
-                }
-
-                if (flag) continue;
-                    
-                for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet())
-                    availableItems[entry.getKey()] -= entry.getValue();
-
-                availableGap = availableGapCopy;
-                
-            }
-                
-        // Por cada orden vemos si al eliminarla podemos agregar otra orden con más elementos
-    }
     
 }
