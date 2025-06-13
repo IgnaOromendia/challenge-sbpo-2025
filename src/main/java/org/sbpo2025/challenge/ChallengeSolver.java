@@ -93,7 +93,7 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int iterations) {
-        String filePath = "./results/results_" + strategy + "_test.csv";
+        String filePath = "./results/results_" + strategy + ".csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,obj,tiempo,it\n");

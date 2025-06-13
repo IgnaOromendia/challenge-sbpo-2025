@@ -19,7 +19,7 @@ public abstract class CPLEXSolver {
     protected IloCplex cplex;
 
     // Constants
-    protected final double TOLERANCE        = 1e-4;
+    protected final double TOLERANCE        = 1e-2;
     protected final double PRECISION        = 1e-4;
     protected final double BINARY_RANGE     = 1e-4;
     protected final long TIME_LIMIT_SEC     = 60;

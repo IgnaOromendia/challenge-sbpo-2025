@@ -14,6 +14,7 @@ public class HybridSolver extends MIPSolver {
     
     private final RelaxationSolver relaxationSolver;
     private final LagrangeSolver lagrangeSolver;
+    private final LocalSearcher localSearcher;
 
     public HybridSolver(List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
         super(orders, aisles, nItems, waveSizeLB, waveSizeUB);
@@ -21,6 +22,7 @@ public class HybridSolver extends MIPSolver {
         this.upperBound = waveSizeUB;
         this.relaxationSolver = new RelaxationSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.lagrangeSolver = new LagrangeSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
+        this.localSearcher = new LocalSearcher(orders, aisles, nItems, waveSizeLB, waveSizeUB);
     }
 
     public int solveMILFP(List<Map<Integer, Integer>> orders, List<Integer> used_orders, List<Integer> used_aisles, StopWatch stopWatch) {
@@ -32,10 +34,10 @@ public class HybridSolver extends MIPSolver {
         this.lowerBound = Math.max(this.lowerBound, this.currentBest);
         this.upperBound = Math.min(this.upperBound, Math.min(greedyUpperBound(aisles), relaxationSolver.solveLP()));
 
-        boolean onlyBinary = true;
-        boolean mixWithBinary = true;
-
-        boolean useLagrange = true;
+        boolean onlyBinary = false;
+        boolean mixWithBinary = false;
+        boolean useLagrange = false;
+        boolean useLocalSearch = true;
 
         while (Math.abs(objValue) > PRECISION && this.upperBound - this.lowerBound > BINARY_RANGE && it < MAX_ITERATIONS) {
             if (onlyBinary || (it % 2 == 0 && mixWithBinary)) {
@@ -50,8 +52,8 @@ public class HybridSolver extends MIPSolver {
 
             if (useLagrange) {
                 double lagrangeBound = lagrangeSolver.upperBounds(q);
+                System.out.println("Lagrange encontro cota " + lagrangeBound);
                 if (lagrangeBound < -PRECISION) {
-                    System.out.println("Lagrange encontro cota " + lagrangeBound);
                     this.upperBound = q; 
                     continue;
                 }
@@ -59,13 +61,28 @@ public class HybridSolver extends MIPSolver {
             
             objValue = solveMIPWith(q, used_orders, used_aisles);
 
+            if (useLocalSearch) {
+                System.out.println("Comienza local search");
+                
+                double localBest = this.localSearcher.search(used_orders, used_aisles);
+                
+                System.out.println("hubo mejora? " + this.currentBest + " a " + localBest);
+
+                if (localBest > this.currentBest) {
+                    System.out.println("Tremenda mejora: " + this.currentBest + " a " + localBest);
+                    this.currentBest = localBest;
+                }
+            }
+
             int usedItems = 0;
 
             for(int o: used_orders) 
                 for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) 
                     usedItems += entry.getValue();
 
-            if (objValue >= 0) {
+            if (Math.abs(objValue) < PRECISION) {
+                break;
+            } else if (objValue >= PRECISION) {
                 this.lowerBound = (double) usedItems / used_aisles.size();
                 this.upperBound = Math.min(this.upperBound, getCplexUpperBound() + q);
             } else {
