@@ -55,8 +55,6 @@ public abstract class CPLEXSolver {
     }
 
     protected void setCPLEXParamsTo() throws IloException {
-        int cutValue = 0;
-
         // Prints
         this.cplex.setParam(IloCplex.Param.Simplex.Display, 0); 
         this.cplex.setParam(IloCplex.Param.MIP.Display, 0);    
@@ -67,6 +65,13 @@ public abstract class CPLEXSolver {
         int availableThreads = Runtime.getRuntime().availableProcessors();
         this.cplex.setParam(IloCplex.Param.Threads, availableThreads);
         this.cplex.setParam(IloCplex.Param.Parallel, IloCplex.ParallelMode.Opportunistic);
+
+        // Emphasis
+        // 1 Factibilidad
+        // 2 Proximidad a solucion entera (GAP)
+        // 3 Mejor bound dual
+        // 4 Menos preprocesar
+        // 5 Encontrar la solución probada más rapido
         this.cplex.setParam(IloCplex.Param.Emphasis.MIP, 1);
 
         // Time
@@ -79,16 +84,19 @@ public abstract class CPLEXSolver {
         this.cplex.setParam(IloCplex.Param.Preprocessing.Presolve, true);
 
         // Planos de corte
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Cliques, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Covers, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Disjunctive, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.FlowCovers, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Gomory, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Implied, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.MIRCut, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.PathCut, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.LiftProj, cutValue);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.ZeroHalfCut, cutValue);
+        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Cliques, 0);
+        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Covers, -1); // El q más ayuda
+        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Disjunctive, 0);
+        this.cplex.setParam(IloCplex.Param.MIP.Cuts.FlowCovers, 0);
+        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Gomory, 0);
+        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Implied, 0);
+        this.cplex.setParam(IloCplex.Param.MIP.Cuts.MIRCut, 0);
+        this.cplex.setParam(IloCplex.Param.MIP.Cuts.PathCut, 0);
+        this.cplex.setParam(IloCplex.Param.MIP.Cuts.LiftProj, 0);
+        this.cplex.setParam(IloCplex.Param.MIP.Cuts.ZeroHalfCut, 0);
+
+        // Local search de cplex
+        // this.cplex.setParam(IloCplex.Param.MIP.Strategy.Search, 1); // RINS
 
         // Heuristica primal
         this.cplex.setParam(IloCplex.Param.MIP.Strategy.HeuristicFreq, 0); // 1 ejecuta solo en raiz, n > 1 ejecuta cada n nodos del árbol 
