@@ -63,6 +63,12 @@ public abstract class CPLEXSolver {
         this.cplex.setOut(null); 
         this.cplex.setWarning(null); 
 
+        // Threads
+        int availableThreads = Runtime.getRuntime().availableProcessors();
+        this.cplex.setParam(IloCplex.Param.Threads, availableThreads);
+        this.cplex.setParam(IloCplex.Param.Parallel, IloCplex.ParallelMode.Opportunistic);
+        this.cplex.setParam(IloCplex.Param.Emphasis.MIP, 1);
+
         // Time
         this.cplex.setParam(IloCplex.Param.TimeLimit, TIME_LIMIT_SEC);
         
