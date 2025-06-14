@@ -1,11 +1,18 @@
 package org.sbpo2025.challenge;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.time.StopWatch;
+
+import ilog.concert.IloLinearIntExpr;
 
 public class HybridSolver extends MIPSolver {
 
@@ -29,7 +36,23 @@ public class HybridSolver extends MIPSolver {
         double objValue = 1, q;
         int it = 0;
 
-        generateMIP(used_orders, used_aisles, null);
+        boolean breakSym = false;
+
+        if (breakSym) {
+            List<List<Integer>> equivalentOrders = groupEquivalent(orders);
+            List<List<Integer>> equivalentAisles = groupEquivalent(aisles);
+
+            generateMIP(used_orders, used_aisles, (cplex, X, Y) -> {
+                    for (List<Integer> groupOfOrders : equivalentOrders)
+                        for (int idx=0; idx<groupOfOrders.size()-1; idx++)
+                            cplex.addLe(X[groupOfOrders.get(idx+1)], X[groupOfOrders.get(idx)]);
+
+                    for (List<Integer> groupOfAisles : equivalentAisles)
+                        for (int idx=0; idx<groupOfAisles.size()-1; idx++)
+                            cplex.addLe(Y[groupOfAisles.get(idx+1)], Y[groupOfAisles.get(idx)]);
+                }
+            );}
+        else {generateMIP(used_orders, used_aisles, null);}
 
         this.lowerBound = Math.max(this.lowerBound, this.currentBest);
         this.upperBound = Math.min(this.upperBound, Math.min(greedyUpperBound(aisles), relaxationSolver.solveLP()));
@@ -62,14 +85,11 @@ public class HybridSolver extends MIPSolver {
             objValue = solveMIPWith(q, used_orders, used_aisles);
 
             if (useLocalSearch) {
-                System.out.println("Comienza local search");
-                
+
                 double localBest = this.localSearcher.search(used_orders, used_aisles);
-                
-                System.out.println("hubo mejora? " + this.currentBest + " a " + localBest);
 
                 if (localBest > this.currentBest) {
-                    System.out.println("Tremenda mejora: " + this.currentBest + " a " + localBest);
+                    System.out.println("Local search mejora: " + this.currentBest + " a " + localBest);
                     this.currentBest = localBest;
                 }
             }
@@ -123,6 +143,19 @@ public class HybridSolver extends MIPSolver {
         return upper_bound;
     }
     
+    private List<List<Integer>> groupEquivalent(List<Map<Integer,Integer>> maps) {
 
+        Map<Map<Integer,Integer>, List<Integer>> buckets = new HashMap<>();
+
+        for (int i = 0; i < maps.size(); i++) {
+            Map<Integer,Integer> m = maps.get(i);
+            buckets.computeIfAbsent(m, k -> new ArrayList<>())
+                .add(i);
+        }
+
+        return buckets.values().stream()
+                  .sorted(Comparator.comparingInt(list -> list.get(0)))
+                  .collect(Collectors.toList());
+    }
     
 }
