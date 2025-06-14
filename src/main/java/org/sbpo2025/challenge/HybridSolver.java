@@ -4,15 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.time.StopWatch;
-
-import ilog.concert.IloLinearIntExpr;
 
 public class HybridSolver extends MIPSolver {
 
@@ -64,8 +60,8 @@ public class HybridSolver extends MIPSolver {
 
         while (Math.abs(objValue) > PRECISION && this.upperBound - this.lowerBound > BINARY_RANGE && it < MAX_ITERATIONS) {
             if (onlyBinary || (it % 2 == 0 && mixWithBinary)) {
-                q = (this.lowerBound + this.upperBound) / 2;
-                //q = (3 * this.lowerBound + this.upperBound) / 4
+                // q = (this.lowerBound + this.upperBound) / 2;
+                q = (3 * this.lowerBound + this.upperBound) / 4;
             } else {
                 q = this.currentBest;
             }
@@ -82,7 +78,7 @@ public class HybridSolver extends MIPSolver {
                 }
             }
             
-            objValue = solveMIPWith(q, used_orders, used_aisles);
+            objValue = solveMIPWith(q, used_orders, used_aisles, 0);
 
             if (useLocalSearch) {
 

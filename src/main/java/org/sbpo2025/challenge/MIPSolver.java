@@ -51,9 +51,12 @@ public abstract class MIPSolver extends CPLEXSolver {
     }
 
     // Resovlemos acutalizando la función objetivo
-    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles) {
+    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, int it) {
         try {
+            this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, Math.max(0, GAP_TOLERANCE - (0.5 * it)));
+
             setObjectiveFunction(q);
+
             if (this.cplex.solve())  {
                 extractSolutionFrom(used_orders, used_aisles);
                 return this.cplex.getObjValue();
@@ -74,7 +77,7 @@ public abstract class MIPSolver extends CPLEXSolver {
             System.out.println(e.getMessage());
         }
 
-        return solveMIPWith(0, used_orders, used_aisles);
+        return solveMIPWith(0, used_orders, used_aisles, 0);
     }
 
     // Generamos el modelo una única vez por instancia
@@ -189,7 +192,6 @@ public abstract class MIPSolver extends CPLEXSolver {
 
         this.objective = this.cplex.addMaximize(obj);
     }
-
 
     private void usePreviousSolution(List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
         if (used_orders.size() != 0 || used_aisles.size() != 0) {

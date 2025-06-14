@@ -42,7 +42,7 @@ public class BinarySolver extends MIPSolver {
             cplex.addGe(exprX, exprkY);
         });
 
-        solveMIPWith(0, used_orders, used_aisles);
+        solveMIPWith(0, used_orders, used_aisles, 0);
 
         if (solutionInfeasible) return -1;
         
@@ -50,7 +50,7 @@ public class BinarySolver extends MIPSolver {
         // this.upper = Math.min(this.upper, Math.min(greedyUpperBound(aisles), relaxationUpperBound()));
 
         double k;
-        int it = 1;
+        int it = 0;
 
         Duration startOfIteration = stopWatch.getDuration();
         boolean useLagrange = true;
@@ -60,7 +60,7 @@ public class BinarySolver extends MIPSolver {
 
             System.out.println("Current range: (" + this.lower + ", " + this.upper + ")");
 
-            solveMIPWith(k, used_orders, used_aisles);
+            solveMIPWith(k, used_orders, used_aisles, it);
 
             if (solutionInfeasible) 
                 this.lower = this.currentBest;
