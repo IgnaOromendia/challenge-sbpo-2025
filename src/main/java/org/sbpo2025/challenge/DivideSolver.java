@@ -54,7 +54,6 @@ public class DivideSolver extends MIPSolver {
         for (int i=0; i<used_orders.size(); i++) 
             used_orders.set(i, smallToOld.get(used_orders.get(i)));
         
-    
         return iter;
     }
 }
