@@ -33,22 +33,56 @@ public class HybridSolver extends MIPSolver {
         int it = 0;
 
         boolean breakSym = false;
+        boolean useGreedyWithLP = false;
 
         if (breakSym) {
             List<List<Integer>> equivalentOrders = groupEquivalent(orders);
             List<List<Integer>> equivalentAisles = groupEquivalent(aisles);
 
-            generateMIP(used_orders, used_aisles, (cplex, X, Y) -> {
-                    for (List<Integer> groupOfOrders : equivalentOrders)
-                        for (int idx=0; idx<groupOfOrders.size()-1; idx++)
-                            cplex.addLe(X[groupOfOrders.get(idx+1)], X[groupOfOrders.get(idx)]);
+            int lowerBoundForBreakingSym = 10;
 
-                    for (List<Integer> groupOfAisles : equivalentAisles)
-                        for (int idx=0; idx<groupOfAisles.size()-1; idx++)
-                            cplex.addLe(Y[groupOfAisles.get(idx+1)], Y[groupOfAisles.get(idx)]);
+            generateMIP(used_orders, used_aisles, (cplex, X, Y) -> {
+                    for (List<Integer> groupOfOrders : equivalentOrders) {
+                        if (groupOfOrders.size() >= lowerBoundForBreakingSym) {
+                            for (int idx=0; idx<groupOfOrders.size()-1; idx++)
+                                cplex.addLe(X[groupOfOrders.get(idx+1)], X[groupOfOrders.get(idx)]);
+                        }
+                    }
+
+                    for (List<Integer> groupOfAisles : equivalentAisles) {
+                        if (groupOfAisles.size() >= lowerBoundForBreakingSym) {
+                            for (int idx=0; idx<groupOfAisles.size()-1; idx++)
+                                cplex.addLe(Y[groupOfAisles.get(idx+1)], Y[groupOfAisles.get(idx)]);
+                            
+                        }
+                    }
                 }
             );}
         else {generateMIP(used_orders, used_aisles, null);}
+
+        System.out.println("Simple greedy is " + this.currentBest);
+
+        if (useGreedyWithLP) {
+            GreedyLPSolver greedyLPSolver = new GreedyLPSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
+
+            greedyLPSolver.generateMIP();
+
+            int bestAisle = -1;
+            for (int a=1; a<aisles.size()+1; a++) {
+                double value = greedyLPSolver.updateWithAisles(a, used_orders);
+                
+                if (value > this.currentBest) {
+                    bestAisle = a;
+                    this.currentBest = value;
+                }
+            }
+
+            if (bestAisle != -1) greedyLPSolver.buildUsedAisles(bestAisle, used_aisles);
+        }
+
+        System.out.println("Complex greedy is " + this.currentBest);
+
+        if (false) return 1;
 
         this.lowerBound = Math.max(this.lowerBound, this.currentBest);
         this.upperBound = Math.min(this.upperBound, Math.min(greedyUpperBound(aisles), relaxationSolver.solveLP()));
