@@ -53,7 +53,7 @@ public abstract class MIPSolver extends CPLEXSolver {
     // Resovlemos acutalizando la función objetivo
     protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, int it) {
         try {
-            this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, Math.max(0, GAP_TOLERANCE - (0.5 * it)));
+            this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, Math.max(0, GAP_TOLERANCE - (0 * it)));
 
             setObjectiveFunction(q);
 
@@ -239,7 +239,7 @@ public abstract class MIPSolver extends CPLEXSolver {
         }
     }
 
-    private void fillSolutionList(IloIntVar[] V, List<Integer> solution, Integer size) throws IloException {
+    protected void fillSolutionList(IloIntVar[] V, List<Integer> solution, Integer size) throws IloException {
         for(int i = 0; i < size; i++)
             if (this.cplex.getValue(V[i]) > TOLERANCE) 
                 solution.add(i);
