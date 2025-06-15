@@ -82,10 +82,11 @@ public abstract class CPLEXSolver {
 
         // Preprocesamiento
         this.cplex.setParam(IloCplex.Param.Preprocessing.Presolve, true);
+        this.cplex.setParam(IloCplex.Param.Preprocessing.Reduce, 3);
 
         // Planos de corte
         this.cplex.setParam(IloCplex.Param.MIP.Cuts.Cliques, 0);
-        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Covers, -1); // El q más ayuda
+        this.cplex.setParam(IloCplex.Param.MIP.Cuts.Covers, -1); // La que menos ayuda
         this.cplex.setParam(IloCplex.Param.MIP.Cuts.Disjunctive, 0);
         this.cplex.setParam(IloCplex.Param.MIP.Cuts.FlowCovers, 0);
         this.cplex.setParam(IloCplex.Param.MIP.Cuts.Gomory, 0);
@@ -94,9 +95,6 @@ public abstract class CPLEXSolver {
         this.cplex.setParam(IloCplex.Param.MIP.Cuts.PathCut, 0);
         this.cplex.setParam(IloCplex.Param.MIP.Cuts.LiftProj, 0);
         this.cplex.setParam(IloCplex.Param.MIP.Cuts.ZeroHalfCut, 0);
-
-        // Local search de cplex
-        // this.cplex.setParam(IloCplex.Param.MIP.Strategy.Search, 1); // RINS
 
         // Heuristica primal
         this.cplex.setParam(IloCplex.Param.MIP.Strategy.HeuristicFreq, 0); // 1 ejecuta solo en raiz, n > 1 ejecuta cada n nodos del árbol 
