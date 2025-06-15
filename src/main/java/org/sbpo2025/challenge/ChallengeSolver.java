@@ -28,6 +28,7 @@ public class ChallengeSolver {
     private final BinarySolver binarySolver;
     private final FixedAisleSolver fixedAisleSolver;
     private final HybridSolver hybridSolver;
+    private final DivideSolver divideSolver;
 
     public ChallengeSolver(
             List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
@@ -42,7 +43,7 @@ public class ChallengeSolver {
         this.binarySolver       = new BinarySolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.fixedAisleSolver   = new FixedAisleSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.hybridSolver       = new HybridSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-
+        this.divideSolver       = new DivideSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
     }
 
     public ChallengeSolution solve(StopWatch stopWatch) {  
@@ -52,7 +53,8 @@ public class ChallengeSolver {
         Boolean useBinarySearchSolution = false;
         Boolean useParametricAlgorithmMILFP = false;
         Boolean useFixedAisles = false;
-        Boolean useHybrid = true;
+        Boolean useHybrid = false;
+        Boolean useDivide = true;
         String strategy = "";
         Integer iterations = 1;
 
@@ -79,6 +81,9 @@ public class ChallengeSolver {
             strategy = "fixed_aisles";
         } else if (useHybrid) {
             iterations = hybridSolver.solveMILFP(orders, used_orders, used_aisles, stopWatch);
+            strategy = "hybrid";
+        } else if (useDivide) {
+            iterations = divideSolver.solveMILFP(used_orders, used_aisles, stopWatch);
             strategy = "hybrid";
         }
 
