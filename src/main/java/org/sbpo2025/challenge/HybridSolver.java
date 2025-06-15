@@ -60,8 +60,6 @@ public class HybridSolver extends MIPSolver {
             );}
         else {generateMIP(used_orders, used_aisles, null);}
 
-        System.out.println("Simple greedy is " + this.currentBest);
-
         if (useGreedyWithLP) {
             GreedyLPSolver greedyLPSolver = new GreedyLPSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
 
@@ -79,10 +77,6 @@ public class HybridSolver extends MIPSolver {
 
             if (bestAisle != -1) greedyLPSolver.buildUsedAisles(bestAisle, used_aisles);
         }
-
-        System.out.println("Complex greedy is " + this.currentBest);
-
-        if (false) return 1;
 
         this.lowerBound = Math.max(this.lowerBound, this.currentBest);
         this.upperBound = Math.min(this.upperBound, Math.min(greedyUpperBound(aisles), relaxationSolver.solveLP()));
@@ -136,7 +130,7 @@ public class HybridSolver extends MIPSolver {
                 this.lowerBound = (double) usedItems / used_aisles.size();
                 this.upperBound = Math.min(this.upperBound, getCplexUpperBound() + q);
             } else {
-                this.upperBound = q;
+                this.upperBound = getCplexUpperBound() + q;
             }
 
             it++;
