@@ -51,10 +51,10 @@ public class ChallengeSolver {
         List<Integer> used_aisles = new ArrayList<>();
 
         Boolean useBinarySearchSolution = false;
-        Boolean useParametricAlgorithmMILFP = false;
+        Boolean useParametricAlgorithmMILFP = true;
         Boolean useFixedAisles = false;
         Boolean useHybrid = false;
-        Boolean useDivide = true;
+        Boolean useDivide = false;
         String strategy = "";
         Integer iterations = 1;
 
@@ -89,7 +89,7 @@ public class ChallengeSolver {
 
         ChallengeSolution solution = new ChallengeSolution(Set.copyOf(used_orders), Set.copyOf(used_aisles));
 
-        writeResults(strategy, solution, stopWatch, iterations);
+        // writeResults(strategy, solution, stopWatch, iterations);
 
         return solution;
     } 

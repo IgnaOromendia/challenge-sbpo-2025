@@ -1,5 +1,6 @@
 package org.sbpo2025.challenge;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +18,8 @@ public class ParametricSolver extends MIPSolver {
 
         generateMIP(used_orders, used_aisles, null);
 
+        Duration startOfIteration = stopWatch.getDuration();
+
         while (Math.abs(objValue + Math.abs(objValue) * GAP_TOLERANCE) >= PRECISION && it < MAX_ITERATIONS) {
             objValue = solveMIPWith(q, used_orders, used_aisles, it);
             
@@ -31,6 +34,7 @@ public class ParametricSolver extends MIPSolver {
             
             q += (objValue / used_aisles.size()); // Antes era objValue / used_aisles.size() 
 
+            if (stopWatch.getDuration().getSeconds() - startOfIteration.getSeconds() > TIME_LIMIT_SEC) break;
             
             it++;
         }
