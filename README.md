@@ -1,12 +1,12 @@
 ## Tareas pendientes
 
-- Hacer hibrido **Cifu**
-- Cambiar el metodo de aproximacion (jugar con https://www.sciencedirect.com/science/article/pii/S0377221719305740) **Lu**
-- Pensar heuristicas que trabajen a partir de las soluciones del modelo. **Lu e Igna**
-- cotas inferiores 
+- Testear todo, ahora que el Divide anda bien.
+- Poner GAP como parametro en parametrico. Usar gap 0 en la ultima iteracion.
+- Capaz eliminar simetrias agregando variables no binaria (si hay k copias de la orden o, entonces poner una variable de 0 ak)
 
 
 ## Tareas Hechas
+- Pensar heuristicas que trabajen a partir de las soluciones del modelo. **Lu e Igna** 
 - Correr Dataset B idem, para hacer los ground truths **Igna: Hecho!**
 - Factorizar en archivos distintos: Parametric, Binary, CPLEX runner, Greedy **Igna: Hecho!**
 - Iniciar cada iteracion del parametrico con el resultado de la iteracion anterior. **Igna: Hecho!**
