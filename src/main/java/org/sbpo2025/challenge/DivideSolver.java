@@ -70,7 +70,6 @@ public class DivideSolver extends MIPSolver {
         int iter  = smallParamSolver.solveMILFP(sizeOneOrders, used_orders, used_aisles, stopWatch);
         int biter = bigParamSolver.solveMILFP(bigOrders, big_used_orders, big_used_aisles, stopWatch);
 
-
         // Remappeamos las soluciones a los indices reales
         for (int i=0; i< used_orders.size(); i++) {
             used_orders.set(i, smallToOld.get(used_orders.get(i)));
@@ -99,6 +98,8 @@ public class DivideSolver extends MIPSolver {
 
         System.out.println("S: " + smallOpt + ", B: " + bigOpt);
 
+        double bestOpt = smallOpt;
+
         if (bigOpt > smallOpt) {
             used_orders.clear();
             used_aisles.clear();
@@ -108,11 +109,15 @@ public class DivideSolver extends MIPSolver {
             
             // Xq no funciona esto
             // used_aisles = new ArrayList<>(big_used_aisles);
-
-            return biter;
-        } else {
-
-            return iter;
+            bestOpt = bigOpt;
+            iter = biter;
         }
+
+        ParametricSolver finalSolver = new ParametricSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
+        finalSolver.startFromGreedySolution(bestOpt);
+    
+        finalSolver.solveMILFP(orders, used_orders, used_aisles, stopWatch);
+
+        return iter;
     }
 }
