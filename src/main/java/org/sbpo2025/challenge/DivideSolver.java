@@ -59,6 +59,9 @@ public class DivideSolver extends MIPSolver {
         List<Integer> big_used_orders = new ArrayList<>();
         List<Integer> big_used_aisles = new ArrayList<>();
         
+        GreedySolver greedySolver = new GreedySolver(bigOrders, aisles, nItems, waveSizeLB, waveSizeUB);
+        greedySolver.solve(big_used_orders, big_used_aisles);
+
         int iter  = smallParamSolver.solveMILFP(sizeOneOrders, used_orders, used_aisles, stopWatch);
         int biter = bigParamSolver.solveMILFP(bigOrders, big_used_orders, big_used_aisles, stopWatch);
 
@@ -77,7 +80,14 @@ public class DivideSolver extends MIPSolver {
         double smallOpt = used_aisles.size() > 0 ? small_used_items / used_aisles.size() : 0;
         double bigOpt = big_used_aisles.size() > 0 ? big_used_items / big_used_aisles.size() : 0;
 
-        System.out.println("S: " + smallOpt + " B: " + bigOpt);
+        System.out.println("Smaller before local seach: " + smallOpt);
+        System.out.println("Bigger before local seach: " + bigOpt);
+
+        LocalSearcher localSearcher = new LocalSearcher(orders, aisles, nItems, waveSizeLB, waveSizeUB);
+        localSearcher.search(big_used_orders, big_used_aisles);
+        localSearcher.search(used_orders, used_aisles);
+
+        System.out.println("S: " + smallOpt + ", B: " + bigOpt);
 
         if (bigOpt > smallOpt) {
             used_orders.clear();
