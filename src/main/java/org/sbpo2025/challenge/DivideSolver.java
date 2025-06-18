@@ -1,6 +1,5 @@
 package org.sbpo2025.challenge;
 
-import java.security.KeyStore.Entry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +23,7 @@ public class DivideSolver extends MIPSolver {
 
     public int solveMILFP(List<Integer> used_orders, List<Integer> used_aisles, StopWatch stopWatch) {
         Map<Integer, Integer> smallToOld = new HashMap<>();
+        Map<Integer, Integer> bigToOld = new HashMap<>();
         
         for (int o=0; o<orders.size(); o++) {
             int acum = 0;
@@ -31,7 +31,10 @@ public class DivideSolver extends MIPSolver {
                 acum += entry.getValue();
                 if (acum > 1) break;
             }
-            if (acum > 1) bigOrders.add(orders.get(o));
+            if (acum > 1) {
+                bigToOld.put(bigOrders.size(), o);
+                bigOrders.add(orders.get(o));
+            }
             else {
                 smallToOld.put(sizeOneOrders.size(), o);
                 sizeOneOrders.add(orders.get(o));    
@@ -41,15 +44,55 @@ public class DivideSolver extends MIPSolver {
         used_orders.clear();
         used_aisles.clear();
 
+        double greedySolution = 0;
+
         if (sizeOneOrders.size() > this.waveSizeLB) {
             GreedyCovering greedyCovering = new GreedyCovering(sizeOneOrders, aisles, nItems, waveSizeLB, waveSizeUB);
-            double value = greedyCovering.solve(used_orders, used_aisles);
-            System.out.println(value);
+            greedySolution = greedyCovering.solve(used_orders, used_aisles);
         }
 
-        ParametricSolver paramSolver = new ParametricSolver(sizeOneOrders, aisles, nItems, waveSizeLB, waveSizeUB);
+        ParametricSolver smallParamSolver = new ParametricSolver(sizeOneOrders, aisles, nItems, waveSizeLB, waveSizeUB);
+        ParametricSolver bigParamSolver   = new ParametricSolver(bigOrders, aisles, nItems, waveSizeLB, waveSizeUB);
+
+        smallParamSolver.startFromGreedySolution(greedySolution);
+
+        List<Integer> big_used_orders = new ArrayList<>();
+        List<Integer> big_used_aisles = new ArrayList<>();
         
-        int iter = paramSolver.solveMILFP(sizeOneOrders, used_orders, used_aisles, stopWatch);
+        int iter  = smallParamSolver.solveMILFP(sizeOneOrders, used_orders, used_aisles, stopWatch);
+        int biter = bigParamSolver.solveMILFP(bigOrders, big_used_orders, big_used_aisles, stopWatch);
+
+        double small_used_items = 0, big_used_items = 0;
+
+        for(int o: used_orders) {
+            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) 
+                small_used_items += entry.getValue();
+        }
+
+        for(int o: big_used_orders) {
+            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) 
+                big_used_items += entry.getValue();
+        }
+
+        double smallOpt = used_aisles.size() > 0 ? small_used_items / used_aisles.size() : 0;
+        double bigOpt = big_used_aisles.size() > 0 ? big_used_items / big_used_aisles.size() : 0;
+
+        System.out.println("S: " + smallOpt + " B: " + bigOpt);
+
+        if (bigOpt > smallOpt) {
+            used_orders.clear();
+            used_aisles.clear();
+
+            for (int i = 0; i < big_used_orders.size(); i++) 
+                used_orders.add(bigToOld.get(big_used_orders.get(i)));
+
+            for (int a : big_used_aisles) used_aisles.add(a);
+            
+            // Xq no funciona esto
+            // used_aisles = new ArrayList<>(big_used_aisles);
+
+            return biter;
+        }
         
         for (int i=0; i<used_orders.size(); i++) 
             used_orders.set(i, smallToOld.get(used_orders.get(i)));
