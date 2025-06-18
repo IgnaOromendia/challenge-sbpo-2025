@@ -25,9 +25,10 @@ public class DivideSolver extends MIPSolver {
         Map<Integer, Integer> smallToOld = new HashMap<>();
         Map<Integer, Integer> bigToOld = new HashMap<>();
         
+        // Se dividen ordenes en grandes y chicas, se arman mappeos para indexar
         for (int o=0; o<orders.size(); o++) {
             int acum = 0;
-            for (Map.Entry<Integer, Integer> entry : orders.get(0).entrySet()) {
+            for (Map.Entry<Integer, Integer> entry : orders.get(o).entrySet()) {
                 acum += entry.getValue();
                 if (acum > 1) break;
             }
@@ -44,6 +45,7 @@ public class DivideSolver extends MIPSolver {
         used_orders.clear();
         used_aisles.clear();
 
+        // Solucion greedy que usa solo ordenes de tamaño 1
         double greedySolution = 0;
 
         if (sizeOneOrders.size() > this.waveSizeLB) {
@@ -51,6 +53,7 @@ public class DivideSolver extends MIPSolver {
             greedySolution = greedyCovering.solve(used_orders, used_aisles);
         }
 
+        // Resolvemos de forma exacta para las ordenes de tamaño 1 y para las otras
         ParametricSolver smallParamSolver = new ParametricSolver(sizeOneOrders, aisles, nItems, waveSizeLB, waveSizeUB);
         ParametricSolver bigParamSolver   = new ParametricSolver(bigOrders, aisles, nItems, waveSizeLB, waveSizeUB);
 
@@ -60,18 +63,26 @@ public class DivideSolver extends MIPSolver {
         List<Integer> big_used_aisles = new ArrayList<>();
         
         GreedySolver greedySolver = new GreedySolver(bigOrders, aisles, nItems, waveSizeLB, waveSizeUB);
-        greedySolver.solve(big_used_orders, big_used_aisles);
+        double greedySolutionForBigOrders = greedySolver.solve(big_used_orders, big_used_aisles);
+
+        bigParamSolver.startFromGreedySolution(greedySolutionForBigOrders);
 
         int iter  = smallParamSolver.solveMILFP(sizeOneOrders, used_orders, used_aisles, stopWatch);
         int biter = bigParamSolver.solveMILFP(bigOrders, big_used_orders, big_used_aisles, stopWatch);
 
-        double small_used_items = 0, big_used_items = 0;
 
-        for(int o: used_orders) {
-            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) 
-                small_used_items += entry.getValue();
+        // Remappeamos las soluciones a los indices reales
+        for (int i=0; i< used_orders.size(); i++) {
+            used_orders.set(i, smallToOld.get(used_orders.get(i)));
         }
 
+        for (int i=0; i< big_used_orders.size(); i++) {
+            big_used_orders.set(i, bigToOld.get(big_used_orders.get(i)));
+        }
+
+        double small_used_items = used_orders.size(); // Las ordenes tienen tamaño 1, la cantidad de items es simplemente la cantidad de ordenes 
+        
+        double big_used_items = 0;
         for(int o: big_used_orders) {
             for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) 
                 big_used_items += entry.getValue();
@@ -80,12 +91,11 @@ public class DivideSolver extends MIPSolver {
         double smallOpt = used_aisles.size() > 0 ? small_used_items / used_aisles.size() : 0;
         double bigOpt = big_used_aisles.size() > 0 ? big_used_items / big_used_aisles.size() : 0;
 
-        System.out.println("Smaller before local seach: " + smallOpt);
-        System.out.println("Bigger before local seach: " + bigOpt);
+        System.out.println("(Pre local serach) S: " + smallOpt + ", B: " + bigOpt);
 
         LocalSearcher localSearcher = new LocalSearcher(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-        bigOpt = localSearcher.search(big_used_orders, big_used_aisles);
-        smallOpt = localSearcher.search(used_orders, used_aisles);
+        if (!big_used_aisles.isEmpty()) bigOpt = localSearcher.search(big_used_orders, big_used_aisles);
+        if (!used_aisles.isEmpty()) smallOpt = localSearcher.search(used_orders, used_aisles);
 
         System.out.println("S: " + smallOpt + ", B: " + bigOpt);
 
@@ -93,20 +103,16 @@ public class DivideSolver extends MIPSolver {
             used_orders.clear();
             used_aisles.clear();
 
-            for (int i = 0; i < big_used_orders.size(); i++) 
-                used_orders.add(bigToOld.get(big_used_orders.get(i)));
-
+            for (int o : big_used_orders) used_orders.add(o);
             for (int a : big_used_aisles) used_aisles.add(a);
             
             // Xq no funciona esto
             // used_aisles = new ArrayList<>(big_used_aisles);
 
             return biter;
+        } else {
+
+            return iter;
         }
-        
-        for (int i=0; i<used_orders.size(); i++) 
-            used_orders.set(i, smallToOld.get(used_orders.get(i)));
-        
-        return iter;
     }
 }
