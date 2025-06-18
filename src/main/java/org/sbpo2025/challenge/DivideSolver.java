@@ -84,8 +84,8 @@ public class DivideSolver extends MIPSolver {
         System.out.println("Bigger before local seach: " + bigOpt);
 
         LocalSearcher localSearcher = new LocalSearcher(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-        localSearcher.search(big_used_orders, big_used_aisles);
-        localSearcher.search(used_orders, used_aisles);
+        bigOpt = localSearcher.search(big_used_orders, big_used_aisles);
+        smallOpt = localSearcher.search(used_orders, used_aisles);
 
         System.out.println("S: " + smallOpt + ", B: " + bigOpt);
 
