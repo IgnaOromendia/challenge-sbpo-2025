@@ -34,6 +34,10 @@ public class HybridSolver extends MIPSolver {
 
         boolean breakSym = false;
         boolean useGreedyWithLP = false;
+        boolean onlyBinary = false;
+        boolean mixWithBinary = false;
+        boolean useLagrange = false;
+        boolean useLocalSearch = true;
 
         if (breakSym) {
             List<List<Integer>> equivalentOrders = groupEquivalent(orders);
@@ -75,16 +79,13 @@ public class HybridSolver extends MIPSolver {
                 }
             }
 
+            greedyLPSolver.endCplex();
+
             if (bestAisle != -1) greedyLPSolver.buildUsedAisles(bestAisle, used_aisles);
         }
 
         this.lowerBound = Math.max(this.lowerBound, this.currentBest);
-        this.upperBound = Math.min(this.upperBound, Math.min(greedyUpperBound(aisles), relaxationSolver.solveLP()));
-
-        boolean onlyBinary = false;
-        boolean mixWithBinary = false;
-        boolean useLagrange = false;
-        boolean useLocalSearch = true;
+        this.upperBound = Math.min(this.upperBound, Math.min(greedyUpperBound(aisles), relaxationSolver.solveLP()));        
 
         while (Math.abs(objValue) > PRECISION && this.upperBound - this.lowerBound > BINARY_RANGE && it < MAX_ITERATIONS) {
             if (onlyBinary || (it % 2 == 0 && mixWithBinary)) {
