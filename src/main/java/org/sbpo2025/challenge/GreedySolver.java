@@ -16,8 +16,7 @@ public class GreedySolver {
     private final int waveSizeLB;
     private final int waveSizeUB;
 
-    public GreedySolver(List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles,
-                                    int nItems, int waveSizeLB, int waveSizeUB) {
+    public GreedySolver(List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
         this.orders = orders;
         this.aisles = aisles;
         this.nItems = nItems;
@@ -26,11 +25,15 @@ public class GreedySolver {
     }
 
     public double solve(List<Integer> ordersToSave, List<Integer> aislesToSave) {
+        return solve(ordersToSave, aislesToSave, -1);
+    }
+
+    public double solve(List<Integer> ordersToSave, List<Integer> aislesToSave, double aLowerBound) {
         List<Integer> aislesSortedByNumElements = getMapIndicesSortedByMapSumOfValues(this.aisles);
         LinkedList<Integer> ordersSortedByNumElements = new LinkedList<>(getMapIndicesSortedByMapSumOfValues(this.orders)); // Linked list para remover en O(1) desde adentro
         
         int[] elementsPerType = new int[this.nItems]; // Inicializa a 0 automaticamente
-        int curElements = 0; double bestRatio = -1;
+        int curElements = 0; double bestRatio = aLowerBound;
 
         // Guardo todas las ordenes elegidas en orden, y un indice que me dice donde termina la mejor
         // encontrada hasta el momento (que debe ser un prefijo de las totales elegidas)
@@ -80,7 +83,7 @@ public class GreedySolver {
             }
         }
 
-        if (bestRatio != -1) { // Se encontro alguna solucion
+        if (bestRatio > aLowerBound) { // Se encontro alguna solucion
             ordersToSave.clear();
             aislesToSave.clear();
 
