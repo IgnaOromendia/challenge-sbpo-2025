@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.time.StopWatch;
 
+import ilog.cplex.IloCplex;
+
 public class DivideSolver extends MIPSolver {
 
 
@@ -60,7 +62,7 @@ public class DivideSolver extends MIPSolver {
         ParametricSolver finalSolver = new ParametricSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         finalSolver.startFromGreedySolution(bestOpt);
     
-        return finalSolver.solveMILFP(used_orders, used_aisles, 0.01, stopWatch);
+        return finalSolver.solveMILFP(used_orders, used_aisles, 0.01, IloCplex.MIPStartEffort.SolveMIP, stopWatch);
     }
 
     private double solveSubMIP(List<Map<Integer,Integer>> subMIPOrders, Map<Integer,Integer> ordersMap, List<Integer> subMIPUsedOrders, List<Integer> subMIPUsedAisles, StopWatch stopWatch) {

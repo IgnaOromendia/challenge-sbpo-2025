@@ -82,6 +82,10 @@ public abstract class MIPSolver extends CPLEXSolver {
 
     // Generamos el modelo una única vez por instancia
     protected void generateMIP(List<Integer> used_orders, List<Integer> used_aisles, RunnableCode extraCode) {
+        generateMIP(used_orders, used_aisles, IloCplex.MIPStartEffort.Auto, extraCode);
+    }
+
+    protected void generateMIP(List<Integer> used_orders, List<Integer> used_aisles, IloCplex.MIPStartEffort anEffort, RunnableCode extraCode) {
         try {
             // Cplex Params
             setCPLEXParamsTo();
@@ -101,7 +105,7 @@ public abstract class MIPSolver extends CPLEXSolver {
             if (extraCode != null) extraCode.run(this.cplex, this.X, this.Y);            
             
             // Inicializamos con el valor anterior
-            usePreviousSolution(used_orders, used_aisles);
+            usePreviousSolution(used_orders, used_aisles, anEffort);
         
         } catch (IloException e) {
             System.out.println(e.getMessage());
@@ -185,7 +189,7 @@ public abstract class MIPSolver extends CPLEXSolver {
         this.objective = this.cplex.addMaximize(obj);
     }
 
-    private void usePreviousSolution(List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
+    private void usePreviousSolution(List<Integer> used_orders, List<Integer> used_aisles, IloCplex.MIPStartEffort anEffort) throws IloException {
         if (used_orders.size() != 0 || used_aisles.size() != 0) {
             IloIntVar[] varsToSet = new IloIntVar[used_orders.size() + used_aisles.size()];
 
@@ -204,14 +208,14 @@ public abstract class MIPSolver extends CPLEXSolver {
             double[] ones = new double[varsToSet.length];
             Arrays.fill(ones, 1);
 
-            // Nivel 0 (cero) MIPStartAuto: Automático, deja que CPLEX decida.
-            // Nivel 1 (uno) MIPStartCheckFeas: CPLEX comprueba la viabilidad del inicio del PIM.
-            // Nivel 2 MIPStartSolveFixed: CPLEX resuelve el problema fijo especificado por el inicio MIP.
-            // Nivel 3 MIPStartSolveMIP: CPLEX resuelve un subMIP.
-            // Nivel 4 MIPStartRepair: CPLEX intenta reparar el inicio MIP si es inviable, según el parámetro que establece la frecuencia para intentar reparar el inicio MIP inviable, ' CPXPARAM_MIP_Limits_RepairTries (es decir, ' IloCplex::Param::MIP::Limits::RepairTries).
-            // Nivel 5 MIPStartNoCheck: CPLEX acepta el inicio del PIM sin ninguna comprobación. Es necesario completar el inicio de MIP.
+            //  0 MIPStartAuto: Automático, deja que CPLEX decida.
+            //  1 MIPStartCheckFeas: Verifica si la solución es válida, pero no la usa para la búsqueda.
+            //  2 MIPStartSolveFixed: Fija las variables enteras a los valores dados y resuelve el problema resultante (solo variables continuas libres).
+            //  3 MIPStartSolveMIP: Usa tu solución como punto de partida para resolver el MIP completo desde ahí.
+            //  4 MIPStartRepair: Si no es factible, intenta repararla para convertirla en una solución válida.
+            //  5 MIPStartNoCheck: Supone que la solución es factible sin comprobarla. Solo válida si el modelo no cambia desde que se generó el MIP start.
 
-            this.cplex.addMIPStart(varsToSet, ones, IloCplex.MIPStartEffort.Auto);
+            this.cplex.addMIPStart(varsToSet, ones, anEffort);
         }
     }
 

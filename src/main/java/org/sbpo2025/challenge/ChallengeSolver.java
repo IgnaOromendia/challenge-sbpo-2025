@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.time.StopWatch;
 
+import ilog.cplex.IloCplex;
+
 public class ChallengeSolver {
     private final long MAX_RUNTIME = 600000; // milliseconds; 10 minutes
 
@@ -51,10 +53,10 @@ public class ChallengeSolver {
         List<Integer> used_aisles = new ArrayList<>();
 
         Boolean useBinarySearchSolution = false;
-        Boolean useParametricAlgorithmMILFP = false;
+        Boolean useParametricAlgorithmMILFP = true;
         Boolean useFixedAisles = false;
         Boolean useHybrid = false;
-        Boolean useDivide = true;
+        Boolean useDivide = false;
         String strategy = "";
         Integer iterations = 1;
 
@@ -64,7 +66,6 @@ public class ChallengeSolver {
         double greedySolutionValue = this.greedySolver.solve(greedySolutionOrders, greedySolutionAisles);
         
         if (greedySolutionValue != -1) {
-            parametricSolver.startFromGreedySolution(greedySolutionValue);
             hybridSolver.startFromGreedySolution(greedySolutionValue);
             used_orders = greedySolutionOrders;
             used_aisles = greedySolutionAisles;
@@ -74,7 +75,7 @@ public class ChallengeSolver {
             iterations = binarySolver.binarySearchSolution(used_orders, used_aisles, aisles, stopWatch);
             strategy = "binary";
         } else if (useParametricAlgorithmMILFP) {
-            iterations = parametricSolver.solveMILFP(orders, used_orders, used_aisles, stopWatch);
+            iterations = parametricSolver.solveMILFP(used_orders, used_aisles, 0.25, IloCplex.MIPStartEffort.SolveMIP, stopWatch);
             strategy = "parametric";
         } else if (useFixedAisles) {
             fixedAisleSolver.solveFixedAisles(used_orders, used_aisles);
