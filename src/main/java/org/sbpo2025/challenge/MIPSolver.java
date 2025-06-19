@@ -51,9 +51,9 @@ public abstract class MIPSolver extends CPLEXSolver {
     }
 
     // Resovlemos acutalizando la función objetivo
-    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, int it) {
+    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, double gapTolerance) {
         try {
-            this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, Math.max(0, GAP_TOLERANCE - (0 * it)));
+            this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, gapTolerance);
 
             setObjectiveFunction(q);
 
@@ -123,9 +123,7 @@ public abstract class MIPSolver extends CPLEXSolver {
         IloLinearIntExpr exprUB = this.cplex.linearIntExpr();
 
         for(int o = 0; o < this.orders.size(); o++) {
-            int sizeOfOrder = 0;
-            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) 
-                sizeOfOrder += entry.getValue();
+            int sizeOfOrder = orderItemSum(o);
                 
             exprLB.addTerm(sizeOfOrder, this.X[o]);
             exprUB.addTerm(sizeOfOrder, this.X[o]);
@@ -174,14 +172,8 @@ public abstract class MIPSolver extends CPLEXSolver {
     protected void setObjectiveFunction(double alpha) throws IloException {
         IloLinearNumExpr obj = this.cplex.linearNumExpr();
 
-        for(int o = 0; o < this.orders.size(); o++) {
-            int sumOfOrder = 0;
-            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet())
-                sumOfOrder += entry.getValue();
-
-            obj.addTerm(sumOfOrder, this.X[o]);
-        }
-            
+        for(int o = 0; o < this.orders.size(); o++) 
+            obj.addTerm(orderItemSum(o), this.X[o]);    
         
         for(int a = 0; a < this.aisles.size(); a++) 
             obj.addTerm(-alpha, this.Y[a]);
@@ -263,6 +255,25 @@ public abstract class MIPSolver extends CPLEXSolver {
         }
 
         return pickedObjects / usedColumns;
+    }
+
+    protected int ordersItemSum(List<Integer> ordersToSum) {
+        int sum = 0;
+        
+        for(int order: ordersToSum) 
+            for (Map.Entry<Integer, Integer> entry : this.orders.get(order).entrySet()) 
+                sum += entry.getValue();
+
+        return sum;
+    }
+
+    protected int orderItemSum(Integer orderToSum) {
+        int sum = 0;
+        
+        for (Map.Entry<Integer, Integer> entry : this.orders.get(orderToSum).entrySet()) 
+            sum += entry.getValue();
+
+        return sum;
     }
 
 }
