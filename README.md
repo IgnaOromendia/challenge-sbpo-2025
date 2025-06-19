@@ -1,11 +1,11 @@
 ## Tareas pendientes
 
-- Testear todo, ahora que el Divide anda bien.
-- Poner GAP como parametro en parametrico. Usar gap 0 en la ultima iteracion.
 - Capaz eliminar simetrias agregando variables no binaria (si hay k copias de la orden o, entonces poner una variable de 0 ak)
 
 
 ## Tareas Hechas
+- Testear todo, ahora que el Divide anda bien **Hecho!**.
+- Poner GAP como parametro en parametrico. Usar gap 0 en la ultima iteracion **Hecho!**.
 - Pensar heuristicas que trabajen a partir de las soluciones del modelo. **Lu e Igna** 
 - Correr Dataset B idem, para hacer los ground truths **Igna: Hecho!**
 - Factorizar en archivos distintos: Parametric, Binary, CPLEX runner, Greedy **Igna: Hecho!**
