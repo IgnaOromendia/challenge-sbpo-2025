@@ -1,5 +1,8 @@
 ## Tareas pendientes
 
+- Analizar cuántos pasillos usa la solución óptima de los distintos casos, y ver que forma tienen: cantidad de elementos, cantidad de elementos distintos, cantidad de ordenes que puede satisfacer cada pasillo.
+- Ver pares de pasillos contenidos
+- Qué tan rápido anda todo para una cantidad fija de pasillos?
 - Capaz eliminar simetrias agregando variables no binaria (si hay k copias de la orden o, entonces poner una variable de 0 ak)
 
 
