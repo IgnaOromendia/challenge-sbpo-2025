@@ -57,6 +57,8 @@ public abstract class MIPSolver extends CPLEXSolver {
 
             setObjectiveFunction(q);
 
+            usePreviousSolution(used_orders, used_aisles, IloCplex.MIPStartEffort.SolveMIP);
+
             if (this.cplex.solve())  {
                 extractSolutionFrom(used_orders, used_aisles);
                 return this.cplex.getObjValue();

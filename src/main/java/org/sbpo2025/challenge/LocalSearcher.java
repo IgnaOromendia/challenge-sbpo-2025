@@ -1,5 +1,6 @@
 package org.sbpo2025.challenge;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +22,13 @@ public class LocalSearcher {
     }
 
     public double search(List<Integer> used_orders, List<Integer> used_aisles) {
+        return search(used_orders, used_aisles, 0);
+    }
+
+    public double search(List<Integer> used_orders, List<Integer> used_aisles, double currentBest) {
+
+        List<Integer> localOrders = new ArrayList<>(used_orders);
+
         // Dispoinibildad de items
         int[] availableItems = new int[this.nItems]; 
         int[] availableOrders = new int[this.orders.size()];
@@ -30,14 +38,14 @@ public class LocalSearcher {
             for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet())
                 availableItems[entry.getKey()] += entry.getValue();
 
-        for(Integer o : used_orders) 
+        for(Integer o : localOrders) 
             for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) {
                 availableGap -= entry.getValue();
                 availableItems[entry.getKey()] -= entry.getValue();
             }
 
         for(int o = 0; o < this.orders.size(); o++)
-            if (!used_orders.contains(o)) 
+            if (!localOrders.contains(o)) 
                 availableOrders[o] = 1;
     
         // Por cada orden no usada intentar agregar en los pasillos usados
@@ -58,14 +66,14 @@ public class LocalSearcher {
                     availableItems[entry.getKey()] -= entry.getValue();
 
                 availableGap = availableGapCopy;
-                used_orders.add(o);
+                localOrders.add(o);
                 availableOrders[o] = 0;
                 
             }
                 
         // Por cada orden vemos si al eliminarla podemos agregar otra orden con más elementos
-        for(int i = 0; i < used_orders.size(); i++) {
-            int o = used_orders.get(i);
+        for(int i = 0; i < localOrders.size(); i++) {
+            int o = localOrders.get(i);
 
             int availableGapWithoutOrder = availableGap;
             boolean swapHappend = false;
@@ -109,7 +117,7 @@ public class LocalSearcher {
 
                 // System.out.println("Sale: " + o + " entra:" + swapableOrder);
 
-                used_orders.set(i, swapableOrder);
+                localOrders.set(i, swapableOrder);
 
                 swapHappend = true;
 
@@ -125,9 +133,15 @@ public class LocalSearcher {
 
         }
 
-        // System.out.println(this.waveSizeUB + " + " + availableGap + " / " + used_aisles.size());
+        double newBest = (double) (this.waveSizeUB - availableGap) / used_aisles.size();
 
-        return (double) (this.waveSizeUB - availableGap) / used_aisles.size();
+        if (newBest > currentBest) {
+            used_orders.clear();
+            for(int o: localOrders) used_orders.add(o);
+            currentBest = newBest;
+        }
+
+        return currentBest;
             
     }
     
