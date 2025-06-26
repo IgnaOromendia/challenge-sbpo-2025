@@ -23,18 +23,24 @@ def lambda_gap(obj, real_obj):
 def process_file(result_path, dataset):
     instancias = amount_of_orders_instance(dataset)
 
-    df = pd.read_csv(result_path)
+    df = pd.read_csv(result_path, dtype={"ordenes": int, "pasillos": int, "usados": int, "it": int})
+
     df_gt = pd.read_csv("./results/ground_truth_set_" + dataset + ".csv")
 
     df.insert(0, "instancia", df["ordenes"].apply(lambda x: instancias.get(int(x), "Total")))
 
     df = df.sort_values(by="instancia", ascending=True, ignore_index=True)
 
-    df.insert(3, "expected", df_gt["obj"]) 
-    df.insert(4, "error", df.apply(lambda row: lambda_gap(row["obj"], df_gt.loc[row.name, "obj"]), axis=1))
+    df.insert(5, "expected", df_gt["obj"]) 
+    df.insert(6, "error", df.apply(lambda row: lambda_gap(row["obj"], df_gt.loc[row.name, "obj"]), axis=1))
 
     new_row = {"instancia": "Tiempo total", "tiempo": df["tiempo"].sum() / 60}
     df.loc[len(df)] = new_row
+
+    df["ordenes"] = df["ordenes"].fillna(0).astype(int)
+    df["pasillos"] = df["pasillos"].fillna(0).astype(int)
+    df["usados"] = df["usados"].fillna(0).astype(int)
+    df["it"] = df["it"].fillna(0).astype(int)
 
     df.to_csv(result_path, index=False)
 
