@@ -1,51 +1,118 @@
-## Tareas pendientes
+# challenge-sbpo-2025
 
-- Call back
-- Testear cambiar el gap y el tl al mismo tiempo 
-- Qué tan rápido anda todo para una cantidad fija de pasillos?
-- Capaz eliminar simetrias agregando variables no binaria (si hay k copias de la orden o, entonces poner una variable de 0 ak)
+Welcome to the Mercado Libre First Optimization Challenge repository! This challenge is part of the [LVII Brazilian Symposium on Operations Research (SBPO 2025)](https://sbpo2025.galoa.com.br/sbpo-2025/page/5407-home). For further details, please read the post on Medium ([Portuguese version](https://medium.com/mercadolibre-tech/desafio-mercado-livre-de-otimiza%C3%A7%C3%A3o-3a4009607ee3); [Spanish version](https://medium.com/mercadolibre-tech/primer-desaf%C3%ADo-mercado-libre-de-optimizaci%C3%B3n-e8dad236054c)).
+In this repository, you will find the base code for the framework, documentation, and other resources related to the challenge.
+
+## Change Log
+
+- **26-06-2025**: [Preliminary qualification phase results](results/qualification_phase.pdf) are now available. See section [Challenge Results Explanation](#challenge-results-explanation) for more details.
+- **16-04-2025**: [Sprint phase results](results/sprint_phase.pdf) updated. See section [Challenge Results Explanation](#challenge-results-explanation) for more details.
+- **15-04-2025**: [Sprint phase results](results/sprint_phase.pdf) are now available.
+- **15-04-2025**: Dataset `B` is now available.
+- **05-03-2025**: Updated the challenge rules to clarify that, due to allowing a multithread environment, no seed for random generation will be provided.
+- **27-02-2025**: Updated the challenge rules to include specific details of the computer environment in which the challenge will be run.
+- **21-02-2025**: Corrected OR-Tools version to 9.11.
+- **17-01-2025**: Base framework code, documentation and dataset `A`.
+
+## Challenge Results Explanation
+
+### Understanding Your Score
+
+Below is a general explanation of the different scores you may see in the rankings (for a detailed explanation, please refer to the [challenge rules](docs/es_challenge_rules.pdf)):
+
+#### Positive Score
+
+A positive score indicates successful submissions that produced valid solutions, although there may be some instances that produced invalid solutions or errors.
+
+#### Zero Score
+
+Teams with a score of 0 could have encountered one or more of the following issues:
+
+- **Compilation Success, no valid solutions**: your code compiled successfully, but no solutions met the feasibility criteria across any test cases.
+- **Timeouts**: your program successfully compiled but exceeded the time limit (600 seconds) on the test instances.
+- **Empty output files**: your program ran but produced empty output files or failed to generate any output.
+- **Invalid Format**: your outputs did not follow the required format and could not be processed by the evaluation system.
+
+#### Negative Score
+
+Teams with a negative score typically encountered:
+
+- **Compilation errors**: the submitted code failed to compile using the standard Maven build process. Common causes include:
+    - Incompatible Java or library (e.g., CPLEX or OR-Tools) versions
+    - Missing files or classes
+    - Syntax errors
+    - References to libraries that weren't included in the submission
+    - Dependency issues
+
+- **Runtime errors**: the program compiled but encountered errors during execution, such as:
+    - Null pointer exceptions
+    - Array index out of bounds
+    - Class not found exceptions
+    - Other runtime exceptions
+
+## Challenge Rules and Problem Description
+
+Spanish and Portuguese versions of the challenge rules and problem description can be found in the `docs` directory:
+
+- **Spanish**:
+  - [Problem description](docs/es_problem_description.pdf)
+  - [Challenge rules](docs/es_challenge_rules.pdf)
 
 
-## Tareas Hechas
-- Analizar cuántos pasillos usa la solución óptima de los distintos casos, y ver que forma tienen: cantidad de elementos, cantidad de elementos distintos, cantidad de ordenes que puede satisfacer cada pasillo. **Igna: Hecho!**
-- Ver pares de pasillos contenidos **Igna: Hecho!**
-- Testear todo, ahora que el Divide anda bien **Hecho!**.
-- Poner GAP como parametro en parametrico. Usar gap 0 en la ultima iteracion **Hecho!**.
-- Pensar heuristicas que trabajen a partir de las soluciones del modelo. **Lu e Igna** 
-- Correr Dataset B idem, para hacer los ground truths **Igna: Hecho!**
-- Factorizar en archivos distintos: Parametric, Binary, CPLEX runner, Greedy **Igna: Hecho!**
-- Iniciar cada iteracion del parametrico con el resultado de la iteracion anterior. **Igna: Hecho!**
-- Jugar con los parámetros de Simplex **Igna: Hecho!**
-- Correr Dataset A con precision e-4 **Igna: Hecho!**
-- Potencialmente romper simetrías (ordenes iguales) unificandolas en una sola variable o dando un orden en el cual agregarlas a la solución **No hay tales**
-- Revisar esto https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6858622 **Igna: Hecho!**
-- Que el parametrico use ALGO de todo lo que hicimos (cota inferior greedy, ) **Igna: Hecho!**
-- En el run_solver agregar que se corra el checker.py contra las soluciones. **Cifu: Hecho!**
-- Hacer un algoritmo greedy para intentar encontrar una solución inicial que sea mejor que la que da Simplex con k=0. Una idea es tomar pasillos grandes y recorrer las ordenes de mas grandes a mas chicas intentando colocarlas. **Cifu: Hecho!**
-- Cuando se resuelve el problema $\max(N(x) - qD(x))$ una cota superior $B$ a este problema se traduce a una cota al problema fraccional como $\frac{N(x)}{D(x)} \leq \frac{B}{D(x)} + q \leq B + q$. Usar.
-- Formato de salida: hay que imprimir las órdenes y pasillos en orden?
-- Resolver la relajación lineal para encontrar una cota superior. Hay que implementar el método de Cooper. **Igna: Hecho!**
-- La binaria no puede resolver el llamado a simplex en instancias grandes donde el k está muy cerca del valor óptimo real. Considerar no usar la binaria en general (solo hacer paramétrico) o en particular (hacer binaria hasta cierto punto). **Igna: Hecho!**
-- Hacer un tester del modelo: un conjunto de instancias chicas de las cuales sepamos la solución, y un bash que corrar el código completo y verifique si las soluciones son correctas y alcanzan el óptimo. Entre estas instancias debería haber casos borde. **Santi: Hecho!**
-- Refactorizar el código. **Igna: Hecho!**
-- Poner función de optimización en la binaria: ahora mismo estamos pidiendo que $\sum_{ordenes} \sum_{e en orden} e \geq k |A|$ donde $A$ es el conjunto de pasillos elegidos, y no estamos optimizando nada. Podemos pedir maximizar $\sum_{o \in ordenes} \sum_{e \in o} e - k |A|$ (incluso podemos sacar la restricción de que sea mayor a cero). Hay que ver cómo empeora la performance si optimizamos en vez de pedir factibilidad. **Igna: Hecho!**
-- Mejorar las cotas superiores e inferiores: **Luciana: Hecho!**
-  - Como inferior se puede usar el resultado de la primera corrida. Alternativamente podemos usar alguna solución golosa.
-  - Como superior podemos usar la suma de los elementos. También podemos acotra a mano el caso de un solo pasillo, y luego acotar lo que queda por UB / 2. La cota de un pasillo es directamente el tamaño del pasillo.
+- **Portuguese**:
+  - [Problem description](docs/pt_problem_description.pdf)
+  - [Challenge rules](docs/pt_challenge_rules.pdf)
 
-## Cómo se hace un benchmark
+## Project Structure
 
-Se correr todos los casos, con tolerancia $10^{-3}$.
+- `src/main/java/org/sbpo2025/challenge`
+  - `Challenge.java` ⟶ Main Java class for reading an input, solving the challenge, and writing the output.
+  - `ChallengeSolver.java` ⟶ Java class responsible for solving the wave order picking problem. Most of the solving logic should be implemented here.
+  - `ChallengeSolution.java` ⟶ Java class representing the solution to the wave order picking problem.
+- `datasets/` ⟶ Directory containing input instance files.
+- `run_challenge.py` ⟶ Python script to compile code, run benchmarks, and evaluate solutions.
+- `checker.py` ⟶ Python script for evaluating the feasibility and objective value of solutions.
 
-## Resultados actuales
+## Prerequisites
 
-El objetivo es procesar todas las instancias en 10 minutos encontrando los óptimos (módulo alguna precisión epsilon)
+- Java 17
+- Maven
+- Python 3.8 or higher
+- CPLEX 22.11 (optional)
+- OR-Tools 9.11 (optional)
 
-| Fecha       | Tiempo en procesar todo  |
-|-------------|------------------------  |
-|             |                          |        
+## Setup
 
-## Ejemplos de cómo correr las cosas
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/mercadolibre/challenge-sbpo-2025
+    ```
+2. Set the paths to CPLEX and OR-Tools libraries in `run_challenge.py` if needed, e.g.:
+    ```sh
+    cplex_path = "$HOME/CPLEX_Studio2211/opl/bin/arm64_osx/"
+    or_tools_path = "$HOME/Documents/or-tools/build/lib/"
+    ```
+
+## Usage
+
+### Running the challenge
+
+To compile the code and run benchmarks, use the following command:
+```sh
+python run_challenge.py <source_folder> <input_folder> <output_folder>
+```
+Where `<source_folder>` is the path to the Java source code, more specifically, where the `pom.xml` file is located.
+
+In order to run this script you will need the `timeout` (or `gtimeout` on macOS) command installed. You can install it using `apt-get install coreutils` (or equivalent) on Linux or `brew install coreutils` on macOS.
+
+### Checking solution viability
+
+To check the feasibility and objective value of a solution, use the following command:
+```sh
+python checker.py <input_file> <solution_file>
+```
+
+## Examples
 
 1. Compile and run benchmarks:
     ```sh
