@@ -102,8 +102,8 @@ public class ChallengeSolver {
         String filePath = "./results/" + strategy + "_a.csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
-            if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,obj,tiempo,it\n");
-            writer.write(this.orders.size() + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
+            if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,pasillos,usados,obj,tiempo,it\n");
+            writer.write(this.orders.size() + "," + this.aisles.size() + "," + solution.aisles().size() + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
