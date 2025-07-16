@@ -29,7 +29,18 @@ public class GreedySolver {
     }
 
     public double solve(List<Integer> ordersToSave, List<Integer> aislesToSave, double aLowerBound) {
-        List<Integer> aislesSortedByNumElements = getMapIndicesSortedByMapSumOfValues(this.aisles);
+        return solve(ordersToSave, aislesToSave, aLowerBound, true);
+    }
+
+
+    public double solve(List<Integer> ordersToSave, List<Integer> aislesToSave, double aLowerBound, boolean sortByNumberOfValues) {
+        List<Integer> aislesSortedByNumElements;
+
+        if (sortByNumberOfValues)
+            aislesSortedByNumElements = getMapIndicesSortedByMapSumOfValues(this.aisles);
+        else
+            aislesSortedByNumElements = getMapIndicesSortedByNumDistinct(this.aisles);
+
         LinkedList<Integer> ordersSortedByNumElements = new LinkedList<>(getMapIndicesSortedByMapSumOfValues(this.orders)); // Linked list para remover en O(1) desde adentro
         
         int[] elementsPerType = new int[this.nItems]; // Inicializa a 0 automaticamente
@@ -99,6 +110,21 @@ public class GreedySolver {
 
         for (int i = 0; i < mapWithvalues.size(); i++) {
             int sum = mapWithvalues.get(i).values().stream().mapToInt(Integer::intValue).sum();
+            indicesAndSum.add(new AbstractMap.SimpleEntry<>(i, sum));
+        }
+
+        indicesAndSum.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
+
+        return indicesAndSum.stream()
+                            .map(a -> a.getKey())
+                            .collect(Collectors.toList());
+    }
+
+    private List<Integer> getMapIndicesSortedByNumDistinct(List<Map<Integer, Integer>> mapWithValues) {
+        List<Map.Entry<Integer, Integer>> indicesAndSum = new ArrayList<>();
+
+        for (int i = 0; i < mapWithValues.size(); i++) {
+            int sum = mapWithValues.get(i).keySet().size();
             indicesAndSum.add(new AbstractMap.SimpleEntry<>(i, sum));
         }
 
