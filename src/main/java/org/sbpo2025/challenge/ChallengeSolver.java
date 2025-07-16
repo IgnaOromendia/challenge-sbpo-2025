@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import javax.swing.text.StyledEditorKit.BoldAction;
+
 import org.apache.commons.lang3.time.StopWatch;
 
 import ilog.cplex.IloCplex;
@@ -31,6 +34,7 @@ public class ChallengeSolver {
     private final FixedAisleSolver fixedAisleSolver;
     private final HybridSolver hybridSolver;
     private final DivideSolver divideSolver;
+    private final HalfAisleSolver halfAisleSolver;
 
     public ChallengeSolver(
             List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
@@ -46,6 +50,7 @@ public class ChallengeSolver {
         this.fixedAisleSolver   = new FixedAisleSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.hybridSolver       = new HybridSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.divideSolver       = new DivideSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
+        this.halfAisleSolver    = new HalfAisleSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
     }
 
     public ChallengeSolution solve(StopWatch stopWatch) {  
@@ -53,23 +58,13 @@ public class ChallengeSolver {
         List<Integer> used_aisles = new ArrayList<>();
 
         Boolean useBinarySearchSolution = false;
-        Boolean useParametricAlgorithmMILFP = true;
+        Boolean useParametricAlgorithmMILFP = false;
         Boolean useFixedAisles = false;
         Boolean useHybrid = false;
         Boolean useDivide = false;
+        boolean useHalf   = true;
         String strategy = "";
         Integer iterations = 1;
-
-        List<Integer> greedySolutionOrders = new ArrayList<>();
-        List<Integer> greedySolutionAisles = new ArrayList<>();
-
-        double greedySolutionValue = this.greedySolver.solve(greedySolutionOrders, greedySolutionAisles);
-        
-        if (greedySolutionValue != -1) {
-            hybridSolver.startFromGreedySolution(greedySolutionValue);
-            used_orders = greedySolutionOrders;
-            used_aisles = greedySolutionAisles;
-        }
 
         if (useBinarySearchSolution) {
             iterations = binarySolver.binarySearchSolution(used_orders, used_aisles, aisles, stopWatch);
@@ -86,6 +81,9 @@ public class ChallengeSolver {
         } else if (useDivide) {
             iterations = divideSolver.solveMILFP(used_orders, used_aisles, stopWatch);
             strategy = "divide";
+        } else if (useHalf) {
+            iterations = halfAisleSolver.solveHalfAisleMILFP(used_orders, used_aisles, 0.25, stopWatch);
+            strategy = "half";
         }
 
         ChallengeSolution solution = new ChallengeSolution(Set.copyOf(used_orders), Set.copyOf(used_aisles));
