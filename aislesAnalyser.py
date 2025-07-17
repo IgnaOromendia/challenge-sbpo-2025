@@ -5,6 +5,7 @@ outputPath  = "output/output_"
 datasetPath = "datasets/"
 aislesPath = "aisles/"
 plotPath = "aisles/plots/"
+EPS = 1e-5
 
 def processOutputFile(filePath):
     with open(filePath, 'r') as file: 
@@ -12,12 +13,23 @@ def processOutputFile(filePath):
         o = int(lines[0].split()[0])
         return [int(aisle) for aisle in lines[o+2:]]
     
-def processItems(mapToFill, lines, from_ , to):
+def fillMaps(mapToFill, lines, from_ , to):
     for i, line in enumerate(lines[from_: to]):
         line = line.split()
         mapToFill[i] = {}
         for item, amount in zip(line[1::2], line[2::2]):
             mapToFill[i][int(item)] = int(amount)
+
+def processRarenessItems(aisles, nItems):
+    itemsAmount = [0] * nItems
+    itemsAppearences = [0] * nItems
+
+    for aisle, aisleItems in aisles.items():
+        for item, amount in aisleItems.items():
+            itemsAmount[item] += amount
+            itemsAppearences[item] += 1
+
+    return [1 / (itemsAmount[i] * (itemsAppearences[i] + EPS)) for i in range(nItems)]
 
 def processInstanceFile(filePath):
     with open(filePath, 'r') as file:
@@ -31,10 +43,12 @@ def processInstanceFile(filePath):
         aisles = {}
         orders = {}
 
-        processItems(orders, lines, 1, nOrders + 1)
-        processItems(aisles, lines, nOrders + 1, nOrders + nAisles + 1)
+        fillMaps(orders, lines, 1, nOrders + 1)
+        fillMaps(aisles, lines, nOrders + 1, nOrders + nAisles + 1)
 
-        return orders, aisles, nItems
+        rareness = processRarenessItems(aisles, nItems)
+
+        return orders, aisles, nItems, rareness
 
 def containedAisles(aisles, aisleToCompare, itemsToCompare):
     containedAisles = 0
@@ -55,12 +69,16 @@ def containedAisles(aisles, aisleToCompare, itemsToCompare):
 
     return containedAisles
 
-def processAisle(rows, aisle, orders, aisles, isUsed):
+def processAisle(rows, aisle, orders, aisles, isUsed, rareness):
     aisleItems = aisles[aisle];
     amountOfItems = sum(aisleItems.values())
     amountOfUniqueItems = len(aisleItems.keys())
     amountOfSatisfiableOrders = 0
     amountOfcontainedAisles = containedAisles(aisles, aisle, aisleItems)
+    aisleRareness = 0
+
+    for item, amount in aisleItems.items():
+        aisleRareness += rareness[item] * amount
 
     for order, orderItems in orders.items():
         
@@ -78,7 +96,8 @@ def processAisle(rows, aisle, orders, aisles, isUsed):
                  'uniqueItems': amountOfUniqueItems,
                  'satOrders': amountOfSatisfiableOrders,
                  'contained': amountOfcontainedAisles,
-                 'isUsed': isUsed})
+                 'isUsed': isUsed,
+                 'rareness': aisleRareness})
 
 def make_bars(df, ax, col, title):
     d = df.sort_values(col, ascending=False, ignore_index=True)
@@ -88,9 +107,10 @@ def make_bars(df, ax, col, title):
     ax.tick_params(axis="x", labelbottom=False)
 
 def plot_instance(df, fileName):
-    fig, axes = plt.subplots(2, 2, figsize=(18, 6))
+    fig, axes = plt.subplots(2, 3, figsize=(18, 6))
     make_bars(df, axes[0][0], "uniqueItems", "Ítems únicos")
     make_bars(df, axes[0][1], "items", "Total ítems")
+    make_bars(df, axes[0][2], "rareness", "Rareza")
     make_bars(df, axes[1][0], "satOrders","Órdenes satisfechas")
     make_bars(df, axes[1][1], "contained", "Pasillos contenidos")
 
@@ -131,11 +151,11 @@ if __name__ == "__main__":
             usedAisles = processOutputFile(outputFilePath)
 
         if os.path.isfile(inputFilePath):
-            orders, aisles, nItems = processInstanceFile(inputFilePath)
+            orders, aisles, nItems, rareness = processInstanceFile(inputFilePath)
 
         for aisle in aisles:
-            processAisle(rows, aisle, orders, aisles, aisle in usedAisles)
+            processAisle(rows, aisle, orders, aisles, aisle in usedAisles, rareness)
 
         df = pd.DataFrame(rows)
         df.to_csv(os.path.join(aislesPath, fileName.replace("txt","csv")), index=False)
-        plot_instance(df, fileName.replace("txt", ""))
+        plot_instance(df, fileName.replace(".txt", ""))
