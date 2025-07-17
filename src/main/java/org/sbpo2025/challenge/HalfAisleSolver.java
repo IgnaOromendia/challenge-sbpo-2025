@@ -9,8 +9,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.time.StopWatch;
 
-
-
 public class HalfAisleSolver {
 
     private final Map<Integer,Integer> newToOldIndex;
@@ -19,13 +17,13 @@ public class HalfAisleSolver {
     public HalfAisleSolver (List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
         newToOldIndex = new HashMap<>();
 
-        double nombre = 0.5;
+        double reductionSize = 0.75;
 
         List<Integer> aisleUniqeItemsSorted = getMapIndicesSortedByMapSumOfValues(aisles);
 
         List<Map<Integer, Integer>> filteredAisles = new ArrayList<Map<Integer,Integer>>();
 
-        for(int i = 0; i < aisleUniqeItemsSorted.size() * nombre; i++) {
+        for(int i = 0; i < aisleUniqeItemsSorted.size() * reductionSize; i++) {
             int aisle = aisleUniqeItemsSorted.get(i);
             newToOldIndex.put(filteredAisles.size(), aisle);
             filteredAisles.add(aisles.get(aisle));
@@ -51,7 +49,7 @@ public class HalfAisleSolver {
     }
 
     public int solveHalfAisleMILFP(List<Integer> used_orders, List<Integer> used_aisles, double gapTolerance, StopWatch stopWatch) {
-        int iterations = parametricSolver.solveMILFP(used_orders, used_aisles, 0, stopWatch);
+        int iterations = parametricSolver.solveMILFP(used_orders, used_aisles, gapTolerance, stopWatch);
 
         for(int a = 0; a < used_aisles.size(); a++) {
             int filterdAisle = used_aisles.get(a);
