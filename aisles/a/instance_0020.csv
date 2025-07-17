@@ -1,6 +1,6 @@
-aisle,items,uniqueItems,satOrders,contained,isUsed,rareness
-0,5,4,1,0,False,0.2396818232826462
+aisle,items,uniqueItems,contained,satOrders,isUsed,rareness
+0,5,4,0,1,False,0.2396818232826462
 1,6,4,1,1,True,0.3063482677278314
-2,5,3,2,0,False,0.23492001693294676
-3,5,4,2,0,True,0.28412611957943634
-4,6,4,3,0,False,0.3349196391565171
+2,5,3,0,2,False,0.23492001693294676
+3,5,4,0,2,True,0.28412611957943634
+4,6,4,0,3,False,0.3349196391565171
