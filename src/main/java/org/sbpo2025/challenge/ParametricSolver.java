@@ -24,7 +24,7 @@ public class ParametricSolver extends MIPSolver {
     }
 
     public int solveMILFP(List<Integer> used_orders, List<Integer> used_aisles, double gapTolerance, IloCplex.MIPStartEffort anEffort, StopWatch stopWatch) {
-        this.currentBest = greedySolver.solve(used_orders, used_aisles, this.currentBest);
+        this.currentBest = greedySolver.solve(used_orders, used_aisles, this.currentBest, false);
 
         double objValue = 1, q = this.currentBest;
         int it = 0;
