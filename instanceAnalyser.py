@@ -20,29 +20,39 @@ class Plotter:
         ax.bar(range(len(d)), d[col], color=colors)
         ax.set_title(title)
         ax.tick_params(axis="x", labelbottom=False)
+    
 
-    def plotInstance(self, df, filePath, fileName, height, width):
-        fig, axes = plt.subplots(height, width, figsize=(18, 6))
+    def plotAisleInstanceData(self, df, fileName):
+        df.to_csv(os.path.join(aislesPath, fileName.replace("txt","csv")), index=False)
+        fig, axes = plt.subplots(2, 3, figsize=(18, 6))
         axes = axes.flatten()
         self.makeBars(df, axes[0], "uniqueItems", "Ítems únicos")
-        if (height * width > 1): self.makeBars(df, axes[1], "items", "Total ítems")
-        if (height * width > 2): self.makeBars(df, axes[2], "rareness", "Rareza")
-        if (height * width > 3): self.makeBars(df, axes[3], "satOrders","Órdenes satisfechas")
-        if (height * width > 4): self.makeBars(df, axes[4], "contained", "Pasillos contenidos")
+        self.makeBars(df, axes[1], "items", "Total ítems")
+        self.makeBars(df, axes[2], "rareness", "Rareza")
+        self.makeBars(df, axes[3], "satOrders","Órdenes satisfechas")
+        self.makeBars(df, axes[4], "contained", "Pasillos contenidos")
 
         fig.suptitle(fileName, fontsize=14)
         fig.tight_layout()
 
-        fig.savefig(filePath + fileName + "_bars.png", dpi=150)
+        fig.savefig(fileName.replace(".txt", "") + fileName + "_bars.png", dpi=150)
         plt.close(fig)
-
-    def plotAisleInstanceData(self, df, fileName):
-        df.to_csv(os.path.join(aislesPath, fileName.replace("txt","csv")), index=False)
-        self.plotInstance(df, aislesPlotPath, fileName.replace(".txt", ""), 2, 3)
 
     def plotOrderInstanceData(self, df, fileName):
         df.to_csv(os.path.join(ordersPath, fileName.replace("txt","csv")), index=False)
-        self.plotInstance(df, ordersPlotPath, fileName.replace(".txt", ""), 1, 3)
+        df.to_csv(os.path.join(aislesPath, fileName.replace("txt","csv")), index=False)
+        fig, axes = plt.subplots(2, 2, figsize=(18, 6))
+        axes = axes.flatten()
+        self.makeBars(df, axes[0], "uniqueItems", "Ítems únicos")
+        self.makeBars(df, axes[1], "items", "Total ítems")
+        self.makeBars(df, axes[2], "rareness", "Rareza")
+        self.makeBars(df, axes[3], "cost ", "Costo estimado de satisfacerla") # cantidad de pasillo minimos
+
+        fig.suptitle(fileName, fontsize=14)
+        fig.tight_layout()
+
+        fig.savefig(fileName.replace(".txt", "") + fileName + "_bars.png", dpi=150)
+        plt.close(fig)
 
 class Processor:
     def __init__(self, inputFilePath, outputFilePath, fileName):
