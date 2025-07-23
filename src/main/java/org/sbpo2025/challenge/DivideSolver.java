@@ -91,7 +91,7 @@ public class DivideSolver extends MIPSolver {
 
     private void divideOrders() {
         for (int o = 0; o < orders.size(); o++) {
-            int acum = orderItemSum(o); // No es tan rápido como el for con el break pero no creo q tenga tanto impacto
+            int acum = 0; // ESTO HAY Q ARREGLARLO ERA ANTES orderItemSum(o); // No es tan rápido como el for con el break pero no creo q tenga tanto impacto
             
             if (acum > 1) {
                 bigToOld.put(bigOrders.size(), o);
