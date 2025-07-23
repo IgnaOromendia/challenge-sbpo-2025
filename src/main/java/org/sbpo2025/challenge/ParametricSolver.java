@@ -31,7 +31,7 @@ public class ParametricSolver extends MIPSolver {
 
         generateMIP(used_orders, used_aisles, anEffort, null);
 
-        // Duration startOfIteration = stopWatch.getDuration();
+        Duration startOfIteration = stopWatch.getDuration();
 
         while (Math.abs(objValue + Math.abs(objValue) * gapTolerance) >= PRECISION && it < MAX_ITERATIONS) {
             System.out.println("it: " + it + " q: " + q + " obj: " + objValue);
@@ -47,7 +47,7 @@ public class ParametricSolver extends MIPSolver {
 
             q = localSearcher.search(used_orders, used_aisles, q);
 
-            // if (stopWatch.getDuration().getSeconds() - startOfIteration.getSeconds() > TIME_LIMIT_SEC) break;
+            if (stopWatch.getDuration().getSeconds() - startOfIteration.getSeconds() > TIME_LIMIT_SEC) break;
             
             it++;
         }
