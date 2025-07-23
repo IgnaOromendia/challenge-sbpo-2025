@@ -115,8 +115,6 @@ public class LocalSearcher {
                 availableOrders[o] = 1;
                 availableOrders[swapableOrder] = 0;
 
-                // System.out.println("Sale: " + o + " entra:" + swapableOrder);
-
                 localOrders.set(i, swapableOrder);
 
                 swapHappend = true;
