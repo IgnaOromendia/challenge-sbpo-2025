@@ -22,7 +22,7 @@ public abstract class CPLEXSolver {
     protected final double TOLERANCE        = 1e-2;
     protected final double PRECISION        = 1e-4;
     protected final double BINARY_RANGE     = 1e-4;
-    protected final long TIME_LIMIT_SEC     = 600;
+    protected final long TIME_LIMIT_SEC     = 60;
     protected final double GAP_TOLERANCE    = 0.25;
     protected final int MAX_ITERATIONS      = 10;
 
@@ -81,6 +81,7 @@ public abstract class CPLEXSolver {
         this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, GAP_TOLERANCE);
 
         // Preprocesamiento
+        this.cplex.setParam(IloCplex.Param.Preprocessing.Presolve, true);
         this.cplex.setParam(IloCplex.Param.Preprocessing.Reduce, 3);
 
         // Planos de corte
