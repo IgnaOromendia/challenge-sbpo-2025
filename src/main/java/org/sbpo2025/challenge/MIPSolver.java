@@ -255,8 +255,7 @@ public abstract class MIPSolver extends CPLEXSolver {
         try {
             for (int o=0; o < this.orders.size(); o++)
                 if (this.cplex.getValue(this.X[o]) > TOLERANCE)
-                    for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet())        
-                        pickedObjects += entry.getValue();
+                    pickedObjects += this.orderItemSum[o];
         
             for (int a=0; a < this.aisles.size(); a++)
                 if (this.cplex.getValue(this.Y[a]) > TOLERANCE)
