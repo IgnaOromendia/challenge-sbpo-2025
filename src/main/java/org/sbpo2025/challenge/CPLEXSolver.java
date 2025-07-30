@@ -23,7 +23,7 @@ public abstract class CPLEXSolver {
     protected final double PRECISION        = 1e-4;
     protected final double BINARY_RANGE     = 1e-4;
     protected final long TIME_LIMIT_SEC     = 600;
-    protected final long TIME_LIMIT_SEC_IT  = 60;
+    protected final long TIME_LIMIT_SEC_IT  = 600;
     protected final int MAX_ITERATIONS      = 10;
 
     protected Boolean solutionInfeasible = false;
@@ -65,6 +65,7 @@ public abstract class CPLEXSolver {
         int availableThreads = Runtime.getRuntime().availableProcessors();
         this.cplex.setParam(IloCplex.Param.Threads, availableThreads);
         this.cplex.setParam(IloCplex.Param.Parallel, IloCplex.ParallelMode.Opportunistic);
+        cplex.setParam(IloCplex.Param.RandomSeed, 0);
 
         // Emphasis
         // 1 Factibilidad
@@ -82,6 +83,7 @@ public abstract class CPLEXSolver {
         this.cplex.setParam(IloCplex.Param.Preprocessing.Reduce, 3);
 
         // Planos de corte
+        // Volver a testear
         this.cplex.setParam(IloCplex.Param.MIP.Cuts.Cliques, 0);
         this.cplex.setParam(IloCplex.Param.MIP.Cuts.Covers, -1); // La que menos ayuda
         this.cplex.setParam(IloCplex.Param.MIP.Cuts.Disjunctive, 0);
