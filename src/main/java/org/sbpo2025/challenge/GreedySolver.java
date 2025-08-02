@@ -32,6 +32,13 @@ public class GreedySolver {
         return solve(ordersToSave, aislesToSave, aLowerBound, true);
     }
 
+    public double solve_with_both_greedies(List<Integer> ordersToSave, List<Integer> aislesToSave, double aLowerBound) {
+        LinkedList<Integer> ordersSortedByNumElements = new LinkedList<>(getMapIndicesSortedByMapSumOfValues(this.orders)); // Linked list para remover en O(1) desde adentro
+        
+        double first_greedy_value = solve_for_sorted_aisles_and_orders(ordersToSave, aislesToSave, ordersSortedByNumElements, getMapIndicesSortedByMapSumOfValues(this.aisles), aLowerBound);
+        
+        return solve_for_sorted_aisles_and_orders(ordersToSave, aislesToSave, ordersSortedByNumElements, getMapIndicesSortedByNumDistinct(this.aisles), Math.max(first_greedy_value, aLowerBound));
+    }
 
     public double solve(List<Integer> ordersToSave, List<Integer> aislesToSave, double aLowerBound, boolean sortByNumberOfValues) {
         List<Integer> aislesSortedByNumElements;
@@ -43,6 +50,10 @@ public class GreedySolver {
 
         LinkedList<Integer> ordersSortedByNumElements = new LinkedList<>(getMapIndicesSortedByMapSumOfValues(this.orders)); // Linked list para remover en O(1) desde adentro
         
+        return solve_for_sorted_aisles_and_orders(ordersToSave, aislesToSave, ordersSortedByNumElements, aislesSortedByNumElements, aLowerBound);
+    }
+
+    private double solve_for_sorted_aisles_and_orders(List<Integer> ordersToSave, List<Integer> aislesToSave, LinkedList<Integer> ordersSortedByNumElements, List<Integer> aislesSortedByNumElements, double aLowerBound) {
         int[] elementsPerType = new int[this.nItems]; // Inicializa a 0 automaticamente
         int curElements = 0; double bestRatio = aLowerBound;
 
