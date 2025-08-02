@@ -27,7 +27,6 @@ public class ChallengeSolver {
     private final ParametricSolver parametricSolver;
     private final BinarySolver binarySolver;
     private final HybridSolver hybridSolver;
-    private final DivideSolver divideSolver;
     private final HalfAisleSolver halfAisleSolver;
 
     public ChallengeSolver(
@@ -41,7 +40,6 @@ public class ChallengeSolver {
         this.parametricSolver   = new ParametricSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.binarySolver       = new BinarySolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.hybridSolver       = new HybridSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-        this.divideSolver       = new DivideSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.halfAisleSolver    = new HalfAisleSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
     }
 
@@ -66,9 +64,6 @@ public class ChallengeSolver {
         } else if (useHybrid) {
             iterations = hybridSolver.solveMILFP(orders, used_orders, used_aisles, 0.25, stopWatch);
             strategy = "hybrid";
-        } else if (useDivide) {
-            iterations = divideSolver.solveMILFP(used_orders, used_aisles, stopWatch);
-            strategy = "divide";
         } else if (useHalf) {
             iterations = halfAisleSolver.solveHalfAisleMILFP(used_orders, used_aisles, 0, stopWatch);
             strategy = "half";

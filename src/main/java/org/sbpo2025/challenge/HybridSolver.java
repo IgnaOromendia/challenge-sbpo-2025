@@ -29,7 +29,6 @@ public class HybridSolver extends MIPSolver {
         int it = 0;
 
         boolean breakSym = false;
-        boolean useGreedyWithLP = false;
         boolean onlyBinary = false;
         boolean mixWithBinary = true;
 
@@ -57,26 +56,6 @@ public class HybridSolver extends MIPSolver {
                 }
             );}
         else {generateMIP(used_orders, used_aisles, null);}
-
-        if (useGreedyWithLP) {
-            GreedyLPSolver greedyLPSolver = new GreedyLPSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-
-            greedyLPSolver.generateMIP();
-
-            int bestAisle = -1;
-            for (int a=1; a<aisles.size()+1; a++) {
-                double value = greedyLPSolver.updateWithAisles(a, used_orders);
-                
-                if (value > this.currentBest) {
-                    bestAisle = a;
-                    this.currentBest = value;
-                }
-            }
-
-            greedyLPSolver.endCplex();
-
-            if (bestAisle != -1) greedyLPSolver.buildUsedAisles(bestAisle, used_aisles);
-        }
 
         this.lowerBound = Math.max(this.lowerBound, this.currentBest);
         this.upperBound = Math.min(this.upperBound, Math.min(greedyUpperBound(aisles), relaxationSolver.solveLP()));
