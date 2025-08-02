@@ -34,10 +34,15 @@ public class GreedySolver {
 
     public double solve_with_both_greedies(List<Integer> ordersToSave, List<Integer> aislesToSave, double aLowerBound) {
         LinkedList<Integer> ordersSortedByNumElements = new LinkedList<>(getMapIndicesSortedByMapSumOfValues(this.orders)); // Linked list para remover en O(1) desde adentro
-        
+        LinkedList<Integer> ordersSortedByNumElementsClone = (LinkedList<Integer>) ordersSortedByNumElements.clone();
+
         double first_greedy_value = solve_for_sorted_aisles_and_orders(ordersToSave, aislesToSave, ordersSortedByNumElements, getMapIndicesSortedByMapSumOfValues(this.aisles), aLowerBound);
-        
-        return solve_for_sorted_aisles_and_orders(ordersToSave, aislesToSave, ordersSortedByNumElements, getMapIndicesSortedByNumDistinct(this.aisles), Math.max(first_greedy_value, aLowerBound));
+        System.out.println("First greedy gave: " + first_greedy_value);
+
+        double second_greedy_value = solve_for_sorted_aisles_and_orders(ordersToSave, aislesToSave, ordersSortedByNumElementsClone, getMapIndicesSortedByNumDistinct(this.aisles), Math.max(first_greedy_value, aLowerBound));
+        System.out.println("Second greedy gave: " + second_greedy_value);
+
+        return second_greedy_value;
     }
 
     public double solve(List<Integer> ordersToSave, List<Integer> aislesToSave, double aLowerBound, boolean sortByNumberOfValues) {
