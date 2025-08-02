@@ -20,7 +20,9 @@ public abstract class MIPSolver extends CPLEXSolver {
     protected final IloIntVar[] Y; // El pasillo a fue recorrido
     protected IloRange aisleConstraintRange; // Rango de la pasillos
 
-    private final int[] orderItemSum;
+    protected final int[] orderItemSum;
+
+    private IloRange cutConstraint;
 
     protected double currentBest;
 
@@ -59,13 +61,14 @@ public abstract class MIPSolver extends CPLEXSolver {
     }
 
     // Resovlemos acutalizando la función objetivo
-    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, double gapTolerance) {
+    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, double gapTolerance, long remainingTime) {
         try {
-            this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, gapTolerance);
+            this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, Math.max(0, gapTolerance));
+            this.cplex.setParam(IloCplex.Param.TimeLimit, Math.max(0, remainingTime));
 
             setObjectiveFunction(q);
 
-            usePreviousSolution(used_orders, used_aisles, IloCplex.MIPStartEffort.SolveMIP);
+            usePreviousSolution(used_orders, used_aisles, IloCplex.MIPStartEffort.Auto);
 
             if (this.cplex.solve())  {
                 extractSolutionFrom(used_orders, used_aisles);
@@ -77,17 +80,6 @@ public abstract class MIPSolver extends CPLEXSolver {
             System.out.println(e.getMessage());
         } 
         return -1;
-    }
-
-    // En este caso el k es la cantidad de pasillos la cual vamos a querer tener
-    protected double solveMIPFixed(int k, List<Integer> used_orders, List<Integer> used_aisles) {
-        try {
-            aisleConstraintRange.setBounds(k, k);
-        } catch (IloException e) {
-            System.out.println(e.getMessage());
-        }
-
-        return solveMIPWith(0, used_orders, used_aisles, 0);
     }
 
     // Generamos el modelo una única vez por instancia
@@ -111,6 +103,9 @@ public abstract class MIPSolver extends CPLEXSolver {
 
             // Hay que elegir por lo menos un pasillo
             setAtLeastOneAisleConstraint();
+
+            // Agrega restricciones de corte
+            setConstraint(this.currentBest);
 
             if (extraCode != null) extraCode.run(this.cplex, this.X, this.Y);            
             
@@ -225,6 +220,30 @@ public abstract class MIPSolver extends CPLEXSolver {
 
             this.cplex.addMIPStart(varsToSet, ones, anEffort);
         }
+    }
+
+    private void setConstraint(double k) throws IloException {
+        // Sum order item >=  k|A|
+        IloLinearNumExpr exprX  = this.cplex.linearNumExpr();
+
+        for(int o = 0; o < this.orders.size(); o++) 
+            exprX.addTerm(this.orderItemSum[o], X[o]);
+        
+        for(int a = 0; a < this.aisles.size(); a++) 
+            exprX.addTerm(-k, Y[a]);
+        
+        this.cutConstraint = this.cplex.addGe(exprX, 0);
+    }
+
+    protected void updateCutConstraint(double k) {
+        try {
+            for (int a = 0; a < this.aisles.size(); a++)
+                this.cplex.setLinearCoef(this.cutConstraint, this.Y[a], -k);
+            
+        } catch (IloException e) {
+            System.out.println(e.getMessage());
+        }
+        
     }
 
     // Soltuion

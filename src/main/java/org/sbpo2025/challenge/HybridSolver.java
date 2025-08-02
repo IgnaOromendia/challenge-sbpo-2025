@@ -16,28 +16,22 @@ public class HybridSolver extends MIPSolver {
     private double upperBound;
     
     private final RelaxationSolver relaxationSolver;
-    private final LagrangeSolver lagrangeSolver;
-    private final LocalSearcher localSearcher;
 
     public HybridSolver(List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
         super(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.lowerBound = waveSizeLB / aisles.size();
         this.upperBound = waveSizeUB;
         this.relaxationSolver = new RelaxationSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-        this.lagrangeSolver = new LagrangeSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-        this.localSearcher = new LocalSearcher(orders, aisles, nItems, waveSizeLB, waveSizeUB);
     }
 
-    public int solveMILFP(List<Map<Integer, Integer>> orders, List<Integer> used_orders, List<Integer> used_aisles, StopWatch stopWatch) {
-        double objValue = 1, q;
+    public int solveMILFP(List<Map<Integer, Integer>> orders, List<Integer> used_orders, List<Integer> used_aisles, double gapTolerance, StopWatch stopWatch) {
+        double objValue = 1, lambda;
         int it = 0;
 
         boolean breakSym = false;
         boolean useGreedyWithLP = false;
         boolean onlyBinary = false;
-        boolean mixWithBinary = false;
-        boolean useLagrange = false;
-        boolean useLocalSearch = true;
+        boolean mixWithBinary = true;
 
         if (breakSym) {
             List<List<Integer>> equivalentOrders = groupEquivalent(orders);
@@ -85,39 +79,33 @@ public class HybridSolver extends MIPSolver {
         }
 
         this.lowerBound = Math.max(this.lowerBound, this.currentBest);
-        this.upperBound = Math.min(this.upperBound, Math.min(greedyUpperBound(aisles), relaxationSolver.solveLP()));        
+        this.upperBound = Math.min(this.upperBound, Math.min(greedyUpperBound(aisles), relaxationSolver.solveLP()));
+        
+        long remainingTime = -1;
 
-        while (Math.abs(objValue) > PRECISION && this.upperBound - this.lowerBound > BINARY_RANGE && it < MAX_ITERATIONS) {
+        while (this.upperBound - this.lowerBound > BINARY_RANGE && it < MAX_ITERATIONS) {
             if (onlyBinary || (it % 2 == 0 && mixWithBinary)) {
-                // q = (this.lowerBound + this.upperBound) / 2;
-                q = (3 * this.lowerBound + this.upperBound) / 4;
+                // lambda = (this.lowerBound + this.upperBound) / 2;
+                lambda = (3 * this.lowerBound + this.upperBound) / 4;
             } else {
-                q = this.currentBest;
+                lambda = this.currentBest;
             }
 
-            System.out.println("it: " + it + " q: " + q + " obj: " + objValue);
+            System.out.println("it: " + it + " lambda: " + lambda + " obj: " + objValue);
             System.out.println("Current range: (" + this.lowerBound + ", " + this.upperBound + ")");
 
-            if (useLagrange) {
-                double lagrangeBound = lagrangeSolver.upperBounds(q);
-                System.out.println("Lagrange encontro cota " + lagrangeBound);
-                if (lagrangeBound < -PRECISION) {
-                    this.upperBound = q; 
-                    continue;
-                }
+            remainingTime = TIME_LIMIT_SEC - stopWatch.getDuration().getSeconds() - 5;
+
+            gapTolerance -= 0.05 * it;
+            
+            if (onlyBinary || (it % 2 == 0 && mixWithBinary)) {
+                System.out.println("binary");
+                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, remainingTime);
+            } else {
+                System.out.println("parametric");
+                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, remainingTime);
             }
             
-            objValue = solveMIPWith(q, used_orders, used_aisles, 0);
-
-            if (useLocalSearch) {
-
-                double localBest = this.localSearcher.search(used_orders, used_aisles);
-
-                if (localBest > this.currentBest) {
-                    System.out.println("Local search mejora: " + this.currentBest + " a " + localBest);
-                    this.currentBest = localBest;
-                }
-            }
 
             int usedItems = 0;
 
@@ -129,9 +117,9 @@ public class HybridSolver extends MIPSolver {
                 break;
             } else if (objValue >= PRECISION) {
                 this.lowerBound = (double) usedItems / used_aisles.size();
-                this.upperBound = Math.min(this.upperBound, getCplexUpperBound() + q);
+                this.upperBound = Math.min(this.upperBound, getCplexUpperBound() + lambda);
             } else {
-                this.upperBound = getCplexUpperBound() + q;
+                this.upperBound = getCplexUpperBound() + lambda;
             }
 
             it++;

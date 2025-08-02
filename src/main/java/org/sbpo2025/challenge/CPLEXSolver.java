@@ -23,8 +23,8 @@ public abstract class CPLEXSolver {
     protected final double PRECISION        = 1e-4;
     protected final double BINARY_RANGE     = 1e-4;
     protected final long TIME_LIMIT_SEC     = 600;
-    protected final long TIME_LIMIT_SEC_IT  = 600;
-    protected final int MAX_ITERATIONS      = 10;
+    protected final long TIME_LIMIT_SEC_IT  = 10;
+    protected final int MAX_ITERATIONS      = 100;
 
     protected Boolean solutionInfeasible = false;
 
@@ -74,9 +74,6 @@ public abstract class CPLEXSolver {
         // 4 Menos preprocesar
         // 5 Encontrar la solución probada más rapido
         this.cplex.setParam(IloCplex.Param.Emphasis.MIP, 1);
-
-        // Time
-        this.cplex.setParam(IloCplex.Param.TimeLimit, TIME_LIMIT_SEC_IT);
         
         // Preprocesamiento
         this.cplex.setParam(IloCplex.Param.Preprocessing.Presolve, true);

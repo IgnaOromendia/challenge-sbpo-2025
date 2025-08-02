@@ -12,11 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.text.StyledEditorKit.BoldAction;
-
 import org.apache.commons.lang3.time.StopWatch;
-
-import ilog.cplex.IloCplex;
 
 public class ChallengeSolver {
     private final long MAX_RUNTIME = 600000; // milliseconds; 10 minutes
@@ -28,10 +24,8 @@ public class ChallengeSolver {
     protected int waveSizeUB;
     
     // Solvers
-    private final GreedySolver greedySolver;
     private final ParametricSolver parametricSolver;
     private final BinarySolver binarySolver;
-    private final FixedAisleSolver fixedAisleSolver;
     private final HybridSolver hybridSolver;
     private final DivideSolver divideSolver;
     private final HalfAisleSolver halfAisleSolver;
@@ -44,10 +38,8 @@ public class ChallengeSolver {
         this.waveSizeLB = waveSizeLB;
         this.waveSizeUB = waveSizeUB;
                 
-        this.greedySolver       = new GreedySolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.parametricSolver   = new ParametricSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.binarySolver       = new BinarySolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-        this.fixedAisleSolver   = new FixedAisleSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.hybridSolver       = new HybridSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.divideSolver       = new DivideSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
         this.halfAisleSolver    = new HalfAisleSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
@@ -58,31 +50,27 @@ public class ChallengeSolver {
         List<Integer> used_aisles = new ArrayList<>();
 
         Boolean useBinarySearchSolution = false;
-        Boolean useParametricAlgorithmMILFP = false;
-        Boolean useFixedAisles = false;
+        Boolean useParametricAlgorithmMILFP = true;
         Boolean useHybrid = false;
         Boolean useDivide = false;
-        boolean useHalf   = true;
+        boolean useHalf   = false;
         String strategy = "";
         Integer iterations = 1;
 
         if (useBinarySearchSolution) {
-            iterations = binarySolver.binarySearchSolution(used_orders, used_aisles, aisles, stopWatch);
+            iterations = binarySolver.binarySearchSolution(used_orders, used_aisles, aisles, 0.25, stopWatch);
             strategy = "binary";
         } else if (useParametricAlgorithmMILFP) {
-            iterations = parametricSolver.solveMILFP(used_orders, used_aisles, 0.25, IloCplex.MIPStartEffort.SolveMIP, stopWatch);
+            iterations = parametricSolver.solveMILFP(used_orders, used_aisles, 0.4, stopWatch);
             strategy = "parametric";
-        } else if (useFixedAisles) {
-            fixedAisleSolver.solveFixedAisles(used_orders, used_aisles);
-            strategy = "fixed_aisles";
         } else if (useHybrid) {
-            iterations = hybridSolver.solveMILFP(orders, used_orders, used_aisles, stopWatch);
+            iterations = hybridSolver.solveMILFP(orders, used_orders, used_aisles, 0.25, stopWatch);
             strategy = "hybrid";
         } else if (useDivide) {
             iterations = divideSolver.solveMILFP(used_orders, used_aisles, stopWatch);
             strategy = "divide";
         } else if (useHalf) {
-            iterations = halfAisleSolver.solveHalfAisleMILFP(used_orders, used_aisles, 0.25, stopWatch);
+            iterations = halfAisleSolver.solveHalfAisleMILFP(used_orders, used_aisles, 0, stopWatch);
             strategy = "half";
         }
 
@@ -97,7 +85,7 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int iterations) {
-        String filePath = "./results/" + strategy + "_a.csv";
+        String filePath = "./results/" + strategy + "_b.csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,pasillos,usados,obj,tiempo,it\n");

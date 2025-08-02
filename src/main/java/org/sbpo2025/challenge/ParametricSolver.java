@@ -22,22 +22,30 @@ public class ParametricSolver extends MIPSolver {
     }
 
     public int solveMILFP(List<Integer> used_orders, List<Integer> used_aisles, double gapTolerance, IloCplex.MIPStartEffort anEffort, StopWatch stopWatch) {
-        this.currentBest = greedySolver.solve(used_orders, used_aisles, this.currentBest, false);
+        this.currentBest = greedySolver.solve_with_both_greedies(used_orders, used_aisles, this.currentBest);
 
         double objValue = -1, lambda = this.currentBest;
         int it = 0;
 
         generateMIP(used_orders, used_aisles, anEffort, null);
 
-        Duration startOfIteration = stopWatch.getDuration();
+        Duration startOfInstance = stopWatch.getDuration();
+        long timeLimit = TIME_LIMIT_SEC_IT;
+        int gapIteration = 4;
         
-        while (it < MAX_ITERATIONS) {
+        while (it < MAX_ITERATIONS && timeLimit > 0) {
             System.out.println("it: " + it + " lambda: " + lambda + " obj: " + objValue);
 
             double old_obj = objValue;
 
-            objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance);
-            
+            updateCutConstraint(lambda);
+
+            long startOfIteration = stopWatch.getDuration().getSeconds();
+            objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, Math.min(timeLimit, TIME_LIMIT_SEC - stopWatch.getDuration().getSeconds() - 5));
+            long endOfIteration = stopWatch.getDuration().getSeconds();
+
+            System.out.println("TIME IT: " + (endOfIteration - startOfIteration));
+
             if (solutionInfeasible) break;
             
             // Newton -> Qn+1 = Qn - F(Qn) / F'(Qn), F'(Qn) ≈ D(x^*)
@@ -45,9 +53,18 @@ public class ParametricSolver extends MIPSolver {
             
             lambda += objValue / used_aisles.size(); 
 
-            if (objValue== old_obj || objValue < 0) break;
+            if (objValue == old_obj || objValue <= 0 || Math.abs(objValue + objValue * gapTolerance) <= PRECISION) {
+                if (gapTolerance <= 0.05 && objValue <= PRECISION) break; // BORRAR
 
-            if (stopWatch.getDuration().getSeconds() - startOfIteration.getSeconds() > TIME_LIMIT_SEC) break;
+                if (endOfIteration - startOfIteration >= timeLimit && timeLimit <= 80) 
+                    timeLimit *= 2;
+                else
+                    gapTolerance /= 2;
+                
+                System.out.println("GAP: " + gapTolerance + " TL: " + timeLimit);
+            }
+
+            if (stopWatch.getDuration().getSeconds() - startOfInstance.getSeconds() > TIME_LIMIT_SEC) break;
             
             it++;
         }

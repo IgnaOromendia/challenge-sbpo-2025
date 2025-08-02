@@ -18,13 +18,8 @@ public class RelaxationSolver extends CPLEXSolver {
 
         this.X = new IloNumVar[this.orders.size()]; // La orden o está completa
         this.Y = new IloNumVar[this.aisles.size()]; // El pasillo a fue recorrido
-    }
 
-    // Solve the linear relaxation of the problem using the Charnes-Cooper transformation
-    protected double solveLP() {
-        double result = 1e9;
         try {
-
             this.T = cplex.numVar(0, Double.MAX_VALUE, "T");
 
             // Cplex Params
@@ -47,6 +42,17 @@ public class RelaxationSolver extends CPLEXSolver {
 
             // Funcion obj
             setObjectiveFunction();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+    }
+
+    // Solve the linear relaxation of the problem using the Charnes-Cooper transformation
+    protected double solveLP() {
+        double result = 1e9;
+        try {
 
             if (this.cplex.solve()) 
                 result = this.cplex.getObjValue();
