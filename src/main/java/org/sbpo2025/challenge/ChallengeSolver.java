@@ -50,7 +50,6 @@ public class ChallengeSolver {
         Boolean useBinarySearchSolution = false;
         Boolean useParametricAlgorithmMILFP = true;
         Boolean useHybrid = false;
-        Boolean useDivide = false;
         boolean useHalf   = false;
         String strategy = "";
         Integer iterations = 1;
@@ -65,7 +64,7 @@ public class ChallengeSolver {
             iterations = hybridSolver.solveMILFP(orders, used_orders, used_aisles, 0.25, stopWatch);
             strategy = "hybrid";
         } else if (useHalf) {
-            iterations = halfAisleSolver.solveHalfAisleMILFP(used_orders, used_aisles, 0, stopWatch);
+            iterations = halfAisleSolver.solveHalfAisleMILFP(used_orders, used_aisles, 0.4, stopWatch);
             strategy = "half";
         }
 
@@ -80,7 +79,7 @@ public class ChallengeSolver {
 
     @SuppressWarnings("CallToPrintStackTrace")
     private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int iterations) {
-        String filePath = "./results/" + strategy + "_b.csv";
+        String filePath = "./results/" + strategy + "_b_rins.csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
             if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,pasillos,usados,obj,tiempo,it\n");

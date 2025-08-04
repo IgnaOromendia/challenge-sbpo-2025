@@ -79,10 +79,10 @@ public class HybridSolver extends MIPSolver {
             
             if (onlyBinary || (it % 2 == 0 && mixWithBinary)) {
                 System.out.println("binary");
-                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, remainingTime);
+                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, new TimeListener(60) , remainingTime);
             } else {
                 System.out.println("parametric");
-                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, remainingTime);
+                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, new TimeListener(60), remainingTime);
             }
             
 

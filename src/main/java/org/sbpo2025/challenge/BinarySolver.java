@@ -60,7 +60,7 @@ public class BinarySolver extends MIPSolver {
             System.out.println("Current range: (" + this.lower + ", " + this.upper + ")");
 
             remainingTime = TIME_LIMIT_SEC - stopWatch.getDuration().getSeconds() - 5;
-            solveMIPWith(k, used_orders, used_aisles, gapTolerance - 0.05 * it, remainingTime);
+            solveMIPWith(k, used_orders, used_aisles, gapTolerance - 0.05 * it, new TimeListener(60), remainingTime);
 
             if (solutionInfeasible) 
                 this.lower = this.currentBest;

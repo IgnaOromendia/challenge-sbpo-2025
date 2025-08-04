@@ -1,11 +1,13 @@
 ## Tareas pendientes
 
-- Analizar cuántos pasillos usa la solución óptima de los distintos casos, y ver que forma tienen: cantidad de elementos, cantidad de elementos distintos, cantidad de ordenes que puede satisfacer cada pasillo.
+- Call back
+- Testear cambiar el gap y el tl al mismo tiempo 
 - Qué tan rápido anda todo para una cantidad fija de pasillos?
 - Capaz eliminar simetrias agregando variables no binaria (si hay k copias de la orden o, entonces poner una variable de 0 ak)
 
 
 ## Tareas Hechas
+- Analizar cuántos pasillos usa la solución óptima de los distintos casos, y ver que forma tienen: cantidad de elementos, cantidad de elementos distintos, cantidad de ordenes que puede satisfacer cada pasillo. **Igna: Hecho!**
 - Ver pares de pasillos contenidos **Igna: Hecho!**
 - Testear todo, ahora que el Divide anda bien **Hecho!**.
 - Poner GAP como parametro en parametrico. Usar gap 0 en la ultima iteracion **Hecho!**.

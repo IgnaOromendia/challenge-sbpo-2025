@@ -68,16 +68,20 @@ public abstract class CPLEXSolver {
         cplex.setParam(IloCplex.Param.RandomSeed, 0);
 
         // Emphasis
+        // 0 Balanceado
         // 1 Factibilidad
         // 2 Proximidad a solucion entera (GAP)
         // 3 Mejor bound dual
         // 4 Menos preprocesar
         // 5 Encontrar la solución probada más rapido
-        this.cplex.setParam(IloCplex.Param.Emphasis.MIP, 1);
+        this.cplex.setParam(IloCplex.Param.Emphasis.MIP, 0);
         
         // Preprocesamiento
         this.cplex.setParam(IloCplex.Param.Preprocessing.Presolve, true);
         this.cplex.setParam(IloCplex.Param.Preprocessing.Reduce, 3);
+
+        /// RINS
+        this.cplex.setParam(IloCplex.Param.MIP.Strategy.RINSHeur, 60);
 
         // Planos de corte
         // Volver a testear
@@ -94,6 +98,15 @@ public abstract class CPLEXSolver {
 
         // Heuristica primal
         this.cplex.setParam(IloCplex.Param.MIP.Strategy.HeuristicFreq, 0); // 1 ejecuta solo en raiz, n > 1 ejecuta cada n nodos del árbol 
+    }
+
+    protected void updateEmphasis(int newValue) {
+        try {
+            this.cplex.setParam(IloCplex.Param.Emphasis.MIP, newValue);
+        } catch (IloException e){ 
+            System.out.println("Error en la actualización de enfásis");
+        }
+        
     }
 
     protected void endCplex() {

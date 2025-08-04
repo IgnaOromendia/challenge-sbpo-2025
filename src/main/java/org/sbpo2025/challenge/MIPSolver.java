@@ -3,6 +3,7 @@ package org.sbpo2025.challenge;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import ilog.concert.IloException;
 import ilog.concert.IloIntVar;
@@ -25,6 +26,9 @@ public abstract class MIPSolver extends CPLEXSolver {
     private IloRange cutConstraint;
 
     protected double currentBest;
+
+    private long itStartingTime;
+    private TimeListener itTimeListener;
 
     public MIPSolver(List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
         super(orders, aisles, nItems, waveSizeLB, waveSizeUB);
@@ -61,14 +65,17 @@ public abstract class MIPSolver extends CPLEXSolver {
     }
 
     // Resovlemos acutalizando la función objetivo
-    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, double gapTolerance, long remainingTime) {
+    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, double gapTolerance, TimeListener timeListener, long remainingTime) {
         try {
             this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, Math.max(0, gapTolerance));
             this.cplex.setParam(IloCplex.Param.TimeLimit, Math.max(0, remainingTime));
 
+            this.itTimeListener = timeListener;
+            this.itStartingTime = System.nanoTime();
+
             setObjectiveFunction(q);
 
-            usePreviousSolution(used_orders, used_aisles, IloCplex.MIPStartEffort.Auto);
+            usePreviousSolution(used_orders, used_aisles);
 
             if (this.cplex.solve())  {
                 extractSolutionFrom(used_orders, used_aisles);
@@ -84,10 +91,6 @@ public abstract class MIPSolver extends CPLEXSolver {
 
     // Generamos el modelo una única vez por instancia
     protected void generateMIP(List<Integer> used_orders, List<Integer> used_aisles, RunnableCode extraCode) {
-        generateMIP(used_orders, used_aisles, IloCplex.MIPStartEffort.Auto, extraCode);
-    }
-
-    protected void generateMIP(List<Integer> used_orders, List<Integer> used_aisles, IloCplex.MIPStartEffort anEffort, RunnableCode extraCode) {
         try {
             // Cplex Params
             setCPLEXParamsTo();
@@ -110,7 +113,36 @@ public abstract class MIPSolver extends CPLEXSolver {
             if (extraCode != null) extraCode.run(this.cplex, this.X, this.Y);            
             
             // Inicializamos con el valor anterior
-            usePreviousSolution(used_orders, used_aisles, anEffort);
+            usePreviousSolution(used_orders, used_aisles);
+
+            // this.cplex.use(new IloCplex.IncumbentCallback() {
+            //     public void main() throws IloException {
+            //         double f = 0, g = 0;
+                        
+            //         for (int o = 0; o < orders.size(); o++) {
+            //             if (getValue(X[o]) > TOLERANCE)
+            //                 f += orderItemSum[o];
+            //         }
+            
+            //         for (int a = 0; a < aisles.size(); a++) {
+            //             if (getValue(Y[a]) > TOLERANCE)
+            //                 g++;
+            //         }
+                    
+            //         double sol = f / g; 
+            //         System.out.println("sol: " + sol);
+            //     }
+            // });
+
+            this.cplex.use(new IloCplex.MIPInfoCallback() {
+                public void main() throws IloException {
+                    long currTime = TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - itStartingTime);
+                    if (itTimeListener.isLessOrEqualThan(currTime)) {   
+                        if (getIncumbentObjValue() > PRECISION) abort();
+                        itTimeListener.doubleTimeLimit();         
+                    }
+                }
+            });
         
         } catch (IloException e) {
             System.out.println(e.getMessage());
@@ -175,6 +207,30 @@ public abstract class MIPSolver extends CPLEXSolver {
         this.cplex.addGe(exprY, 1);
     }
 
+    private void setConstraint(double k) throws IloException {
+        // Sum order item >=  k|A|
+        IloLinearNumExpr exprX  = this.cplex.linearNumExpr();
+
+        for(int o = 0; o < this.orders.size(); o++) 
+            exprX.addTerm(this.orderItemSum[o], X[o]);
+        
+        for(int a = 0; a < this.aisles.size(); a++) 
+            exprX.addTerm(-k, Y[a]);
+        
+        this.cutConstraint = this.cplex.addGe(exprX, 0);
+    }
+
+    protected void updateCutConstraint(double k) {
+        try {
+            for (int a = 0; a < this.aisles.size(); a++)
+                this.cplex.setLinearCoef(this.cutConstraint, this.Y[a], -k);
+            
+        } catch (IloException e) {
+            System.out.println(e.getMessage());
+        }
+        
+    }
+
     // Objective function
     protected void setObjectiveFunction(double alpha) throws IloException {
         IloLinearNumExpr obj = this.cplex.linearNumExpr();
@@ -192,7 +248,7 @@ public abstract class MIPSolver extends CPLEXSolver {
         this.objective = this.cplex.addMaximize(obj);
     }
 
-    private void usePreviousSolution(List<Integer> used_orders, List<Integer> used_aisles, IloCplex.MIPStartEffort anEffort) throws IloException {
+    private void usePreviousSolution(List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
         if (used_orders.size() != 0 || used_aisles.size() != 0) {
             IloIntVar[] varsToSet = new IloIntVar[used_orders.size() + used_aisles.size()];
 
@@ -218,32 +274,8 @@ public abstract class MIPSolver extends CPLEXSolver {
             //  4 MIPStartRepair: Si no es factible, intenta repararla para convertirla en una solución válida.
             //  5 MIPStartNoCheck: Supone que la solución es factible sin comprobarla. Solo válida si el modelo no cambia desde que se generó el MIP start.
 
-            this.cplex.addMIPStart(varsToSet, ones, anEffort);
+            this.cplex.addMIPStart(varsToSet, ones, IloCplex.MIPStartEffort.Auto);
         }
-    }
-
-    private void setConstraint(double k) throws IloException {
-        // Sum order item >=  k|A|
-        IloLinearNumExpr exprX  = this.cplex.linearNumExpr();
-
-        for(int o = 0; o < this.orders.size(); o++) 
-            exprX.addTerm(this.orderItemSum[o], X[o]);
-        
-        for(int a = 0; a < this.aisles.size(); a++) 
-            exprX.addTerm(-k, Y[a]);
-        
-        this.cutConstraint = this.cplex.addGe(exprX, 0);
-    }
-
-    protected void updateCutConstraint(double k) {
-        try {
-            for (int a = 0; a < this.aisles.size(); a++)
-                this.cplex.setLinearCoef(this.cutConstraint, this.Y[a], -k);
-            
-        } catch (IloException e) {
-            System.out.println(e.getMessage());
-        }
-        
     }
 
     // Soltuion
