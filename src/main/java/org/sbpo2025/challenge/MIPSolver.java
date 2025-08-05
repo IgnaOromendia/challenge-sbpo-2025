@@ -288,8 +288,8 @@ public abstract class MIPSolver extends CPLEXSolver {
         if (curSolutionValue > this.currentBest) {
             this.currentBest = curSolutionValue;
 
-            Set<Integer> aisles_copy_before = new HashSet<>(used_aisles);
-            Set<Integer> aisles_copy_before_copy = new HashSet<>(used_aisles);
+            Set<Integer> aisles_before = new HashSet<>(used_aisles);
+            Set<Integer> aisles_before_copy = new HashSet<>(used_aisles);
 
             System.out.println("Before: size is " + used_aisles.size());
 
@@ -299,14 +299,14 @@ public abstract class MIPSolver extends CPLEXSolver {
             fillSolutionList(this.X, used_orders, this.orders.size());
             fillSolutionList(this.Y, used_aisles, this.aisles.size());
          
-            Set<Integer> aisles_copy_after = new HashSet<>(used_aisles);
+            Set<Integer> aisles_after = new HashSet<>(used_aisles);
 
-            aisles_copy_before.removeAll(aisles_copy_after);
-            aisles_copy_after.removeAll(aisles_copy_before_copy);
+            aisles_before.removeAll(aisles_after);
+            aisles_after.removeAll(aisles_before_copy);
 
             System.out.println("After: size is " + used_aisles.size());
             System.out.println("Difference between iterations is " 
-                    + (aisles_copy_before.size() + aisles_copy_after.size()));       
+                    + (aisles_before.size() + aisles_after.size()));       
         }
     }
 
