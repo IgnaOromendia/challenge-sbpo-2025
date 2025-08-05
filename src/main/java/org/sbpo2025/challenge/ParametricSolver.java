@@ -23,6 +23,8 @@ public class ParametricSolver extends MIPSolver {
 
         double objValue = -1, lambda = this.currentBest;
         int it = 0;
+        int startLocalSearch = 2;
+        int neighbourhoodSize = 3;
 
         generateMIP(used_orders, used_aisles, null);
 
@@ -38,8 +40,15 @@ public class ParametricSolver extends MIPSolver {
             double oldObjValue = objValue;
 
             long startOfIteration = stopWatch.getDuration().getSeconds();
-            objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, timeListener, remainingTime);
+
+            if (it >= startLocalSearch && it%2==0)
+                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, 
+                            timeListener, remainingTime, true, neighbourhoodSize);
+            else
+                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, timeListener, remainingTime);
+
             long endOfIteration = stopWatch.getDuration().getSeconds();
+
 
             System.out.println("TIME IT: " + (endOfIteration - startOfIteration));
 
@@ -63,7 +72,7 @@ public class ParametricSolver extends MIPSolver {
                 System.out.println("GAP: " + gapTolerance + " TL: " + timeListener);
             }
 
-            if (stopWatch.getDuration().getSeconds() - startOfInstance.getSeconds() > TIME_LIMIT_SEC) break;
+            if (stopWatch.getDuration().getSeconds() - startOfInstance.getSeconds() > TIME_LIMIT_SEC - 5) break;
             
             it++;
         }

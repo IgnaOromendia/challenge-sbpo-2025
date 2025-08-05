@@ -1,7 +1,6 @@
 package org.sbpo2025.challenge;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -67,9 +66,22 @@ public abstract class MIPSolver extends CPLEXSolver {
         return 0;
     }
 
+    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, 
+                        double gapTolerance, TimeListener timeListener, long remainingTime) {
+        return solveMIPWith(q, used_orders, used_aisles, gapTolerance, timeListener, remainingTime, false, -1);
+    }
+
     // Resovlemos acutalizando la función objetivo
-    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, double gapTolerance, TimeListener timeListener, long remainingTime) {
+    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, 
+                        double gapTolerance, TimeListener timeListener, long remainingTime,
+                        boolean localSearch, long neighbourhoodSize) {
+        
+        IloRange neigbourhoodConstraint = null;
+        double res = -1;
+
         try {
+            if (localSearch) gapTolerance = gapTolerance / 2;
+
             this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, Math.max(0, gapTolerance));
             this.cplex.setParam(IloCplex.Param.TimeLimit, Math.max(0, remainingTime));
 
@@ -80,16 +92,28 @@ public abstract class MIPSolver extends CPLEXSolver {
 
             usePreviousSolution(used_orders, used_aisles);
 
+            if (localSearch)
+                neigbourhoodConstraint = addConstraintOfChangingFewAisles(used_aisles, neighbourhoodSize);
+
             if (this.cplex.solve())  {
                 extractSolutionFrom(used_orders, used_aisles);
-                return this.cplex.getObjValue();
+                res = this.cplex.getObjValue();
             } else {
                 solutionInfeasible = cplex.getStatus() == IloCplex.Status.Infeasible;
             }
         } catch (IloException e) {
             System.out.println(e.getMessage());
         } 
-        return -1;
+
+        if (localSearch) {
+            try {
+                this.cplex.remove(neigbourhoodConstraint);
+            } catch (IloException e) {
+                System.out.println("Error borrando constraint de busqueda local");
+            }
+        }
+
+        return res;
     }
 
     // Generamos el modelo una única vez por instancia
@@ -345,4 +369,18 @@ public abstract class MIPSolver extends CPLEXSolver {
         return sum;
     }
 
+    private IloRange addConstraintOfChangingFewAisles(List<Integer> used_aisles, long neighbourhoodSize) throws IloException {
+        System.out.println("Agregando constraint de busqueda local");
+        
+        IloLinearIntExpr expr = this.cplex.linearIntExpr();
+
+        for (int a=0; a<this.aisles.size(); a++) {
+            if (used_aisles.contains(a))
+                expr.addTerm(1, this.Y[a]);
+            else
+                expr.addTerm(-1, this.Y[a]);
+        }
+
+        return this.cplex.addGe(expr, used_aisles.size() - neighbourhoodSize);
+    }
 }
