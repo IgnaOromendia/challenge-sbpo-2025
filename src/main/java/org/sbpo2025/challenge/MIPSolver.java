@@ -315,7 +315,28 @@ public abstract class MIPSolver extends CPLEXSolver {
             Set<Integer> aisles_before = new HashSet<>(used_aisles);
             Set<Integer> aisles_before_copy = new HashSet<>(used_aisles);
 
-            System.out.println("Before: size is " + used_aisles.size());
+            System.out.println("Before: num aisles is " + used_aisles.size());
+
+            Set<Integer> orders_before_small = new HashSet<>();
+            Set<Integer> orders_before_small_copy = new HashSet<>();
+            Set<Integer> orders_before_big = new HashSet<>();
+            Set<Integer> orders_before_big_copy = new HashSet<>();
+
+            int threshold = 10;
+            for (int o : used_orders) {
+                if (this.orderItemSum[o] >= threshold) {
+                    orders_before_big.add(o);
+                    orders_before_big_copy.add(o);
+                } else {
+                    orders_before_small.add(o);
+                    orders_before_small_copy.add(o);
+                }
+            }
+
+            System.out.println("Before: num small orders is " + orders_before_small.size());
+            System.out.println("Before: num big orders is " + orders_before_big.size());
+            System.out.println("Before: total orders is " 
+                        + (orders_before_small.size() + orders_before_big.size()));
 
             used_orders.clear();
             used_aisles.clear();      
@@ -324,13 +345,44 @@ public abstract class MIPSolver extends CPLEXSolver {
             fillSolutionList(this.Y, used_aisles, this.aisles.size());
          
             Set<Integer> aisles_after = new HashSet<>(used_aisles);
+            Set<Integer> orders_after_small = new HashSet<>();
+            Set<Integer> orders_after_big = new HashSet<>();
+
+            for (int o : used_orders) {
+                if (this.orderItemSum[o] >= threshold) {
+                    orders_after_big.add(o);
+                } else {
+                    orders_after_small.add(o);
+                }
+            }
 
             aisles_before.removeAll(aisles_after);
             aisles_after.removeAll(aisles_before_copy);
 
             System.out.println("After: size is " + used_aisles.size());
-            System.out.println("Difference between iterations is " 
-                    + (aisles_before.size() + aisles_after.size()));       
+            System.out.println("After: Difference between iterations is " 
+                    + (aisles_before.size() + aisles_after.size()));  
+            
+            System.out.println("After: num small orders is " + orders_after_small.size());
+            System.out.println("After: num big orders is " + orders_after_big.size());
+            System.out.println("After: num total orders is " 
+                            + (orders_after_small.size() + orders_after_big.size()));
+
+            orders_before_small.removeAll(orders_after_small);
+            orders_after_small.removeAll(orders_before_small_copy);
+        
+            System.out.println("After: Difference small orders "
+                                + (orders_before_small.size() + orders_after_small.size()));
+            
+            orders_before_big.removeAll(orders_after_big);
+            orders_after_big.removeAll(orders_before_big_copy);
+
+            System.out.println("After: Difference big orders "
+                                + (orders_before_big.size() + orders_after_big.size()));
+
+            System.out.println("After: Difference total orders "
+                                + (orders_before_big.size() + orders_after_big.size()
+                                + orders_before_small.size() + orders_after_small.size()));
         }
     }
 
