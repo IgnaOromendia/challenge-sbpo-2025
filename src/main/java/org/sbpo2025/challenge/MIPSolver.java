@@ -1,5 +1,6 @@
 package org.sbpo2025.challenge;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +33,8 @@ public abstract class MIPSolver extends CPLEXSolver {
     private long itStartingTime;
     private TimeListener itTimeListener;
 
+    long quantile = -1;
+
     public MIPSolver(List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
         super(orders, aisles, nItems, waveSizeLB, waveSizeUB);
 
@@ -41,10 +44,16 @@ public abstract class MIPSolver extends CPLEXSolver {
         Y = new IloIntVar[this.aisles.size()];
 
         this.orderItemSum = new int[orders.size()];
+        List<Integer> orderSum = new ArrayList<>();
         
-        for(int o = 0; o < this.orders.size(); o++)
+        for(int o = 0; o < this.orders.size(); o++) {
             this.orderItemSum[o] = this.orders.get(o).values().stream().mapToInt(Integer::intValue).sum();
+            orderSum.add(orderItemSum[o]);
+        }
 
+        double percentil = 0.95;
+        orderSum.sort(null);
+        this.quantile = orderSum.get((int)Math.round(orderSum.size()*percentil));
     }
 
 
@@ -321,9 +330,16 @@ public abstract class MIPSolver extends CPLEXSolver {
             Set<Integer> orders_before_small_copy = new HashSet<>();
             Set<Integer> orders_before_big = new HashSet<>();
             Set<Integer> orders_before_big_copy = new HashSet<>();
+            Set<Integer> orders_before_quant = new HashSet<>();
+            Set<Integer> orders_before_quant_copy = new HashSet<>();
 
             int threshold = 10;
             for (int o : used_orders) {
+                if (this.orderItemSum[o] >= quantile) {
+                    orders_before_quant.add(o);
+                    orders_before_quant_copy.add(o);
+                }
+
                 if (this.orderItemSum[o] >= threshold) {
                     orders_before_big.add(o);
                     orders_before_big_copy.add(o);
@@ -347,8 +363,12 @@ public abstract class MIPSolver extends CPLEXSolver {
             Set<Integer> aisles_after = new HashSet<>(used_aisles);
             Set<Integer> orders_after_small = new HashSet<>();
             Set<Integer> orders_after_big = new HashSet<>();
+            Set<Integer> orders_after_quant = new HashSet<>();
 
             for (int o : used_orders) {
+                if (this.orderItemSum[o] >= quantile)
+                    orders_after_quant.add(o);
+
                 if (this.orderItemSum[o] >= threshold) {
                     orders_after_big.add(o);
                 } else {
@@ -383,6 +403,13 @@ public abstract class MIPSolver extends CPLEXSolver {
             System.out.println("After: Difference total orders "
                                 + (orders_before_big.size() + orders_after_big.size()
                                 + orders_before_small.size() + orders_after_small.size()));
+
+            orders_before_quant.removeAll(orders_after_quant);
+            orders_after_quant.removeAll(orders_before_quant_copy);
+
+            System.out.println("After: Difference quant orders "
+                                + (orders_before_quant.size() + orders_after_quant.size())
+                                + " (quantile is " + this.quantile + ")");
         }
     }
 
