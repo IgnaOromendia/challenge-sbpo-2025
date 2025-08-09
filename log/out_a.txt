@@ -1,0 +1,705 @@
+First greedy gave: 1.4456521739130435
+Second greedy gave: 1.4456521739130435
+it: 0 lambda: 1.4456521739130435 obj: -1.0
+Before: size is 92
+After: size is 44
+Difference between iterations is 74
+TIME IT: 0
+it: 1 lambda: 3.454545454545457 obj: 88.39130434782618
+Before: size is 44
+After: size is 37
+Difference between iterations is 31
+TIME IT: 0
+it: 2 lambda: 4.135135135135136 obj: 25.181818181818123
+Agregando constraint de busqueda local
+Before: size is 37
+After: size is 36
+Difference between iterations is 1
+TIME IT: 0
+it: 3 lambda: 4.138888888888892 obj: 0.1351351351352168
+Before: size is 36
+After: size is 28
+Difference between iterations is 10
+TIME IT: 0
+it: 4 lambda: 4.285714285714288 obj: 4.111111111111094
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.2 TL: 10
+it: 5 lambda: 4.285714285714283 obj: -1.4210854715202004E-13
+Before: size is 28
+After: size is 12
+Difference between iterations is 22
+TIME IT: 0
+it: 6 lambda: 4.416666666666665 obj: 1.5714285714285907
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.1 TL: 10
+it: 7 lambda: 4.416666666666668 obj: 2.6645352591003757E-14
+TIME IT: 0
+GAP: 0.05 TL: 10
+it: 8 lambda: 4.416666666666665 obj: -2.842170943040401E-14
+Agregando constraint de busqueda local
+TIME IT: 0
+Output written to output/output_a/instance_0009.txt
+First greedy gave: 138.94117647058823
+Second greedy gave: 139.2
+it: 0 lambda: 139.2 obj: -1.0
+Updated to: 20
+Before: size is 20
+After: size is 18
+Difference between iterations is 10
+TIME IT: 11
+Updated to: 11
+it: 1 lambda: 155.7777777777778 obj: 298.40000000000043
+Updated to: 22
+Before: size is 18
+After: size is 18
+Difference between iterations is 8
+TIME IT: 14
+Updated to: 14
+it: 2 lambda: 157.66666666666663 obj: 33.99999999999915
+Agregando constraint de busqueda local
+Before: size is 18
+After: size is 17
+Difference between iterations is 3
+TIME IT: 4
+Updated to: 4
+it: 3 lambda: 162.94117647058832 obj: 89.66666666666856
+Updated to: 8
+Updated to: 16
+Updated to: 32
+Updated to: 64
+TIME IT: 50
+Updated to: 50
+GAP: 0.2 TL: 50
+it: 4 lambda: 162.94117647058826 obj: -9.663381206337363E-13
+Agregando constraint de busqueda local
+TIME IT: 7
+Updated to: 7
+GAP: 0.1 TL: 7
+it: 5 lambda: 162.9411764705882 obj: -8.526512829121202E-13
+Updated to: 14
+Updated to: 28
+Updated to: 56
+TIME IT: 42
+Updated to: 42
+GAP: 0.05 TL: 42
+it: 6 lambda: 162.9411764705882 obj: -1.7053025658242404E-13
+Agregando constraint de busqueda local
+TIME IT: 8
+Updated to: 8
+Output written to output/output_a/instance_0008.txt
+First greedy gave: 4.5
+Second greedy gave: 4.5
+it: 0 lambda: 4.5 obj: -1.0
+Before: size is 2
+After: size is 2
+Difference between iterations is 2
+TIME IT: 0
+it: 1 lambda: 5.0 obj: 1.0
+TIME IT: 0
+GAP: 0.2 TL: 10
+it: 2 lambda: 5.0 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.1 TL: 10
+it: 3 lambda: 5.0 obj: 0.0
+TIME IT: 0
+GAP: 0.05 TL: 10
+it: 4 lambda: 5.0 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+Output written to output/output_a/instance_0020.txt
+First greedy gave: 85.5
+Second greedy gave: 109.4
+it: 0 lambda: 109.4 obj: -1.0
+Before: size is 5
+After: size is 5
+Difference between iterations is 4
+TIME IT: 0
+it: 1 lambda: 117.20000000000002 obj: 39.00000000000006
+TIME IT: 1
+Updated to: 1
+GAP: 0.2 TL: 1
+it: 2 lambda: 117.19999999999999 obj: -1.4210854715202004E-13
+Agregando constraint de busqueda local
+TIME IT: 1
+GAP: 0.1 TL: 1
+it: 3 lambda: 117.2 obj: 5.684341886080802E-14
+TIME IT: 0
+GAP: 0.05 TL: 1
+it: 4 lambda: 117.2 obj: 2.842170943040401E-14
+Agregando constraint de busqueda local
+TIME IT: 1
+Output written to output/output_a/instance_0018.txt
+First greedy gave: 202.0
+Second greedy gave: 202.0
+it: 0 lambda: 202.0 obj: -1.0
+TIME IT: 0
+GAP: 0.2 TL: 10
+it: 1 lambda: 202.0 obj: 0.0
+TIME IT: 0
+GAP: 0.1 TL: 10
+it: 2 lambda: 202.0 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.05 TL: 10
+it: 3 lambda: 202.0 obj: 0.0
+TIME IT: 0
+Output written to output/output_a/instance_0019.txt
+First greedy gave: 15.875
+Second greedy gave: 36.5
+it: 0 lambda: 36.5 obj: -1.0
+TIME IT: 0
+GAP: 0.2 TL: 10
+it: 1 lambda: 36.5 obj: 0.0
+TIME IT: 0
+GAP: 0.1 TL: 10
+it: 2 lambda: 36.5 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.05 TL: 10
+it: 3 lambda: 36.5 obj: 0.0
+TIME IT: 0
+Output written to output/output_a/instance_0017.txt
+First greedy gave: 5.333333333333333
+Second greedy gave: 6.8
+it: 0 lambda: 6.8 obj: -1.0
+Before: size is 5
+After: size is 11
+Difference between iterations is 12
+TIME IT: 0
+it: 1 lambda: 9.454545454545457 obj: 29.200000000000028
+Before: size is 11
+After: size is 4
+Difference between iterations is 9
+TIME IT: 0
+it: 2 lambda: 12.0 obj: 10.181818181818176
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.2 TL: 10
+it: 3 lambda: 12.0 obj: 0.0
+TIME IT: 0
+GAP: 0.1 TL: 10
+it: 4 lambda: 12.0 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.05 TL: 10
+it: 5 lambda: 12.0 obj: 0.0
+TIME IT: 0
+Output written to output/output_a/instance_0003.txt
+First greedy gave: 2.0
+Second greedy gave: 2.0
+it: 0 lambda: 2.0 obj: -1.0
+TIME IT: 0
+GAP: 0.2 TL: 10
+it: 1 lambda: 2.0 obj: 0.0
+TIME IT: 0
+GAP: 0.1 TL: 10
+it: 2 lambda: 2.0 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.05 TL: 10
+it: 3 lambda: 2.0 obj: 0.0
+TIME IT: 0
+Output written to output/output_a/instance_0002.txt
+First greedy gave: 75.5
+Second greedy gave: 85.0
+it: 0 lambda: 85.0 obj: -1.0
+TIME IT: 0
+GAP: 0.2 TL: 10
+it: 1 lambda: 85.0 obj: 0.0
+TIME IT: 0
+GAP: 0.1 TL: 10
+it: 2 lambda: 85.0 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.05 TL: 10
+it: 3 lambda: 85.0 obj: 0.0
+TIME IT: 0
+Output written to output/output_a/instance_0016.txt
+First greedy gave: 104.19047619047619
+Second greedy gave: 178.9090909090909
+it: 0 lambda: 178.9090909090909 obj: -1.0
+Before: size is 11
+After: size is 11
+Difference between iterations is 4
+TIME IT: 10
+it: 1 lambda: 181.6363636363636 obj: 29.999999999999716
+Updated to: 20
+TIME IT: 10
+Updated to: 10
+GAP: 0.2 TL: 10
+it: 2 lambda: 181.63636363636365 obj: 7.389644451905042E-13
+Agregando constraint de busqueda local
+TIME IT: 4
+Updated to: 4
+GAP: 0.1 TL: 4
+it: 3 lambda: 181.6363636363636 obj: -5.115907697472721E-13
+Updated to: 8
+Updated to: 16
+TIME IT: 13
+Updated to: 13
+GAP: 0.05 TL: 13
+it: 4 lambda: 181.63636363636365 obj: 7.389644451905042E-13
+Agregando constraint de busqueda local
+TIME IT: 4
+Updated to: 4
+Output written to output/output_a/instance_0014.txt
+First greedy gave: 102.85714285714286
+Second greedy gave: 148.33333333333334
+it: 0 lambda: 148.33333333333334 obj: -1.0
+Before: size is 3
+After: size is 3
+Difference between iterations is 2
+TIME IT: 0
+it: 1 lambda: 149.33333333333331 obj: 2.999999999999943
+TIME IT: 1
+Updated to: 1
+GAP: 0.2 TL: 1
+it: 2 lambda: 149.33333333333334 obj: 5.684341886080802E-14
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.1 TL: 1
+it: 3 lambda: 149.33333333333331 obj: -5.684341886080802E-14
+TIME IT: 1
+GAP: 0.05 TL: 1
+it: 4 lambda: 149.33333333333334 obj: 5.684341886080802E-14
+Agregando constraint de busqueda local
+TIME IT: 0
+Output written to output/output_a/instance_0015.txt
+First greedy gave: 9.4
+Second greedy gave: 15.0
+it: 0 lambda: 15.0 obj: -1.0
+TIME IT: 0
+GAP: 0.2 TL: 10
+it: 1 lambda: 15.0 obj: 0.0
+TIME IT: 0
+GAP: 0.1 TL: 10
+it: 2 lambda: 15.0 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.05 TL: 10
+it: 3 lambda: 15.0 obj: 0.0
+TIME IT: 0
+Output written to output/output_a/instance_0001.txt
+First greedy gave: 171.66666666666666
+Second greedy gave: 171.66666666666666
+it: 0 lambda: 171.66666666666666 obj: -1.0
+Updated to: 20
+Before: size is 9
+After: size is 9
+Difference between iterations is 0
+TIME IT: 10
+Updated to: 10
+it: 1 lambda: 172.1111111111111 obj: 3.999999999999943
+Updated to: 20
+Before: size is 9
+After: size is 8
+Difference between iterations is 1
+TIME IT: 10
+Updated to: 10
+it: 2 lambda: 177.875 obj: 46.11111111111131
+Agregando constraint de busqueda local
+TIME IT: 3
+Updated to: 3
+GAP: 0.2 TL: 3
+it: 3 lambda: 177.875 obj: 0.0
+Updated to: 6
+Updated to: 12
+Updated to: 24
+Updated to: 48
+TIME IT: 37
+Updated to: 37
+GAP: 0.1 TL: 37
+it: 4 lambda: 177.875 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 3
+Updated to: 3
+GAP: 0.05 TL: 3
+it: 5 lambda: 177.875 obj: 0.0
+Updated to: 6
+Updated to: 12
+Updated to: 24
+Updated to: 48
+TIME IT: 36
+Updated to: 36
+Output written to output/output_a/instance_0005.txt
+First greedy gave: 9.662337662337663
+Second greedy gave: 10.146596858638743
+it: 0 lambda: 10.146596858638743 obj: -1.0
+Before: size is 191
+After: size is 143
+Difference between iterations is 122
+TIME IT: 1
+Updated to: 1
+it: 1 lambda: 13.84615384615383 obj: 529.0366492146575
+Updated to: 2
+Before: size is 143
+After: size is 87
+Difference between iterations is 80
+TIME IT: 1
+Updated to: 1
+it: 2 lambda: 14.965517241379327 obj: 97.38461538461813
+Agregando constraint de busqueda local
+Before: size is 87
+After: size is 84
+Difference between iterations is 3
+TIME IT: 0
+it: 3 lambda: 15.095238095238114 obj: 10.896551724138114
+Updated to: 2
+Before: size is 84
+After: size is 82
+Difference between iterations is 2
+TIME IT: 1
+Updated to: 1
+it: 4 lambda: 15.109756097560997 obj: 1.1904761904763905
+Agregando constraint de busqueda local
+Before: size is 82
+After: size is 81
+Difference between iterations is 3
+TIME IT: 0
+it: 5 lambda: 15.22222222222221 obj: 9.109756097558346
+Updated to: 2
+Updated to: 4
+Before: size is 81
+After: size is 66
+Difference between iterations is 25
+TIME IT: 3
+Updated to: 3
+it: 6 lambda: 15.530303030303045 obj: 20.333333333335137
+Agregando constraint de busqueda local
+Before: size is 66
+After: size is 63
+Difference between iterations is 3
+TIME IT: 1
+Updated to: 1
+it: 7 lambda: 15.63492063492065 obj: 6.590909090909065
+Updated to: 2
+Updated to: 4
+Updated to: 8
+Updated to: 16
+Updated to: 32
+Before: size is 63
+After: size is 21
+Difference between iterations is 44
+TIME IT: 21
+Updated to: 21
+it: 8 lambda: 16.66666666666666 obj: 21.666666666666213
+Agregando constraint de busqueda local
+Before: size is 21
+After: size is 20
+Difference between iterations is 3
+TIME IT: 1
+Updated to: 1
+it: 9 lambda: 16.849999999999998 obj: 3.6666666666667354
+Updated to: 2
+Updated to: 4
+Updated to: 8
+Updated to: 16
+Updated to: 32
+Updated to: 64
+TIME IT: 59
+Updated to: 59
+GAP: 0.2 TL: 59
+it: 10 lambda: 16.849999999999998 obj: -7.105427357601002E-15
+Agregando constraint de busqueda local
+TIME IT: 1
+Updated to: 1
+GAP: 0.1 TL: 1
+it: 11 lambda: 16.849999999999998 obj: -7.105427357601002E-15
+Updated to: 2
+Updated to: 4
+Updated to: 8
+Updated to: 16
+Updated to: 32
+Updated to: 64
+TIME IT: 61
+Updated to: 61
+GAP: 0.05 TL: 61
+it: 12 lambda: 16.849999999999998 obj: -7.105427357601002E-15
+Agregando constraint de busqueda local
+TIME IT: 1
+Updated to: 1
+Output written to output/output_a/instance_0011.txt
+First greedy gave: 11.331168831168831
+Second greedy gave: 12.191489361702128
+it: 0 lambda: 12.191489361702128 obj: -1.0
+Updated to: 20
+Before: size is 141
+After: size is 105
+Difference between iterations is 116
+TIME IT: 18
+Updated to: 18
+it: 1 lambda: 16.628571428571384 obj: 465.89361702127167
+Updated to: 36
+Before: size is 105
+After: size is 102
+Difference between iterations is 21
+TIME IT: 21
+Updated to: 21
+it: 2 lambda: 16.95098039215687 obj: 32.88571428571957
+Agregando constraint de busqueda local
+Before: size is 102
+After: size is 101
+Difference between iterations is 3
+TIME IT: 1
+Updated to: 1
+it: 3 lambda: 17.009900990098984 obj: 5.950980392153745
+Updated to: 2
+Updated to: 4
+Updated to: 8
+Updated to: 16
+Updated to: 32
+Updated to: 64
+Updated to: 128
+Updated to: 256
+Updated to: 512
+Updated to: 1024
+Before: size is 101
+After: size is 101
+Difference between iterations is 12
+TIME IT: 518
+Updated to: 518
+it: 4 lambda: 17.108910891089128 obj: 10.000000000004562
+Agregando constraint de busqueda local
+TIME IT: 2
+Updated to: 2
+GAP: 0.2 TL: 2
+it: 5 lambda: 17.10891089108907 obj: -5.5777604757167865E-12
+Updated to: 4
+Updated to: 8
+Updated to: 16
+Updated to: 32
+TIME IT: 35
+GAP: 0.1 TL: 32
+it: 6 lambda: 17.108910891089067 obj: -4.618527782440651E-13
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.05 TL: 32
+it: 7 lambda: 17.108910891089064 obj: -4.547473508864641E-13
+TIME IT: 0
+Output written to output/output_a/instance_0010.txt
+First greedy gave: 1.375
+Second greedy gave: 1.8
+it: 0 lambda: 1.8 obj: -1.0
+Before: size is 5
+After: size is 15
+Difference between iterations is 10
+TIME IT: 0
+it: 1 lambda: 2.6 obj: 12.0
+Before: size is 15
+After: size is 4
+Difference between iterations is 13
+TIME IT: 0
+it: 2 lambda: 3.2500000000000004 obj: 2.600000000000001
+Agregando constraint de busqueda local
+Before: size is 4
+After: size is 2
+Difference between iterations is 2
+TIME IT: 0
+it: 3 lambda: 3.5 obj: 0.4999999999999991
+TIME IT: 0
+GAP: 0.2 TL: 10
+it: 4 lambda: 3.5 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.1 TL: 10
+it: 5 lambda: 3.5 obj: 0.0
+TIME IT: 0
+GAP: 0.05 TL: 10
+it: 6 lambda: 3.5 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+Output written to output/output_a/instance_0004.txt
+First greedy gave: 2.2708333333333335
+Second greedy gave: 6.0
+it: 0 lambda: 6.0 obj: -1.0
+Before: size is 6
+After: size is 9
+Difference between iterations is 11
+TIME IT: 0
+it: 1 lambda: 9.222222222222221 obj: 29.0
+Before: size is 9
+After: size is 4
+Difference between iterations is 7
+TIME IT: 0
+it: 2 lambda: 11.25 obj: 8.111111111111114
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.2 TL: 10
+it: 3 lambda: 11.25 obj: 0.0
+TIME IT: 0
+GAP: 0.1 TL: 10
+it: 4 lambda: 11.25 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.05 TL: 10
+it: 5 lambda: 11.25 obj: 0.0
+TIME IT: 0
+Output written to output/output_a/instance_0012.txt
+First greedy gave: 310.5
+Second greedy gave: 603.0
+it: 0 lambda: 603.0 obj: -1.0
+Before: size is 1
+After: size is 1
+Difference between iterations is 2
+TIME IT: 0
+it: 1 lambda: 691.0 obj: 88.0
+TIME IT: 0
+GAP: 0.2 TL: 10
+it: 2 lambda: 691.0 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.1 TL: 10
+it: 3 lambda: 691.0 obj: 0.0
+TIME IT: 0
+GAP: 0.05 TL: 10
+it: 4 lambda: 691.0 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+Output written to output/output_a/instance_0006.txt
+First greedy gave: 196.42857142857142
+Second greedy gave: 287.2
+it: 0 lambda: 287.2 obj: -1.0
+Before: size is 5
+After: size is 5
+Difference between iterations is 8
+TIME IT: 0
+it: 1 lambda: 376.59999999999997 obj: 446.99999999999983
+Before: size is 5
+After: size is 4
+Difference between iterations is 1
+TIME IT: 1
+Updated to: 1
+it: 2 lambda: 392.25 obj: 62.60000000000025
+Agregando constraint de busqueda local
+TIME IT: 1
+GAP: 0.2 TL: 1
+it: 3 lambda: 392.25 obj: 0.0
+Updated to: 2
+TIME IT: 2
+GAP: 0.1 TL: 2
+it: 4 lambda: 392.25 obj: 0.0
+Agregando constraint de busqueda local
+TIME IT: 0
+GAP: 0.05 TL: 2
+it: 5 lambda: 392.25 obj: 0.0
+Updated to: 4
+TIME IT: 2
+Updated to: 2
+Output written to output/output_a/instance_0007.txt
+First greedy gave: 66.125
+Second greedy gave: 94.625
+it: 0 lambda: 94.625 obj: -1.0
+Before: size is 16
+After: size is 15
+Difference between iterations is 17
+TIME IT: 0
+it: 1 lambda: 111.2 obj: 248.625
+Before: size is 15
+After: size is 13
+Difference between iterations is 4
+TIME IT: 1
+Updated to: 1
+it: 2 lambda: 117.38461538461536 obj: 80.39999999999962
+Agregando constraint de busqueda local
+Updated to: 2
+TIME IT: 2
+GAP: 0.2 TL: 2
+it: 3 lambda: 117.38461538461542 obj: 7.958078640513122E-13
+Updated to: 4
+TIME IT: 2
+Updated to: 2
+GAP: 0.1 TL: 2
+it: 4 lambda: 117.38461538461534 obj: -8.526512829121202E-13
+Agregando constraint de busqueda local
+TIME IT: 2
+GAP: 0.05 TL: 2
+it: 5 lambda: 117.3846153846154 obj: 8.242295734817162E-13
+Updated to: 4
+TIME IT: 3
+Updated to: 3
+Output written to output/output_a/instance_0013.txt
+Compiling code in ....
+Maven compilation successful.
+Running instance_0009.txt
+Running instance_0008.txt
+Running instance_0020.txt
+Running instance_0018.txt
+Running instance_0019.txt
+Running instance_0017.txt
+Running instance_0003.txt
+Running instance_0002.txt
+Running instance_0016.txt
+Running instance_0014.txt
+Running instance_0015.txt
+Running instance_0001.txt
+Running instance_0005.txt
+Running instance_0011.txt
+Running instance_0010.txt
+Running instance_0004.txt
+Running instance_0012.txt
+Running instance_0006.txt
+Running instance_0007.txt
+Running instance_0013.txt
+Result for instance_0001.txt
+Is solution feasible: True
+Objective function value: 15.0
+Result for instance_0002.txt
+Is solution feasible: True
+Objective function value: 2.0
+Result for instance_0003.txt
+Is solution feasible: True
+Objective function value: 12.0
+Result for instance_0004.txt
+Is solution feasible: True
+Objective function value: 3.5
+Result for instance_0005.txt
+Is solution feasible: True
+Objective function value: 177.875
+Result for instance_0006.txt
+Is solution feasible: True
+Objective function value: 691.0
+Result for instance_0007.txt
+Is solution feasible: True
+Objective function value: 392.25
+Result for instance_0008.txt
+Is solution feasible: True
+Objective function value: 162.94117647058823
+Result for instance_0009.txt
+Is solution feasible: True
+Objective function value: 4.416666666666667
+Result for instance_0010.txt
+Is solution feasible: True
+Objective function value: 17.10891089108911
+Result for instance_0011.txt
+Is solution feasible: True
+Objective function value: 16.85
+Result for instance_0012.txt
+Is solution feasible: True
+Objective function value: 11.25
+Result for instance_0013.txt
+Is solution feasible: True
+Objective function value: 117.38461538461539
+Result for instance_0014.txt
+Is solution feasible: True
+Objective function value: 181.63636363636363
+Result for instance_0015.txt
+Is solution feasible: True
+Objective function value: 149.33333333333334
+Result for instance_0016.txt
+Is solution feasible: True
+Objective function value: 85.0
+Result for instance_0017.txt
+Is solution feasible: True
+Objective function value: 36.5
+Result for instance_0018.txt
+Is solution feasible: True
+Objective function value: 117.2
+Result for instance_0019.txt
+Is solution feasible: True
+Objective function value: 202.0
+Result for instance_0020.txt
+Is solution feasible: True
+Objective function value: 5.0
