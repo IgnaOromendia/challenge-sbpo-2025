@@ -25,18 +25,18 @@ public class ParametricSolver extends MIPSolver {
         int it = 0;
         int startLocalSearch = 2;
         int neighbourhoodSize = 3;
+        int acceleratedTimeLimit = 120;
 
         generateMIP(used_orders, used_aisles, null);
 
         Duration startOfInstance = stopWatch.getDuration();
-        
+
         while (it < MAX_ITERATIONS) {
             System.out.println("it: " + it + " lambda: " + lambda + " obj: " + objValue);
 
-            updateCutConstraint(lambda);
-
             long remainingTime = TIME_LIMIT_SEC - stopWatch.getDuration().getSeconds() - 5;
 
+            double oldLambda = lambda;
             double oldObjValue = objValue;
 
             long startOfIteration = stopWatch.getDuration().getSeconds();
@@ -51,6 +51,7 @@ public class ParametricSolver extends MIPSolver {
 
 
             System.out.println("TIME IT: " + (endOfIteration - startOfIteration));
+            
 
             long iterationDuration = endOfIteration - startOfIteration;
             if (timeListener.isGreaterThan(iterationDuration)) timeListener.updateTimeLimitTo(iterationDuration);
@@ -75,6 +76,30 @@ public class ParametricSolver extends MIPSolver {
             if (stopWatch.getDuration().getSeconds() - startOfInstance.getSeconds() > TIME_LIMIT_SEC - 5) break;
             
             it++;
+
+            if (it < 2) continue; 
+
+            // Accelerated Iteration
+            double lambda_prime = 2 * lambda - oldLambda;
+
+            System.out.println("STARTING ACCELERATED ITERATION WITH lambda_prime=" + lambda_prime);
+            System.out.println("Best solution so far is " + lambda);
+
+            startOfIteration = stopWatch.getDuration().getSeconds();
+
+            remainingTime = TIME_LIMIT_SEC - stopWatch.getDuration().getSeconds() - 5;
+            if (it >= startLocalSearch && it%2==0)
+                objValue = solveMIPWith(lambda_prime, used_orders, used_aisles, gapTolerance, 
+                            timeListener, Math.min(acceleratedTimeLimit, remainingTime), true, neighbourhoodSize);
+            else
+                objValue = solveMIPWith(lambda_prime, used_orders, used_aisles, gapTolerance, timeListener, Math.min(acceleratedTimeLimit, remainingTime));
+
+            endOfIteration = stopWatch.getDuration().getSeconds();
+
+            System.out.println("TIME ACCELERATED IT: " + (endOfIteration - startOfIteration));
+            
+            lambda = getValueOfSolution(used_orders, used_aisles);
+            System.out.println("Best solution so far is " + lambda);
         }
 
         endCplex();

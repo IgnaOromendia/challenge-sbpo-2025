@@ -136,9 +136,6 @@ public abstract class MIPSolver extends CPLEXSolver {
             // Hay que elegir por lo menos un pasillo
             setAtLeastOneAisleConstraint();
 
-            // Agrega restricciones de corte
-            setConstraint(this.currentBest);
-
             // Add cuts for singletons
             addSingletonConstraints();
 
@@ -237,30 +234,6 @@ public abstract class MIPSolver extends CPLEXSolver {
             exprY.addTerm(1, this.Y[a]);
 
         this.cplex.addGe(exprY, 1);
-    }
-
-    private void setConstraint(double k) throws IloException {
-        // Sum order item >=  k|A|
-        IloLinearNumExpr exprX  = this.cplex.linearNumExpr();
-
-        for(int o = 0; o < this.orders.size(); o++) 
-            exprX.addTerm(this.orderItemSum[o], X[o]);
-        
-        for(int a = 0; a < this.aisles.size(); a++) 
-            exprX.addTerm(-k, Y[a]);
-        
-        this.cutConstraint = this.cplex.addGe(exprX, 0);
-    }
-
-    protected void updateCutConstraint(double k) {
-        try {
-            for (int a = 0; a < this.aisles.size(); a++)
-                this.cplex.setLinearCoef(this.cutConstraint, this.Y[a], -k);
-            
-        } catch (IloException e) {
-            System.out.println(e.getMessage());
-        }
-        
     }
 
     // Objective function
@@ -363,6 +336,14 @@ public abstract class MIPSolver extends CPLEXSolver {
 
         return pickedObjects / usedColumns;
     }
+    
+    public double getValueOfSolution(List<Integer> used_orders, List<Integer> used_aisles) {
+        double pickedObjects = 0;
+
+        for (int o : used_orders) pickedObjects += this.orderItemSum[o];
+
+        return pickedObjects / used_aisles.size();
+    }
 
     protected int ordersItemSum(List<Integer> ordersToSum) {
         int sum = 0;
@@ -410,9 +391,57 @@ public abstract class MIPSolver extends CPLEXSolver {
                 if (elementsCountInOrders[key] == 1) ordersPerElem.get(key).add(o);
             }
         }
-        System.out.println("Number of size one orders: " + numSizeOne);
+        System.out.println("Number of size one orders: " + numSizeOne + " of " + this.orders.size());
+
+        int cnt = 0;
+        for (int e=0; e<this.nItems; e++)
+            if (elementsCountInOrders[e] == 1 && ordersPerElem.get(e).size() == 1)
+                cnt++;
+
+        System.out.println("Elementos especiales: " + cnt + " de " + this.nItems);
+        
+        int[] elementsCountInAisles = new int[this.nItems];
+        for (int e=0; e<this.nItems; e++) elementsCountInAisles[e] = 0;
+
+        List<List<Integer>> aislesPerElem = new ArrayList<>();
+        for (int e=0; e<this.nItems; e++) aislesPerElem.add(new ArrayList<>());
+
+        for (int a=0; a<this.aisles.size(); a++) {
+            for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet()) {
+                int key = entry.getKey();
+                int value = entry.getValue();
+
+                elementsCountInAisles[key] += value;
+                aislesPerElem.get(key).add(a);
+            }
+        }
+
+        int cntAisle = 0;
+        for (int e=0; e<this.nItems; e++) {
+            if (aislesPerElem.get(e).size() == 1 && elementsCountInOrders[e] == 1 && ordersPerElem.get(e).size() == 1) {
+                cntAisle++;
+            }
+        }
+
+        System.out.println("Elementos magicos: " + cntAisle + " de " + this.nItems);
+        
+
 
         int numSingletons = 0;
+        cnt = 0;
+        for (int o=0; o<this.orders.size(); o++) {
+            boolean works = true;
+            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet()) {
+                int key = entry.getKey();
+                int value = entry.getValue();
+
+                if (elementsCountInOrders[key] != 1) works = false;
+            }
+
+            if (works) cnt ++;
+        }
+
+        System.out.println("Ordenes especiales: " + cnt + " de " + this.orders.size());
 
         // Esto se puede hacer en lineal. Mejorar.
         for (int e=0; e<this.nItems; e++) {
