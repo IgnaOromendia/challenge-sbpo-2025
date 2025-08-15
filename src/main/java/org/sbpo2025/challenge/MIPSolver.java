@@ -137,7 +137,7 @@ public abstract class MIPSolver extends CPLEXSolver {
             setAtLeastOneAisleConstraint();
 
             // Add cuts for singletons
-            addSingletonConstraints();
+            //addSingletonConstraints();
 
             if (extraCode != null) extraCode.run(this.cplex, this.X, this.Y);            
             
@@ -370,6 +370,8 @@ public abstract class MIPSolver extends CPLEXSolver {
         return this.cplex.addGe(expr, used_aisles.size() - neighbourhoodSize);
     }
 
+    // Este corte no es correcto: podria ser conveniente agregar un pasillo pero no una de las 
+    // ordenes singleton en ese pasillo para mantener la suma de items por debajo de UB
     void addSingletonConstraints() throws IloException {
         int[] elementsCountInOrders = new int[this.nItems];
         for (int e=0; e<this.nItems; e++) elementsCountInOrders[e] = 0;
