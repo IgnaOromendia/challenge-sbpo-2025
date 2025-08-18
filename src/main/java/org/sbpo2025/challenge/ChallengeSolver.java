@@ -24,10 +24,9 @@ public class ChallengeSolver {
     protected int waveSizeUB;
     
     // Solvers
-    private final ParametricSolver parametricSolver;
-    private final BinarySolver binarySolver;
-    private final HybridSolver hybridSolver;
-    private final HalfAisleSolver halfAisleSolver;
+    private ParametricSolver parametricSolver;
+    private BinarySolver binarySolver;
+    private HybridSolver hybridSolver;
 
     public ChallengeSolver(
             List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
@@ -36,11 +35,6 @@ public class ChallengeSolver {
         this.nItems = nItems;
         this.waveSizeLB = waveSizeLB;
         this.waveSizeUB = waveSizeUB;
-                
-        this.parametricSolver   = new ParametricSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-        this.binarySolver       = new BinarySolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-        this.hybridSolver       = new HybridSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-        this.halfAisleSolver    = new HalfAisleSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
     }
 
     public ChallengeSolution solve(StopWatch stopWatch) {  
@@ -50,22 +44,21 @@ public class ChallengeSolver {
         Boolean useBinarySearchSolution = false;
         Boolean useParametricAlgorithmMILFP = true;
         Boolean useHybrid = false;
-        boolean useHalf   = false;
         String strategy = "";
         Integer iterations = 1;
 
         if (useBinarySearchSolution) {
+            this.binarySolver = new BinarySolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
             iterations = binarySolver.binarySearchSolution(used_orders, used_aisles, aisles, 0.25, stopWatch);
             strategy = "binary";
         } else if (useParametricAlgorithmMILFP) {
+            this.parametricSolver = new ParametricSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
             iterations = parametricSolver.solveMILFP(used_orders, used_aisles, 0.4, stopWatch);
             strategy = "parametric";
         } else if (useHybrid) {
+            this.hybridSolver = new HybridSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
             iterations = hybridSolver.solveMILFP(orders, used_orders, used_aisles, 0.25, stopWatch);
             strategy = "hybrid";
-        } else if (useHalf) {
-            iterations = halfAisleSolver.solveHalfAisleMILFP(used_orders, used_aisles, 0.4, stopWatch);
-            strategy = "half";
         }
 
         ChallengeSolution solution = new ChallengeSolution(Set.copyOf(used_orders), Set.copyOf(used_aisles));

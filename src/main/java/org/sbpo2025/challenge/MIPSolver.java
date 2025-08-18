@@ -18,6 +18,14 @@ import ilog.cplex.IloCplex;
 
 public abstract class MIPSolver extends CPLEXSolver {
 
+    // Esta variable se usa para controlar si acotamos los coeficientes de las variables
+    // y_i en las restricciones de demanda con la maxima disponibilidad de Items
+    // Se loguea la cantidad de ecuaciones simplificadas.
+    static boolean useBoundForAisleCapacity = true;
+    // Esta variable controla si queremos marcar pasillos como inutiles en base a
+    // una cota superior de que tanto aportan y el valor actual de lambda.
+    static boolean useLambdaToRemoveAisles = true;
+
     // CPLEX
     private IloObjective objective;
     protected final IloIntVar[] X; // La orden o está completa
@@ -25,6 +33,14 @@ public abstract class MIPSolver extends CPLEXSolver {
     protected IloRange aisleConstraintRange; // Rango de la pasillos
 
     protected final int[] orderItemSum;
+    protected final int[] perElemDemand;
+    protected final int[] biggestOrderDemandWithElem;
+    // El array maxIncrementForAisle intenta estimar el mayor aporte que puede hacer un pasillo
+    // Este se acota superiormente suponiendo que cada item del pasillo es utilizado para completar
+    // la orden mas grande con ese elemento. Este tipo de cuenta puede ser una cota muy mala (en particular
+    // contamos dos veces la misma orden). Considerar mejorar.
+    protected final int[] maxIncrementForAisle;
+    
 
     private IloRange cutConstraint;
 
@@ -44,9 +60,25 @@ public abstract class MIPSolver extends CPLEXSolver {
         Y = new IloIntVar[this.aisles.size()];
 
         this.orderItemSum = new int[orders.size()];
+        this.perElemDemand = new int[nItems];
+        this.biggestOrderDemandWithElem = new int[nItems];
+        this.maxIncrementForAisle = new int[aisles.size()];
         
         for(int o = 0; o < this.orders.size(); o++)
             this.orderItemSum[o] = this.orders.get(o).values().stream().mapToInt(Integer::intValue).sum();
+        
+        for (int o=0; o < this.orders.size(); o++)
+            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet())
+                this.perElemDemand[entry.getKey()] += entry.getValue();
+
+        for (int o=0; o < this.orders.size(); o++)
+            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet())
+                this.biggestOrderDemandWithElem[entry.getKey()] = Math.max(this.orderItemSum[o],
+                                this.biggestOrderDemandWithElem[entry.getValue()]);
+
+        for (int a=0; a < this.aisles.size(); a++)
+            for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet())
+                maxIncrementForAisle[a] += biggestOrderDemandWithElem[entry.getKey()] * Math.min(entry.getValue(), perElemDemand[entry.getKey()]);
     }
 
 
@@ -74,7 +106,7 @@ public abstract class MIPSolver extends CPLEXSolver {
     }
 
     // Resovlemos acutalizando la función objetivo
-    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, 
+    protected double solveMIPWith(double lambda, List<Integer> used_orders, List<Integer> used_aisles, 
                         double gapTolerance, TimeListener timeListener, long remainingTime,
                         boolean localSearch, long neighbourhoodSize) {
         
@@ -90,9 +122,11 @@ public abstract class MIPSolver extends CPLEXSolver {
             this.itTimeListener = timeListener;
             this.itStartingTime = System.nanoTime();
 
-            setObjectiveFunction(q);
+            setObjectiveFunction(lambda);
 
             usePreviousSolution(used_orders, used_aisles);
+
+            if (useLambdaToRemoveAisles) setAislesToZero(lambda);
 
             if (localSearch)
                 neigbourhoodConstraint = addConstraintOfChangingFewAisles(used_aisles, neighbourhoodSize);
@@ -216,11 +250,21 @@ public abstract class MIPSolver extends CPLEXSolver {
             }
         }
 
+        int numVariablesImproved = 0; 
         for(int a = 0; a < this.aisles.size(); a++) {
             for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet()) {
-                exprsY[entry.getKey()].addTerm(entry.getValue(), this.Y[a]);
+                if (useBoundForAisleCapacity) 
+                    exprsY[entry.getKey()]
+                                .addTerm(Math.min(entry.getValue(), this.perElemDemand[entry.getKey()]), this.Y[a]);
+                else
+                    exprsY[entry.getKey()].addTerm(entry.getValue(), this.Y[a]);
+
+                if (useBoundForAisleCapacity && this.perElemDemand[entry.getKey()] < entry.getValue()) 
+                    numVariablesImproved++;
             }
         }
+
+        if (useBoundForAisleCapacity) System.out.println("Coefficientes achicados: " + numVariablesImproved);
 
         for(int i = 0; i < nItems; i++)
             this.cplex.addLe(exprsX[i], exprsY[i]);
@@ -368,6 +412,12 @@ public abstract class MIPSolver extends CPLEXSolver {
         }
 
         return this.cplex.addGe(expr, used_aisles.size() - neighbourhoodSize);
+    }
+
+    private void setAislesToZero(double lambda) throws IloException{
+        for (int a=0; a < this.aisles.size(); a++)
+            if (lambda > maxIncrementForAisle[a])
+                this.Y[a].setUB(0);
     }
 
     // Este corte no es correcto: podria ser conveniente agregar un pasillo pero no una de las 
