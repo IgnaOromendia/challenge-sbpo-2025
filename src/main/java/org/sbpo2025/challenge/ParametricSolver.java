@@ -79,12 +79,14 @@ public class ParametricSolver extends MIPSolver {
             
             it++;
 
-            System.out.println("Trying to add aisle greedily. Before value is " + lambda);
+            double beforeGreedy = lambda;
             lambda = greedySolver.tryAddAisle(used_orders, used_aisles);
-            System.out.println("After greedy is " + lambda);
+            if (beforeGreedy + 0.001 < lambda) System.out.println("El greedy mejoro " + (lambda - beforeGreedy));
         }
 
         endCplex();
+
+        System.out.println("Final value is " + lambda);
 
         return it;
     }

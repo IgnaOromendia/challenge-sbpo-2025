@@ -53,7 +53,7 @@ public class ChallengeSolver {
             strategy = "binary";
         } else if (useParametricAlgorithmMILFP) {
             this.parametricSolver = new ParametricSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-            iterations = parametricSolver.solveMILFP(used_orders, used_aisles, 0.4, stopWatch);
+            iterations = parametricSolver.solveMILFP(used_orders, used_aisles, 0.2, stopWatch);
             strategy = "parametric";
         } else if (useHybrid) {
             this.hybridSolver = new HybridSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);

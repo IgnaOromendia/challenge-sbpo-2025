@@ -102,14 +102,14 @@ public abstract class MIPSolver extends CPLEXSolver {
                 }
             }
         }
-        System.out.println("Singletons que se factorizan con limite " + maxNumberOfAislesForFactoringSingleton + ": " + cnt);
-    
+
         cnt = 0;
 
         for (int o=0; o < this.orders.size(); o++)
             if (orderItemSum[o] == 1)
                 cnt++;
-        System.out.println(cnt);
+            System.out.println("Singletons que se factorizan con limite " + maxNumberOfAislesForFactoringSingleton + ": " + cnt + " de " + cnt);
+    
     }
 
 
@@ -376,7 +376,7 @@ public abstract class MIPSolver extends CPLEXSolver {
             //  4 MIPStartRepair: Si no es factible, intenta repararla para convertirla en una solución válida.
             //  5 MIPStartNoCheck: Supone que la solución es factible sin comprobarla. Solo válida si el modelo no cambia desde que se generó el MIP start.
 
-            this.cplex.addMIPStart(varsToSet, ones, IloCplex.MIPStartEffort.Auto);
+            this.cplex.addMIPStart(varsToSet, ones, IloCplex.MIPStartEffort.SolveMIP);
         }
     }
 
@@ -414,8 +414,7 @@ public abstract class MIPSolver extends CPLEXSolver {
             aisles_before.removeAll(aisles_after);
             aisles_after.removeAll(aisles_before_copy);
 
-            System.out.println("After: size is " + used_aisles.size());
-            System.out.println("After: Difference between iterations is " 
+            System.out.println("After: size is " + used_aisles.size() + ". Difference between iterations is " 
                     + (aisles_before.size() + aisles_after.size()));
         }
     }
@@ -464,7 +463,7 @@ public abstract class MIPSolver extends CPLEXSolver {
     }
 
     private IloRange addConstraintOfChangingFewAisles(List<Integer> used_aisles, long neighbourhoodSize) throws IloException {
-        System.out.println("Agregando constraint de busqueda local");
+        System.out.println("Local Seach Iteration");
         
         IloLinearIntExpr expr = this.cplex.linearIntExpr();
 
@@ -494,10 +493,13 @@ public abstract class MIPSolver extends CPLEXSolver {
     }
 
     private void setAislesToZero(double lambda) throws IloException{
+        int cnt = 0;
         for (int a=0; a < this.aisles.size(); a++)
             if (lambda > maxIncrementForAisle[a]) {
+                cnt++;
                 this.Y[a].setLB(0); // Creo que no hace falta este set, pero bueno
                 this.Y[a].setUB(0);
         }
+        System.out.println("Removed " + cnt + " out of " + this.aisles.size() + " aisles with cut");
     }
 }

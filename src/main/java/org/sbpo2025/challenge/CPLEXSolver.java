@@ -55,10 +55,14 @@ public abstract class CPLEXSolver {
     }
 
     protected void setCPLEXParamsTo() throws IloException {
-        this.cplex.setParam(IloCplex.Param.Simplex.Display, 0); 
-        this.cplex.setParam(IloCplex.Param.MIP.Display, 0);    
-        this.cplex.setOut(null); 
-        this.cplex.setWarning(null); 
+        boolean print = false;
+
+        if (!print) {
+            this.cplex.setParam(IloCplex.Param.Simplex.Display, 0); 
+            this.cplex.setParam(IloCplex.Param.MIP.Display, 0);    
+            this.cplex.setOut(null); 
+            this.cplex.setWarning(null);
+        }
 
         // Threads
         int availableThreads = Runtime.getRuntime().availableProcessors();
