@@ -55,7 +55,6 @@ public abstract class CPLEXSolver {
     }
 
     protected void setCPLEXParamsTo() throws IloException {
-        // Prints
         this.cplex.setParam(IloCplex.Param.Simplex.Display, 0); 
         this.cplex.setParam(IloCplex.Param.MIP.Display, 0);    
         this.cplex.setOut(null); 
