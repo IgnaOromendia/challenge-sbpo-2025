@@ -79,9 +79,10 @@ public class ParametricSolver extends MIPSolver {
 
             double beforeGreedy = lambda;
             lambda = greedySolver.tryAddAisle(used_orders, used_aisles);
-            if (0.001 < lambda - beforeGreedy) System.out.println("El greedy mejoro " + (lambda - beforeGreedy));
+            if (0.001 < lambda - beforeGreedy) System.out.println("El greedy mejoro de " + beforeGreedy + " a " + lambda);
 
             if (stopWatch.getDuration().getSeconds() - startOfInstance.getSeconds() > TIME_LIMIT_SEC - 5) break;
+
         }
 
         endCplex();

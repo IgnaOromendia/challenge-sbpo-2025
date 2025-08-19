@@ -2,6 +2,7 @@ package org.sbpo2025.challenge;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,7 @@ public abstract class MIPSolver extends CPLEXSolver {
 
     protected final int[] orderItemSum;
     protected final int[] perElemDemand;
-    protected final int[] biggestOrderDemandWithElem;
+    protected final List<List<Integer>> orderDemandsWithElem;
     // El array maxIncrementForAisle intenta estimar el mayor aporte que puede hacer un pasillo
     // Este se acota superiormente suponiendo que cada item del pasillo es utilizado para completar
     // la orden mas grande con ese elemento. Este tipo de cuenta puede ser una cota muy mala (en particular
@@ -45,6 +46,8 @@ public abstract class MIPSolver extends CPLEXSolver {
     protected final int[] maxIncrementForAisle;
 
     List<List<Integer>> aislesThatCoverElement;
+
+    private IloRange aisleUpperBoundConstraint;
 
     protected double currentBest;
 
@@ -63,7 +66,9 @@ public abstract class MIPSolver extends CPLEXSolver {
 
         this.orderItemSum = new int[orders.size()];
         this.perElemDemand = new int[nItems];
-        this.biggestOrderDemandWithElem = new int[nItems];
+        this.orderDemandsWithElem = new ArrayList<>();
+        for (int e=0; e < nItems; e++) this.orderDemandsWithElem.add(new ArrayList<>());
+        
         this.maxIncrementForAisle = new int[aisles.size()];
         aislesThatCoverElement = new ArrayList<>();
         
@@ -76,12 +81,24 @@ public abstract class MIPSolver extends CPLEXSolver {
 
         for (int o=0; o < this.orders.size(); o++)
             for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet())
-                this.biggestOrderDemandWithElem[entry.getKey()] = Math.max(this.orderItemSum[o],
-                                this.biggestOrderDemandWithElem[entry.getValue()]);
+                this.orderDemandsWithElem.get(entry.getKey()).add(this.orderItemSum[o]);
 
-        for (int a=0; a < this.aisles.size(); a++)
-            for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet())
-                maxIncrementForAisle[a] += biggestOrderDemandWithElem[entry.getKey()] * Math.min(entry.getValue(), perElemDemand[entry.getKey()]);
+        for (int e=0; e < this.nItems; e++) Collections.sort(this.orderDemandsWithElem.get(e), Collections.reverseOrder()) ;
+
+        for (int a=0; a < this.aisles.size(); a++) {
+            for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet()){ 
+                List<Integer> ordersDemandForElem = orderDemandsWithElem.get(entry.getKey());
+                int size = ordersDemandForElem.size();
+                for (int i=0; i < entry.getValue(); i++) {
+                    if (i < size) 
+                        maxIncrementForAisle[a] += ordersDemandForElem.get(i);
+                    else {
+                        maxIncrementForAisle[a] += Math.min(entry.getValue(), perElemDemand[entry.getKey()]) - size;
+                        break;
+                    }
+                }
+            }
+        }
     
         for (int e=0; e < nItems; e++) aislesThatCoverElement.add(new ArrayList<>());
 
@@ -167,6 +184,8 @@ public abstract class MIPSolver extends CPLEXSolver {
 
             setObjectiveFunction(lambda);
 
+            updateNumberOfAislesUpperbound(lambda);
+
             usePreviousSolution(used_orders, used_aisles, used_indicators);
 
             if (useLambdaToRemoveAisles) setAislesToZero(lambda);
@@ -216,6 +235,9 @@ public abstract class MIPSolver extends CPLEXSolver {
 
             // Hay que elegir por lo menos un pasillo
             setAtLeastOneAisleConstraint();
+
+            // Acotamos la cantidad de pasillos con el mejor valor de lambda
+            setNumberOfAislesUpperbound();
 
             if (extraCode != null) extraCode.run(this.cplex, this.X, this.Y);            
 
@@ -324,6 +346,26 @@ public abstract class MIPSolver extends CPLEXSolver {
 
         this.cplex.addGe(exprY, 1);
     }
+
+    protected void setNumberOfAislesUpperbound() throws IloException {
+        IloLinearIntExpr exprY = this.cplex.linearIntExpr();
+            
+        for(int a = 0; a < this.aisles.size(); a++) 
+            exprY.addTerm(1, this.Y[a]);
+
+        int bound = (int) Math.floor(this.waveSizeUB / this.currentBest);
+
+        aisleUpperBoundConstraint = this.cplex.addLe(exprY, bound);
+    }
+
+    protected void updateNumberOfAislesUpperbound(double lambda) throws IloException {
+        int bound = (int) Math.floor(this.waveSizeUB / this.currentBest);
+
+        System.out.println("Updated upper bound for number of aisles: " + bound);
+        aisleUpperBoundConstraint.setUB(bound);
+    }
+
+
 
     // Objective function
     protected void setObjectiveFunction(double alpha) throws IloException {
@@ -490,6 +532,37 @@ public abstract class MIPSolver extends CPLEXSolver {
             }
             cplex.addEq(factorSingleton, X[o]);
         }
+
+        // Constraint falopa que limita la cantidad de singletons por pasillo
+        IloLinearIntExpr[][] exprPerAislePerElem = new IloLinearIntExpr[this.aisles.size()][this.nItems];
+        int[][] counter = new int[this.aisles.size()][this.nItems];
+
+        for (int o=0; o < this.orders.size(); o++) {
+            if (!isSingletonToFactor[o]) continue;
+            int uniqueElem = this.orders.get(o).keySet().iterator().next();
+
+            List<Integer> aislesThatCoverElem = this.aislesThatCoverElement.get(uniqueElem);
+            for (int i=0; i < aislesThatCoverElem.size(); i++) {
+                int aisle = aislesThatCoverElem.get(i);
+                if (exprPerAislePerElem[aisle][uniqueElem] == null) exprPerAislePerElem[aisle][uniqueElem] = this.cplex.linearIntExpr();
+                counter[aisle][uniqueElem]++;
+                exprPerAislePerElem[aisle][uniqueElem].addTerm(1, U[o][i]);
+            }
+        }
+
+        int cnt = 0;
+        for (int a=0; a < this.aisles.size(); a++) {
+            for (int e=0; e < this.nItems; e++) {
+                if (exprPerAislePerElem[a][e] == null) continue;
+                int coef = this.aisles.get(a).get(e);
+                if (counter[a][e] > coef) {
+                    cnt++;
+                    exprPerAislePerElem[a][e].addTerm(-coef, Y[a]);
+                    this.cplex.addLe(exprPerAislePerElem[a][e], 0);
+                }
+            }
+        }
+        System.out.println("Added " + cnt + " real constraints over indicators.");
     }
 
     private void setAislesToZero(double lambda) throws IloException{

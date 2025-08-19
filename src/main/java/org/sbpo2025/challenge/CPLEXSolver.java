@@ -77,7 +77,7 @@ public abstract class CPLEXSolver {
         // 3 Mejor bound dual
         // 4 Menos preprocesar
         // 5 Encontrar la solución probada más rapido
-        this.cplex.setParam(IloCplex.Param.Emphasis.MIP, 1);
+        this.cplex.setParam(IloCplex.Param.Emphasis.MIP, 4);
         
         // Preprocesamiento
         this.cplex.setParam(IloCplex.Param.Preprocessing.Presolve, true);
