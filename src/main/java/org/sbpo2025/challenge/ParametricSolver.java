@@ -75,13 +75,13 @@ public class ParametricSolver extends MIPSolver {
                 System.out.println("GAP: " + gapTolerance + " TL: " + timeListener);
             }
 
-            if (stopWatch.getDuration().getSeconds() - startOfInstance.getSeconds() > TIME_LIMIT_SEC - 5) break;
-            
             it++;
 
             double beforeGreedy = lambda;
             lambda = greedySolver.tryAddAisle(used_orders, used_aisles);
-            if (beforeGreedy + 0.001 < lambda) System.out.println("El greedy mejoro " + (lambda - beforeGreedy));
+            if (0.001 < lambda - beforeGreedy) System.out.println("El greedy mejoro " + (lambda - beforeGreedy));
+
+            if (stopWatch.getDuration().getSeconds() - startOfInstance.getSeconds() > TIME_LIMIT_SEC - 5) break;
         }
 
         endCplex();

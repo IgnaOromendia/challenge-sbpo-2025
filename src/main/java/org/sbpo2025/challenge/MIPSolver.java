@@ -108,7 +108,7 @@ public abstract class MIPSolver extends CPLEXSolver {
         for (int o=0; o < this.orders.size(); o++)
             if (orderItemSum[o] == 1)
                 cnt++;
-            System.out.println("Singletons que se factorizan con limite " + maxNumberOfAislesForFactoringSingleton + ": " + cnt + " de " + cnt);
+        System.out.println("Singletons que se factorizan con limite " + maxNumberOfAislesForFactoringSingleton + ": " + cnt + " de " + cnt);
     
     }
 
