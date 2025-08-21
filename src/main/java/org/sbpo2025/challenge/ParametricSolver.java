@@ -1,8 +1,6 @@
 package org.sbpo2025.challenge;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +28,6 @@ public class ParametricSolver extends MIPSolver {
 
         // Necesario para el modelo extendido
         generateMIP(used_orders, used_aisles, null);
-        List<Pair> used_indicators = prepareIndicatorsGivenSolution(used_orders, used_aisles);
 
         Duration startOfInstance = stopWatch.getDuration();
 
@@ -45,9 +42,9 @@ public class ParametricSolver extends MIPSolver {
 
             if (it >= startLocalSearch && it%2==0)
                 objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, 
-                            timeListener, remainingTime, true, neighbourhoodSize, used_indicators);
+                            timeListener, remainingTime, true, neighbourhoodSize);
             else
-                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, timeListener, remainingTime, used_indicators);
+                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, timeListener, remainingTime, false, 0);
 
             long endOfIteration = stopWatch.getDuration().getSeconds();
 
@@ -90,27 +87,5 @@ public class ParametricSolver extends MIPSolver {
         System.out.println("Final value is " + lambda);
 
         return it;
-    }
-
-    private List<Pair> prepareIndicatorsGivenSolution(List<Integer> used_orders, List<Integer> used_aisles) {
-        List<Pair> used_indicators = new ArrayList<>();
-        List<Map<Integer, Integer>> aisles_copy = new ArrayList<>();
-        for (int a=0; a < this.aisles.size(); a++) aisles_copy.add(new HashMap(aisles.get(a)));
-
-        for (int o : used_orders) {
-            if (!isSingletonToFactor[o]) continue;
-            int uniqueElem = this.orders.get(o).keySet().iterator().next();
-            List<Integer> aislesThatCover = aislesThatCoverElement.get(uniqueElem);
-            for (int i=0; i<aislesThatCover.size(); i++) {
-                int aisle = aislesThatCover.get(i);
-                int cur_val = aisles_copy.get(aisle).get(uniqueElem);
-                if (cur_val > 0) {
-                    aisles_copy.get(aisle).put(uniqueElem, cur_val-1);
-                    used_indicators.add(new Pair(o, i));
-                }
-            }
-        }
-
-        return used_indicators;
     }
 }
