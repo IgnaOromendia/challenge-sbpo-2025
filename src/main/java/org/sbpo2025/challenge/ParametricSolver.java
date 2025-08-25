@@ -25,6 +25,7 @@ public class ParametricSolver extends MIPSolver {
         int it = 0;
         int startLocalSearch = 2;
         int neighbourhoodSize = 3;
+        int limitToStartDoingLocal = 180;
 
         generateMIP(used_orders, used_aisles, null);
 
@@ -41,11 +42,10 @@ public class ParametricSolver extends MIPSolver {
 
             long startOfIteration = stopWatch.getDuration().getSeconds();
 
-            if (it >= startLocalSearch && it%2==0)
-                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, 
-                            timeListener, remainingTime, true, neighbourhoodSize);
+            if ((it >= startLocalSearch && it%2==0) || (remainingTime < limitToStartDoingLocal))
+                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, timeListener, remainingTime, true, neighbourhoodSize);
             else
-                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, timeListener, remainingTime);
+                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, timeListener, remainingTime - limitToStartDoingLocal);
 
             long endOfIteration = stopWatch.getDuration().getSeconds();
 
