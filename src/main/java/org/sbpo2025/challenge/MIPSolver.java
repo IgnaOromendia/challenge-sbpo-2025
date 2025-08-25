@@ -259,7 +259,7 @@ public abstract class MIPSolver extends CPLEXSolver {
 
         for(int a = 0; a < this.aisles.size(); a++) {
             for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet()) {
-                exprsY[entry.getKey()].addTerm(entry.getValue(), this.Y[a]);
+                exprsY[entry.getKey()].addTerm(Math.min(entry.getValue(), this.perElemDemand[entry.getKey()]), this.Y[a]);
             }
         }
 
