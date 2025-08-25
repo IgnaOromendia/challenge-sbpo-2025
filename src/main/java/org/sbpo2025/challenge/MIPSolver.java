@@ -26,6 +26,7 @@ public abstract class MIPSolver extends CPLEXSolver {
     protected IloRange aisleConstraintRange; // Rango de la pasillos
 
     protected final int[] orderItemSum;
+    protected final int[] aislesSizes;
     protected final int[] perElemDemand;
     protected final List<List<Integer>> orderDemandsWithElem;
     // El array maxIncrementForAisle intenta estimar el mayor aporte que puede hacer un pasillo
@@ -60,12 +61,19 @@ public abstract class MIPSolver extends CPLEXSolver {
 
         this.maxIncrementForAisle = new int[aisles.size()];
         
-        for(int o = 0; o < this.orders.size(); o++)
+        for(int o = 0; o < this.orders.size(); o++) {
             this.orderItemSum[o] = this.orders.get(o).values().stream().mapToInt(Integer::intValue).sum();
-        
-        for (int o=0; o < this.orders.size(); o++)
             for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet())
                 this.perElemDemand[entry.getKey()] += entry.getValue();
+        }
+            
+        this.aislesSizes = new int[this.aisles.size()];
+
+        for (int a=0; a < this.aisles.size(); a++) {
+            for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet()) {
+                aislesSizes[a] += Math.min(entry.getValue(), perElemDemand[entry.getKey()]);
+            }
+        }
 
         for (int o=0; o < this.orders.size(); o++)
             for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet())
@@ -132,6 +140,8 @@ public abstract class MIPSolver extends CPLEXSolver {
             setObjectiveFunction(q);
 
             setAislesToZero(q);
+
+            setOrdersToZero(q);
 
             usePreviousSolution(used_orders, used_aisles);
 
@@ -427,7 +437,7 @@ public abstract class MIPSolver extends CPLEXSolver {
         return this.cplex.addGe(expr, used_aisles.size() - neighbourhoodSize);
     }
 
-    private void setAislesToZero(double lambda) throws IloException{
+    private void setAislesToZero(double lambda) throws IloException {
         int cnt = 0;
         for (int a=0; a < this.aisles.size(); a++)
             if (lambda > maxIncrementForAisle[a]) {
@@ -435,5 +445,46 @@ public abstract class MIPSolver extends CPLEXSolver {
                 this.cplex.addEq(Y[a], 0);
         }
         System.out.println("Removed " + cnt + " out of " + this.aisles.size() + " aisles with cut");
+    }
+
+    private void setOrdersToZero(double lambda) throws IloException {
+        int bound = (int) Math.floor(this.waveSizeUB / lambda);
+
+        List<List<Integer>> capacitiesPerElem = new ArrayList<>();
+        for (int e=0; e < this.nItems; e++) capacitiesPerElem.add(new ArrayList<>());
+
+        for (int a=0; a < this.aisles.size(); a++) {
+            if (lambda < maxIncrementForAisle[a]) continue;
+            for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet()) {
+                capacitiesPerElem.get(entry.getKey()).add(entry.getValue());
+            }
+        }
+
+        for (int e=0; e < this.nItems; e++) Collections.sort(capacitiesPerElem.get(e), Collections.reverseOrder());
+
+        int[] elementsBound = new int[this.nItems];
+        for (int e=0; e < this.nItems; e++) {
+            List<Integer> capacities = capacitiesPerElem.get(e);
+            for (int i=0; i < Math.min(bound, capacities.size()); i++) {
+                elementsBound[e] += capacities.get(i);
+            }
+        }
+
+        int cntBlockedOrders = 0;
+
+        for (int o=0; o < this.orders.size(); o++) {
+            boolean isAlive = true;
+
+            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet())
+                if (entry.getValue() > elementsBound[entry.getKey()])
+                    isAlive = false;
+
+            if (!isAlive) {
+                cntBlockedOrders++;
+                this.cplex.addEq(X[o], 0);
+            }
+        }
+        
+        System.out.println("Orders blocked: " + cntBlockedOrders  + " of " + this.orders.size());
     }
 }
