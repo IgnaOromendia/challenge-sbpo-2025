@@ -42,6 +42,8 @@ public abstract class MIPSolver extends CPLEXSolver {
     private long itStartingTime;
     private TimeListener itTimeListener;
 
+    private IloRange aisleUpperBoundConstraint;
+
     public MIPSolver(List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
         super(orders, aisles, nItems, waveSizeLB, waveSizeUB);
 
@@ -139,6 +141,8 @@ public abstract class MIPSolver extends CPLEXSolver {
 
             setObjectiveFunction(q);
 
+            updateNumberOfAislesUpperbound(q);
+
             setAislesToZero(q);
 
             setOrdersToZero(q);
@@ -189,6 +193,9 @@ public abstract class MIPSolver extends CPLEXSolver {
 
             // Agrega restricciones de corte
             setConstraint(this.currentBest);
+
+            // Acotamos la cantidad de pasillos con el mejor valor de lambda
+            setNumberOfAislesUpperbound();
 
             if (extraCode != null) extraCode.run(this.cplex, this.X, this.Y);            
             
@@ -447,6 +454,26 @@ public abstract class MIPSolver extends CPLEXSolver {
         System.out.println("Removed " + cnt + " out of " + this.aisles.size() + " aisles with cut");
     }
 
+    protected void setNumberOfAislesUpperbound() throws IloException {
+        IloLinearIntExpr exprY = this.cplex.linearIntExpr();
+            
+        for(int a = 0; a < this.aisles.size(); a++) 
+            exprY.addTerm(1, this.Y[a]);
+
+        int bound;
+        if (this.currentBest != -1) bound = (int) Math.floor(this.waveSizeUB / this.currentBest);
+        else bound = this.aisles.size();
+
+        aisleUpperBoundConstraint = this.cplex.addLe(exprY, bound);
+    }
+
+    protected void updateNumberOfAislesUpperbound(double lambda) throws IloException {
+        int bound = (int) Math.floor(this.waveSizeUB / this.currentBest);
+
+        System.out.println("Updated upper bound for number of aisles: " + bound);
+        aisleUpperBoundConstraint.setUB(bound);
+    }
+
     private void setOrdersToZero(double lambda) throws IloException {
         int bound = (int) Math.floor(this.waveSizeUB / lambda);
 
@@ -484,7 +511,7 @@ public abstract class MIPSolver extends CPLEXSolver {
                 this.cplex.addEq(X[o], 0);
             }
         }
-        
+
         System.out.println("Orders blocked: " + cntBlockedOrders  + " of " + this.orders.size());
     }
 }
