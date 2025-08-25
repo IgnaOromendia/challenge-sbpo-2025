@@ -1,6 +1,8 @@
 package org.sbpo2025.challenge;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +26,13 @@ public abstract class MIPSolver extends CPLEXSolver {
     protected IloRange aisleConstraintRange; // Rango de la pasillos
 
     protected final int[] orderItemSum;
+    protected final int[] perElemDemand;
+    protected final List<List<Integer>> orderDemandsWithElem;
+    // El array maxIncrementForAisle intenta estimar el mayor aporte que puede hacer un pasillo
+    // Este se acota superiormente suponiendo que cada item del pasillo es utilizado para completar
+    // la orden mas grande con ese elemento. Este tipo de cuenta puede ser una cota muy mala (en particular
+    // contamos dos veces la misma orden). Considerar mejorar.
+    protected final int[] maxIncrementForAisle;
 
     private IloRange cutConstraint;
 
@@ -45,6 +54,38 @@ public abstract class MIPSolver extends CPLEXSolver {
         for(int o = 0; o < this.orders.size(); o++)
             this.orderItemSum[o] = this.orders.get(o).values().stream().mapToInt(Integer::intValue).sum();
 
+        this.perElemDemand = new int[nItems];
+        this.orderDemandsWithElem = new ArrayList<>();
+        for (int e=0; e < nItems; e++) this.orderDemandsWithElem.add(new ArrayList<>());
+
+        this.maxIncrementForAisle = new int[aisles.size()];
+        
+        for(int o = 0; o < this.orders.size(); o++)
+            this.orderItemSum[o] = this.orders.get(o).values().stream().mapToInt(Integer::intValue).sum();
+        
+        for (int o=0; o < this.orders.size(); o++)
+            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet())
+                this.perElemDemand[entry.getKey()] += entry.getValue();
+
+        for (int o=0; o < this.orders.size(); o++)
+            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet())
+                this.orderDemandsWithElem.get(entry.getKey()).add(this.orderItemSum[o]);
+
+        for (int e=0; e < this.nItems; e++) Collections.sort(this.orderDemandsWithElem.get(e), Collections.reverseOrder());
+
+        for (int a=0; a < this.aisles.size(); a++) {
+            for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet()){ 
+                List<Integer> ordersDemandForElem = orderDemandsWithElem.get(entry.getKey());
+                int size = ordersDemandForElem.size();
+                for (int i=0; i < entry.getValue(); i++) {
+                    if (i < size) 
+                        maxIncrementForAisle[a] += ordersDemandForElem.get(i);
+                    else {
+                        break;
+                    }
+                }
+            }
+        }
     }
 
 
@@ -89,6 +130,8 @@ public abstract class MIPSolver extends CPLEXSolver {
             this.itStartingTime = System.nanoTime();
 
             setObjectiveFunction(q);
+
+            setAislesToZero(q);
 
             usePreviousSolution(used_orders, used_aisles);
 
@@ -382,5 +425,15 @@ public abstract class MIPSolver extends CPLEXSolver {
         }
 
         return this.cplex.addGe(expr, used_aisles.size() - neighbourhoodSize);
+    }
+
+    private void setAislesToZero(double lambda) throws IloException{
+        int cnt = 0;
+        for (int a=0; a < this.aisles.size(); a++)
+            if (lambda > maxIncrementForAisle[a]) {
+                cnt++;
+                this.cplex.addEq(Y[a], 0);
+        }
+        System.out.println("Removed " + cnt + " out of " + this.aisles.size() + " aisles with cut");
     }
 }
