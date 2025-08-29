@@ -481,7 +481,7 @@ public abstract class MIPSolver extends CPLEXSolver {
         for (int e=0; e < this.nItems; e++) capacitiesPerElem.add(new ArrayList<>());
 
         for (int a=0; a < this.aisles.size(); a++) {
-            if (lambda < maxIncrementForAisle[a]) continue;
+            if (lambda > maxIncrementForAisle[a]) continue;
             for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet()) {
                 capacitiesPerElem.get(entry.getKey()).add(entry.getValue());
             }

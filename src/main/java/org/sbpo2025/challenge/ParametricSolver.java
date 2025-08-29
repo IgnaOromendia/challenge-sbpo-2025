@@ -25,7 +25,7 @@ public class ParametricSolver extends MIPSolver {
         int it = 0;
         int startLocalSearch = 2;
         int neighbourhoodSize = 3;
-        int limitToStartDoingLocal = 180;
+        int limitToStartDoingLocal = 0;
 
         generateMIP(used_orders, used_aisles, null);
 
