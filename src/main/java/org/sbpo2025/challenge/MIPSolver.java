@@ -1,12 +1,8 @@
 package org.sbpo2025.challenge;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import ilog.concert.IloException;
@@ -56,31 +52,14 @@ public abstract class MIPSolver extends CPLEXSolver {
 
     }
 
-    @FunctionalInterface
-    protected interface RunnableCode {
-        void run(IloCplex cplex, IloIntVar[] X, IloIntVar[] Y) throws IloException;
-    }
 
-    public void startFromGreedySolution(double greedySolutionValue) {
-        this.currentBest = greedySolutionValue;
-    }
-
-    protected double getCplexUpperBound() {
-        try {
-            return this.cplex.getBestObjValue();
-        } catch (IloException e) {
-            System.out.println(e.getMessage());
-        }
-        return 0;
-    }
-
-    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, 
+    protected double solveMIPWith(double lambda, List<Integer> used_orders, List<Integer> used_aisles, 
                         double gapTolerance, TimeListener timeListener, long remainingTime) {
-        return solveMIPWith(q, used_orders, used_aisles, gapTolerance, timeListener, remainingTime, false, -1);
+        return solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, timeListener, remainingTime, false, -1);
     }
 
     // Resovlemos acutalizando la función objetivo
-    protected double solveMIPWith(double q, List<Integer> used_orders, List<Integer> used_aisles, 
+    protected double solveMIPWith(double lambda, List<Integer> used_orders, List<Integer> used_aisles, 
                         double gapTolerance, TimeListener timeListener, long remainingTime,
                         boolean localSearch, long neighbourhoodSize) {
         
@@ -96,9 +75,11 @@ public abstract class MIPSolver extends CPLEXSolver {
             this.itTimeListener = timeListener;
             this.itStartingTime = System.nanoTime();
 
-            setObjectiveFunction(q);
+            setObjectiveFunction(lambda);
 
-            updateNumberOfAislesUpperbound(q);
+            updateNumberOfAislesUpperbound(lambda);
+
+            updateCutConstraint(lambda);
 
             usePreviousSolution(used_orders, used_aisles);
 
@@ -127,7 +108,7 @@ public abstract class MIPSolver extends CPLEXSolver {
     }
 
     // Generamos el modelo una única vez por instancia
-    protected void generateMIP(List<Integer> used_orders, List<Integer> used_aisles, RunnableCode extraCode) {
+    protected void generateMIP(List<Integer> used_orders, List<Integer> used_aisles) {
         try {
             // Cplex Params
             setCPLEXParamsTo();
@@ -145,24 +126,16 @@ public abstract class MIPSolver extends CPLEXSolver {
             setAtLeastOneAisleConstraint();
 
             // Agrega restricciones de corte
-            setConstraint(this.currentBest);
+            setCutConstraint(this.currentBest);
 
             // Acotamos la cantidad de pasillos con el mejor valor de lambda
             setNumberOfAislesUpperbound();
-
-            // Cortar ordenes
-            setOrdersToZero(this.currentBest);
-
-            if (extraCode != null) extraCode.run(this.cplex, this.X, this.Y);            
-            
-            // Inicializamos con el valor anterior
-            usePreviousSolution(used_orders, used_aisles);
 
             this.cplex.use(new IloCplex.MIPInfoCallback() {
                 public void main() throws IloException {
                     long currTime = TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - itStartingTime);
                     if (itTimeListener.isLessOrEqualThan(currTime)) {   
-                        if (getIncumbentObjValue() > IMPROVEMENT_LB) abort();
+                        if (getIncumbentObjValue() > IMPROVEMENT_LB) abort(); 
                         itTimeListener.doubleTimeLimit();         
                     }
                 }
@@ -231,23 +204,23 @@ public abstract class MIPSolver extends CPLEXSolver {
         this.cplex.addGe(exprY, 1);
     }
 
-    private void setConstraint(double k) throws IloException {
-        // Sum order item >=  k|A|
+    private void setCutConstraint(double lambda) throws IloException {
+        // Sum order item >=  lambda|A|
         IloLinearNumExpr exprX  = this.cplex.linearNumExpr();
 
         for(int o = 0; o < this.orders.size(); o++) 
             exprX.addTerm(this.orderItemSum[o], X[o]);
         
         for(int a = 0; a < this.aisles.size(); a++) 
-            exprX.addTerm(-k, Y[a]);
+            exprX.addTerm(-lambda, Y[a]);
         
         this.cutConstraint = this.cplex.addGe(exprX, 0);
     }
 
-    protected void updateCutConstraint(double k) {
+    protected void updateCutConstraint(double lambda) {
         try {
             for (int a = 0; a < this.aisles.size(); a++)
-                this.cplex.setLinearCoef(this.cutConstraint, this.Y[a], -k);
+                this.cplex.setLinearCoef(this.cutConstraint, this.Y[a], -lambda);
             
         } catch (IloException e) {
             System.out.println(e.getMessage());
@@ -256,24 +229,23 @@ public abstract class MIPSolver extends CPLEXSolver {
     }
 
     // Objective function
-    protected void setObjectiveFunction(double alpha) throws IloException {
+    protected void setObjectiveFunction(double lambda) throws IloException {
         IloLinearNumExpr obj = this.cplex.linearNumExpr();
 
         for(int o = 0; o < this.orders.size(); o++) 
             obj.addTerm(this.orderItemSum[o], this.X[o]);    
         
         for(int a = 0; a < this.aisles.size(); a++) 
-            obj.addTerm(-alpha, this.Y[a]);
+            obj.addTerm(-lambda, this.Y[a]);
 
         if (this.objective != null) 
             this.cplex.delete(this.objective);
         
-
         this.objective = this.cplex.addMaximize(obj);
     }
 
     private void usePreviousSolution(List<Integer> used_orders, List<Integer> used_aisles) throws IloException {
-        if (used_orders.size() != 0 || used_aisles.size() != 0) {
+        if (!used_orders.isEmpty() || !used_aisles.isEmpty()) {
             IloIntVar[] varsToSet = new IloIntVar[used_orders.size() + used_aisles.size()];
 
             int index = 0;
@@ -309,25 +281,11 @@ public abstract class MIPSolver extends CPLEXSolver {
         if (curSolutionValue > this.currentBest) {
             this.currentBest = curSolutionValue;
 
-            Set<Integer> aisles_before = new HashSet<>(used_aisles);
-            Set<Integer> aisles_before_copy = new HashSet<>(used_aisles);
-
-            System.out.println("Before: size is " + used_aisles.size());
-
             used_orders.clear();
             used_aisles.clear();      
             
             fillSolutionList(this.X, used_orders, this.orders.size());
             fillSolutionList(this.Y, used_aisles, this.aisles.size());
-         
-            Set<Integer> aisles_after = new HashSet<>(used_aisles);
-
-            aisles_before.removeAll(aisles_after);
-            aisles_after.removeAll(aisles_before_copy);
-
-            System.out.println("After: size is " + used_aisles.size());
-            System.out.println("Difference between iterations is " 
-                    + (aisles_before.size() + aisles_after.size()));       
         }
     }
 
@@ -356,19 +314,7 @@ public abstract class MIPSolver extends CPLEXSolver {
         return pickedObjects / usedColumns;
     }
 
-    protected int ordersItemSum(List<Integer> ordersToSum) {
-        int sum = 0;
-        
-        for(int order: ordersToSum) 
-            for (Map.Entry<Integer, Integer> entry : this.orders.get(order).entrySet()) 
-                sum += entry.getValue();
-
-        return sum;
-    }
-
-    private IloRange addConstraintOfChangingFewAisles(List<Integer> used_aisles, long neighbourhoodSize) throws IloException {
-        System.out.println("Agregando constraint de busqueda local");
-        
+    private IloRange addConstraintOfChangingFewAisles(List<Integer> used_aisles, long neighbourhoodSize) throws IloException {        
         IloLinearIntExpr expr = this.cplex.linearIntExpr();
 
         for (int a=0; a<this.aisles.size(); a++) {
@@ -388,56 +334,15 @@ public abstract class MIPSolver extends CPLEXSolver {
             exprY.addTerm(1, this.Y[a]);
 
         int bound;
-        if (this.currentBest != -1) bound = (int) Math.floor(this.waveSizeUB / this.currentBest);
+        if (this.currentBest > 0) bound = (int) Math.floor(this.waveSizeUB / this.currentBest);
         else bound = this.aisles.size();
 
         aisleUpperBoundConstraint = this.cplex.addLe(exprY, bound);
     }
 
     protected void updateNumberOfAislesUpperbound(double lambda) throws IloException {
-        int bound = (int) Math.floor(this.waveSizeUB / this.currentBest);
-
-        System.out.println("Updated upper bound for number of aisles: " + bound);
+        int bound = (int) Math.floor(this.waveSizeUB / lambda);
         aisleUpperBoundConstraint.setUB(bound);
     }
 
-    private void setOrdersToZero(double lambda) throws IloException {
-        int bound = (int) Math.floor(this.waveSizeUB / lambda);
-
-        List<List<Integer>> capacitiesPerElem = new ArrayList<>();
-        for (int e=0; e < this.nItems; e++) capacitiesPerElem.add(new ArrayList<>());
-
-        for (int a=0; a < this.aisles.size(); a++) {
-            for (Map.Entry<Integer, Integer> entry : this.aisles.get(a).entrySet()) {
-                capacitiesPerElem.get(entry.getKey()).add(entry.getValue());
-            }
-        }
-
-        for (int e=0; e < this.nItems; e++) Collections.sort(capacitiesPerElem.get(e), Collections.reverseOrder());
-
-        int[] elementsBound = new int[this.nItems];
-        for (int e=0; e < this.nItems; e++) {
-            List<Integer> capacities = capacitiesPerElem.get(e);
-            for (int i=0; i < Math.min(bound, capacities.size()); i++) {
-                elementsBound[e] += capacities.get(i);
-            }
-        }
-
-        int cntBlockedOrders = 0;
-
-        for (int o=0; o < this.orders.size(); o++) {
-            boolean isAlive = true;
-
-            for (Map.Entry<Integer, Integer> entry : this.orders.get(o).entrySet())
-                if (entry.getValue() > elementsBound[entry.getKey()])
-                    isAlive = false;
-
-            if (!isAlive) {
-                cntBlockedOrders++;
-                this.cplex.addEq(X[o], 0);
-            }
-        }
-
-        System.out.println("Orders blocked: " + cntBlockedOrders  + " of " + this.orders.size());
-    }
 }

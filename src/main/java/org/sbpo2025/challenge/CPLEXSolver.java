@@ -21,7 +21,7 @@ public abstract class CPLEXSolver {
     // Constants
     protected final double TOLERANCE        = 1e-2;
     protected final double PRECISION        = 1e-4;
-    protected final double IMPROVEMENT_LB   = 1e-2;
+    protected final double IMPROVEMENT_LB   = 1e-4;
     protected final double BINARY_RANGE     = 1e-4;
     protected final long TIME_LIMIT_SEC     = 600;
     protected final long TIME_LIMIT_SEC_IT  = 10;
@@ -64,7 +64,7 @@ public abstract class CPLEXSolver {
         // 3 Mejor bound dual
         // 4 Menos preprocesar
         // 5 Encontrar la solución probada más rapido
-        this.cplex.setParam(IloCplex.Param.Emphasis.MIP, 0);
+        this.cplex.setParam(IloCplex.Param.Emphasis.MIP, 1);
         
         // Preprocesamiento
         this.cplex.setParam(IloCplex.Param.Preprocessing.Presolve, true);
@@ -74,7 +74,6 @@ public abstract class CPLEXSolver {
         this.cplex.setParam(IloCplex.Param.MIP.Strategy.RINSHeur, 60);
 
         // Planos de corte
-        // Volver a testear
         this.cplex.setParam(IloCplex.Param.MIP.Cuts.Cliques, 0);
         this.cplex.setParam(IloCplex.Param.MIP.Cuts.Covers, -1); // La que menos ayuda
         this.cplex.setParam(IloCplex.Param.MIP.Cuts.Disjunctive, 0);

@@ -19,33 +19,35 @@ public class ParametricSolver extends MIPSolver {
     }
 
     public int solveMILFP(List<Integer> used_orders, List<Integer> used_aisles, double gapTolerance, StopWatch stopWatch) {
-        this.currentBest = greedySolver.solve_with_both_greedies(used_orders, used_aisles, this.currentBest);
+        try {
+            this.currentBest = greedySolver.solve_with_both_greedies(used_orders, used_aisles, this.currentBest);
+        } catch (Exception e) {
+            this.currentBest = 0;
+            used_orders.clear();
+            used_aisles.clear();
+        }
+
 
         double objValue = -1, lambda = this.currentBest;
         int it = 0;
         int startLocalSearch = 2;
         int neighbourhoodSize = 3;
-        int limitToStartDoingLocal = 0;
 
-        generateMIP(used_orders, used_aisles, null);
+        generateMIP(used_orders, used_aisles);
 
         Duration startOfInstance = stopWatch.getDuration();
         
-        while (it < MAX_ITERATIONS) {
+        while (stopWatch.getDuration().getSeconds() - startOfInstance.getSeconds() <= TIME_LIMIT_SEC - 5) {
             System.out.println("it: " + it + " lambda: " + lambda + " obj: " + objValue);
-
-            updateCutConstraint(lambda);
 
             long remainingTime = TIME_LIMIT_SEC - stopWatch.getDuration().getSeconds() - 5;
 
-            double oldObjValue = objValue;
-
             long startOfIteration = stopWatch.getDuration().getSeconds();
 
-            if ((it >= startLocalSearch && it%2==0) || (remainingTime < limitToStartDoingLocal))
+            if ((it >= startLocalSearch && it%2==0))
                 objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, timeListener, remainingTime, true, neighbourhoodSize);
             else
-                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, timeListener, remainingTime - limitToStartDoingLocal);
+                objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, timeListener, remainingTime);
 
             long endOfIteration = stopWatch.getDuration().getSeconds();
 
@@ -55,7 +57,11 @@ public class ParametricSolver extends MIPSolver {
             long iterationDuration = endOfIteration - startOfIteration;
             if (timeListener.isGreaterThan(iterationDuration)) timeListener.updateTimeLimitTo(iterationDuration);
 
-            if (solutionInfeasible) break;
+            if (solutionInfeasible) {
+                used_orders.clear();
+                used_aisles.clear();
+                break;
+            }
             
             // Newton -> Qn+1 = Qn - F(Qn) / F'(Qn), F'(Qn) ≈ D(x^*)
             // Qn+1 = Qn - F(Qn) / -D(x^*) = N(x^*) / D(x^*)
@@ -64,15 +70,16 @@ public class ParametricSolver extends MIPSolver {
 
             boolean isAGoodSolution = Math.abs(objValue + objValue * gapTolerance) <= PRECISION;
 
-            if (oldObjValue == objValue || objValue <= 0 || isAGoodSolution ) {
-                if (gapTolerance <= 0.01 && objValue <= PRECISION) break; // BORRAR
+            if (timeListener.fastIteration(iterationDuration) || isAGoodSolution) {
 
-                if (timeListener.fastIteration(iterationDuration) || isAGoodSolution) gapTolerance /= 2;
+                gapTolerance /= 2;
+
+                System.out.println("Borra la linea de abajo SALAME");
+                if (gapTolerance <= 0.01 && isAGoodSolution) break; // BORRAR
+                System.out.println("En serio te olvidaste de borrar la de arriba?");
                 
                 System.out.println("GAP: " + gapTolerance + " TL: " + timeListener);
             }
-
-            if (stopWatch.getDuration().getSeconds() - startOfInstance.getSeconds() > TIME_LIMIT_SEC - 5) break;
             
             it++;
         }
