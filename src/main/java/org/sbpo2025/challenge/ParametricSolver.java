@@ -51,9 +51,6 @@ public class ParametricSolver extends MIPSolver {
 
             long endOfIteration = stopWatch.getDuration().getSeconds();
 
-
-            System.out.println("TIME IT: " + (endOfIteration - startOfIteration));
-
             long iterationDuration = endOfIteration - startOfIteration;
             if (timeListener.isGreaterThan(iterationDuration)) timeListener.updateTimeLimitTo(iterationDuration);
 
@@ -76,7 +73,6 @@ public class ParametricSolver extends MIPSolver {
 
                 System.out.println("Borra la linea de abajo SALAME");
                 if (gapTolerance <= 0.01 && isAGoodSolution) break; // BORRAR
-                System.out.println("En serio te olvidaste de borrar la de arriba?");
                 
                 System.out.println("GAP: " + gapTolerance + " TL: " + timeListener);
             }

@@ -25,7 +25,6 @@ public class TimeListener {
         if (timeLimit == 0) return;
         this.lastTimeLimit = this.timeLimit;
         this.timeLimit = timeLimit;
-        System.out.println("Updated to: " + this.timeLimit);
     }
 
     @Override
