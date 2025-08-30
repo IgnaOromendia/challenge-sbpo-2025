@@ -21,6 +21,7 @@ public abstract class CPLEXSolver {
     // Constants
     protected final double TOLERANCE        = 1e-2;
     protected final double PRECISION        = 1e-4;
+    protected final double IMPROVEMENT_LB   = 1e-2;
     protected final double BINARY_RANGE     = 1e-4;
     protected final long TIME_LIMIT_SEC     = 600;
     protected final long TIME_LIMIT_SEC_IT  = 10;
@@ -37,17 +38,6 @@ public abstract class CPLEXSolver {
 
         try {
             this.cplex = new IloCplex();
-            
-            this.cplex.use(new IloCplex.MIPInfoCallback() {
-                @Override
-                protected void main() throws IloException {
-                    if (getBestObjValue() < -PRECISION) {
-                        System.out.print("Frenó por eps");
-                        abort();
-                    }
-                }
-            });
-
         } catch (IloException e) {
             System.out.println("Error!!!!!!" + e.getMessage());
             this.cplex = null;

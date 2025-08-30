@@ -65,7 +65,7 @@ public class ParametricSolver extends MIPSolver {
             boolean isAGoodSolution = Math.abs(objValue + objValue * gapTolerance) <= PRECISION;
 
             if (oldObjValue == objValue || objValue <= 0 || isAGoodSolution ) {
-                if (gapTolerance <= 0.05 && objValue <= PRECISION) break; // BORRAR
+                if (gapTolerance <= 0.01 && objValue <= PRECISION) break; // BORRAR
 
                 if (timeListener.fastIteration(iterationDuration) || isAGoodSolution) gapTolerance /= 2;
                 
