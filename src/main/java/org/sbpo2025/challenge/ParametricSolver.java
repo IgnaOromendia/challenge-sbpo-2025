@@ -34,13 +34,13 @@ public class ParametricSolver extends MIPSolver {
         int neighbourhoodSize = 3;
 
         generateMIP(used_orders, used_aisles);
-
-        Duration startOfInstance = stopWatch.getDuration();
         
-        while (stopWatch.getDuration().getSeconds() - startOfInstance.getSeconds() <= TIME_LIMIT_SEC - 5) {
+        while (stopWatch.getDuration().getSeconds() <= TIME_LIMIT_SEC - 5) {
             System.out.println("it: " + it + " lambda: " + lambda + " obj: " + objValue);
 
             long remainingTime = TIME_LIMIT_SEC - stopWatch.getDuration().getSeconds() - 5;
+
+            System.out.println("Time left: " + remainingTime);
 
             long startOfIteration = stopWatch.getDuration().getSeconds();
 
@@ -69,12 +69,13 @@ public class ParametricSolver extends MIPSolver {
 
             if (timeListener.fastIteration(iterationDuration) || isAGoodSolution) {
 
-                gapTolerance /= 2;
+                System.out.println("Se baja el gap");
+                //gapTolerance /= 2;
 
-                System.out.println("Borra la linea de abajo SALAME");
+                //System.out.println("Borra la linea de abajo SALAME");
                 if (gapTolerance <= 0.01 && isAGoodSolution) break; // BORRAR
                 
-                System.out.println("GAP: " + gapTolerance + " TL: " + timeListener);
+                //System.out.println("GAP: " + gapTolerance + " TL: " + timeListener);
             }
             
             it++;

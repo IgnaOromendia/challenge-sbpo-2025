@@ -77,10 +77,6 @@ public abstract class MIPSolver extends CPLEXSolver {
 
             setObjectiveFunction(lambda);
 
-            updateNumberOfAislesUpperbound(lambda);
-
-            updateCutConstraint(lambda);
-
             usePreviousSolution(used_orders, used_aisles);
 
             if (localSearch)
