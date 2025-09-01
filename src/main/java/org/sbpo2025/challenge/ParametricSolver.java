@@ -29,20 +29,14 @@ public class ParametricSolver extends MIPSolver {
         double objValue = -1, lambda = this.currentBest;
         int it = 0;
         int startLocalSearch = 1;
-        int neighbourhoodSize = 3;
+        int neighbourhoodSize = 4;
 
         generateMIP(used_orders, used_aisles, null);
         
         while (stopWatch.getDuration().getSeconds() < TIME_LIMIT_SEC - 5) {
-            System.out.println("it: " + it + " lambda: " + lambda + " obj: " + objValue);
-
             updateCutConstraint(lambda);
 
             long remainingTime = Math.max(TIME_LIMIT_SEC - stopWatch.getDuration().getSeconds() - 5, 0);
-
-            System.out.println("Time left: " + remainingTime);
-
-            double oldObjValue = objValue;
 
             long startOfIteration = stopWatch.getDuration().getSeconds();
 
@@ -53,9 +47,6 @@ public class ParametricSolver extends MIPSolver {
                 objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, timeListener, remainingTime);
 
             long endOfIteration = stopWatch.getDuration().getSeconds();
-
-
-            System.out.println("TIME IT: " + (endOfIteration - startOfIteration));
 
             long iterationDuration = endOfIteration - startOfIteration;
             if (timeListener.isGreaterThan(iterationDuration)) timeListener.updateTimeLimitTo(iterationDuration);
@@ -69,17 +60,12 @@ public class ParametricSolver extends MIPSolver {
             boolean isAGoodSolution = Math.abs(objValue + objValue * gapTolerance) <= PRECISION;
 
             if (objValue <= 0 || isAGoodSolution ) {
-                if (gapTolerance <= 0.05 && objValue <= PRECISION) break; // BORRAR
-
-                if (timeListener.fastIteration(iterationDuration) || isAGoodSolution) gapTolerance /= 2;
-                
-                System.out.println("GAP: " + gapTolerance + " TL: " + timeListener);
+                if (timeListener.fastIteration(iterationDuration) || isAGoodSolution) 
+                    gapTolerance /= 2;
             }
             
             it++;
         }
-
-        System.out.println("Final value is " + lambda);
 
         endCplex();
 

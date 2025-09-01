@@ -1,10 +1,8 @@
 package org.sbpo2025.challenge;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import ilog.concert.IloException;
@@ -145,25 +143,6 @@ public abstract class MIPSolver extends CPLEXSolver {
             
             // Inicializamos con el valor anterior
             usePreviousSolution(used_orders, used_aisles);
-
-            // this.cplex.use(new IloCplex.IncumbentCallback() {
-            //     public void main() throws IloException {
-            //         double f = 0, g = 0;
-                        
-            //         for (int o = 0; o < orders.size(); o++) {
-            //             if (getValue(X[o]) > TOLERANCE)
-            //                 f += orderItemSum[o];
-            //         }
-            
-            //         for (int a = 0; a < aisles.size(); a++) {
-            //             if (getValue(Y[a]) > TOLERANCE)
-            //                 g++;
-            //         }
-                    
-            //         double sol = f / g; 
-            //         System.out.println("sol: " + sol);
-            //     }
-            // });
 
             this.cplex.use(new IloCplex.MIPInfoCallback() {
                 public void main() throws IloException {
@@ -316,25 +295,11 @@ public abstract class MIPSolver extends CPLEXSolver {
         if (curSolutionValue > this.currentBest) {
             this.currentBest = curSolutionValue;
 
-            Set<Integer> aisles_before = new HashSet<>(used_aisles);
-            Set<Integer> aisles_before_copy = new HashSet<>(used_aisles);
-
-            System.out.println("Before: size is " + used_aisles.size());
-
             used_orders.clear();
             used_aisles.clear();      
             
             fillSolutionList(this.X, used_orders, this.orders.size());
-            fillSolutionList(this.Y, used_aisles, this.aisles.size());
-         
-            Set<Integer> aisles_after = new HashSet<>(used_aisles);
-
-            aisles_before.removeAll(aisles_after);
-            aisles_after.removeAll(aisles_before_copy);
-
-            System.out.println("After: size is " + used_aisles.size());
-            System.out.println("Difference between iterations is " 
-                    + (aisles_before.size() + aisles_after.size()));       
+            fillSolutionList(this.Y, used_aisles, this.aisles.size());    
         }
     }
 
@@ -373,9 +338,7 @@ public abstract class MIPSolver extends CPLEXSolver {
         return sum;
     }
 
-    private IloRange addConstraintOfChangingFewAisles(List<Integer> used_aisles, long neighbourhoodSize) throws IloException {
-        System.out.println("Agregando constraint de busqueda local");
-        
+    private IloRange addConstraintOfChangingFewAisles(List<Integer> used_aisles, long neighbourhoodSize) throws IloException {        
         IloLinearIntExpr expr = this.cplex.linearIntExpr();
 
         for (int a=0; a<this.aisles.size(); a++) {

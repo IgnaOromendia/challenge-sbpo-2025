@@ -1,10 +1,5 @@
 package org.sbpo2025.challenge;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,29 +36,12 @@ public class ChallengeSolver {
         List<Integer> used_orders = new ArrayList<>();
         List<Integer> used_aisles = new ArrayList<>();
 
-        String strategy = "parametric";
-        Integer iterations = parametricSolver.solveMILFP(used_orders, used_aisles, 0.4, stopWatch);
+        parametricSolver.solveMILFP(used_orders, used_aisles, 0.4, stopWatch);
             
         ChallengeSolution solution = new ChallengeSolution(Set.copyOf(used_orders), Set.copyOf(used_aisles));
 
-        writeResults(strategy, solution, stopWatch, iterations);
-
         return solution;
     } 
-
-    // Para experimentar
-
-    @SuppressWarnings("CallToPrintStackTrace")
-    private void writeResults(String strategy, ChallengeSolution solution, StopWatch stopWatch, int iterations) {
-        String filePath = "./results/" + strategy + "_b_rins.csv";
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath,  true))) {
-            if (Files.size(Paths.get(filePath)) == 0) writer.write("ordenes,pasillos,usados,obj,tiempo,it\n");
-            writer.write(this.orders.size() + "," + this.aisles.size() + "," + solution.aisles().size() + "," + computeObjectiveFunction(solution) + "," + (MAX_RUNTIME / 1000 - getRemainingTime(stopWatch)) + "," + iterations + "\n");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     /*
      * Get the remaining time in seconds
