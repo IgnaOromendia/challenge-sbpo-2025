@@ -20,7 +20,7 @@ public abstract class CPLEXSolver {
 
     // Constants
     protected final double TOLERANCE        = 1e-2;
-    protected final double PRECISION        = 1e-4;
+    protected double PRECISION              = 1e-4;
     protected final double BINARY_RANGE     = 1e-4;
     protected final long TIME_LIMIT_SEC     = 600;
     protected final long TIME_LIMIT_SEC_IT  = 10;

@@ -80,7 +80,10 @@ public abstract class MIPSolver extends CPLEXSolver {
         double res = -1;
 
         try {
-            if (localSearch) gapTolerance = gapTolerance / 2;
+            if (localSearch) {
+                gapTolerance = gapTolerance / 2;
+                PRECISION = 10;
+            }
 
             this.cplex.setParam(IloCplex.Param.MIP.Tolerances.MIPGap, Math.max(0, gapTolerance));
             this.cplex.setParam(IloCplex.Param.TimeLimit, Math.max(0, remainingTime));
@@ -106,6 +109,7 @@ public abstract class MIPSolver extends CPLEXSolver {
         } 
 
         if (localSearch) {
+            PRECISION = 1e-4;
             try {
                 this.cplex.remove(neigbourhoodConstraint);
             } catch (IloException e) {
