@@ -1,6 +1,5 @@
 package org.sbpo2025.challenge;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -19,29 +18,35 @@ public class ParametricSolver extends MIPSolver {
     }
 
     public int solveMILFP(List<Integer> used_orders, List<Integer> used_aisles, double gapTolerance, StopWatch stopWatch) {
-        this.currentBest = greedySolver.solve_with_both_greedies(used_orders, used_aisles, this.currentBest);
+        try {
+            this.currentBest = greedySolver.solve_with_both_greedies(used_orders, used_aisles, this.currentBest);
+        } catch (Exception e) {
+            this.currentBest = 0;
+            used_orders.clear();
+            used_aisles.clear();
+        }
 
         double objValue = -1, lambda = this.currentBest;
         int it = 0;
-        int startLocalSearch = 2;
+        int startLocalSearch = 1;
         int neighbourhoodSize = 3;
 
         generateMIP(used_orders, used_aisles, null);
-
-        Duration startOfInstance = stopWatch.getDuration();
         
-        while (it < MAX_ITERATIONS) {
+        while (stopWatch.getDuration().getSeconds() < TIME_LIMIT_SEC - 5) {
             System.out.println("it: " + it + " lambda: " + lambda + " obj: " + objValue);
 
             updateCutConstraint(lambda);
 
-            long remainingTime = TIME_LIMIT_SEC - stopWatch.getDuration().getSeconds() - 5;
+            long remainingTime = Math.max(TIME_LIMIT_SEC - stopWatch.getDuration().getSeconds() - 5, 0);
+
+            System.out.println("Time left: " + remainingTime);
 
             double oldObjValue = objValue;
 
             long startOfIteration = stopWatch.getDuration().getSeconds();
 
-            if (it >= startLocalSearch && it%2==0)
+            if (it >= startLocalSearch && it%2==1)
                 objValue = solveMIPWith(lambda, used_orders, used_aisles, gapTolerance, 
                             timeListener, remainingTime, true, neighbourhoodSize);
             else
@@ -59,23 +64,22 @@ public class ParametricSolver extends MIPSolver {
             
             // Newton -> Qn+1 = Qn - F(Qn) / F'(Qn), F'(Qn) ≈ D(x^*)
             // Qn+1 = Qn - F(Qn) / -D(x^*) = N(x^*) / D(x^*)
-            
             lambda += objValue / used_aisles.size(); 
 
             boolean isAGoodSolution = Math.abs(objValue + objValue * gapTolerance) <= PRECISION;
 
-            if (oldObjValue == objValue || objValue <= 0 || isAGoodSolution ) {
+            if (objValue <= 0 || isAGoodSolution ) {
                 if (gapTolerance <= 0.05 && objValue <= PRECISION) break; // BORRAR
 
                 if (timeListener.fastIteration(iterationDuration) || isAGoodSolution) gapTolerance /= 2;
                 
                 System.out.println("GAP: " + gapTolerance + " TL: " + timeListener);
             }
-
-            if (stopWatch.getDuration().getSeconds() - startOfInstance.getSeconds() > TIME_LIMIT_SEC - 5) break;
             
             it++;
         }
+
+        System.out.println("Final value is " + lambda);
 
         endCplex();
 

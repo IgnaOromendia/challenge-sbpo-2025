@@ -25,9 +25,6 @@ public class ChallengeSolver {
     
     // Solvers
     private final ParametricSolver parametricSolver;
-    private final BinarySolver binarySolver;
-    private final HybridSolver hybridSolver;
-    private final HalfAisleSolver halfAisleSolver;
 
     public ChallengeSolver(
             List<Map<Integer, Integer>> orders, List<Map<Integer, Integer>> aisles, int nItems, int waveSizeLB, int waveSizeUB) {
@@ -38,36 +35,15 @@ public class ChallengeSolver {
         this.waveSizeUB = waveSizeUB;
                 
         this.parametricSolver   = new ParametricSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-        this.binarySolver       = new BinarySolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-        this.hybridSolver       = new HybridSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
-        this.halfAisleSolver    = new HalfAisleSolver(orders, aisles, nItems, waveSizeLB, waveSizeUB);
     }
 
     public ChallengeSolution solve(StopWatch stopWatch) {  
         List<Integer> used_orders = new ArrayList<>();
         List<Integer> used_aisles = new ArrayList<>();
 
-        Boolean useBinarySearchSolution = false;
-        Boolean useParametricAlgorithmMILFP = true;
-        Boolean useHybrid = false;
-        boolean useHalf   = false;
-        String strategy = "";
-        Integer iterations = 1;
-
-        if (useBinarySearchSolution) {
-            iterations = binarySolver.binarySearchSolution(used_orders, used_aisles, aisles, 0.25, stopWatch);
-            strategy = "binary";
-        } else if (useParametricAlgorithmMILFP) {
-            iterations = parametricSolver.solveMILFP(used_orders, used_aisles, 0.4, stopWatch);
-            strategy = "parametric";
-        } else if (useHybrid) {
-            iterations = hybridSolver.solveMILFP(orders, used_orders, used_aisles, 0.25, stopWatch);
-            strategy = "hybrid";
-        } else if (useHalf) {
-            iterations = halfAisleSolver.solveHalfAisleMILFP(used_orders, used_aisles, 0.4, stopWatch);
-            strategy = "half";
-        }
-
+        String strategy = "parametric";
+        Integer iterations = parametricSolver.solveMILFP(used_orders, used_aisles, 0.4, stopWatch);
+            
         ChallengeSolution solution = new ChallengeSolution(Set.copyOf(used_orders), Set.copyOf(used_aisles));
 
         writeResults(strategy, solution, stopWatch, iterations);
