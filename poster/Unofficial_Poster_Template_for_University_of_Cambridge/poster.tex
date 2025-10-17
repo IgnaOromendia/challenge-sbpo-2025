@@ -39,11 +39,11 @@
 % Title
 % ====================
 
-\title{Some fancy title: followed by some more text}
+\title{Dinkelbach Algorithm for SBPO Challenge 2025}
 
-\author{Alyssa P. Hacker \inst{1} \and Ben Bitdiddle \inst{2} \and Lem E. Tweakit \inst{2}}
+\author{Santiago Cifuentes \inst{1} \and Ignacio Oromendia \inst{1} \and Luciana Skakovsky \inst{1}}
 
-\institute[shortinst]{\inst{1} Some Institute \samelineand \inst{2} Another Institute}
+\institute[shortinst]{\inst{1} FCEN - Universidad de Buenos Aires }
 
 % ====================
 % Footer (optional)
@@ -51,7 +51,7 @@
 
 \footercontent{
   \href{https://www.example.com}{https://www.example.com} \hfill
-  ABC Conference 2025, New York --- XYZ-1234 \hfill
+  SBPO 2025 \hfill
   \href{mailto:alyssa.p.hacker@example.com}{alyssa.p.hacker@example.com}}
 % (can be left out to remove footer)
 
@@ -61,7 +61,7 @@
 
 % use this to include logos on the left and/or right side of the header:
 % \logoright{\includegraphics[height=7cm]{logo1.pdf}}
-% \logoleft{\includegraphics[height=7cm]{logo2.pdf}}
+% \logoleft{\includegraphics[height=7cm]{logo1.pdf}}
 
 % ====================
 % Body
@@ -85,29 +85,43 @@
 
 \begin{column}{\colwidth}
 
-  \begin{block}{A block title}
+  \begin{block}{The Problem}
 
-    Some block contents, followed by a diagram, followed by a dummy paragraph.
+    In warehouse operations, picking each order individually is inefficient. Instead, we group compatible orders into \textbf{waves} so that their items can be collected together through shorter and more efficient routes. The goal is to decide which orders should form the next wave to maximize \textbf{picking productivity} — that is, to collect as many products as possible while visiting as few aisles as needed.
 
-    \begin{figure}
-      \centering
-      \begin{tikzpicture}[scale=6]
-        \draw[step=0.25cm,color=gray] (-1,-1) grid (1,1);
-        \draw (1,0) -- (0.2,0.2) -- (0,1) -- (-0.2,0.2) -- (-1,0)
-          -- (-0.2,-0.2) -- (0,-1) -- (0.2,-0.2) -- cycle;
-      \end{tikzpicture}
-      \caption{A figure caption.}
-    \end{figure}
+    Let:
+\begin{itemize}
+    \item $O$ = set of all pending orders.
+    \item $I_o$ = set of items requested in order $o \in O$.
+    \item $A$ = set of aisles in the warehouse.
+    \item $A_i \subseteq A$ = aisles containing item $i$.
+    \item $u_{oi}$ = units of item $i$ requested by order $o$.
+    \item $u_{ai}$ = units of item $i$ available in aisle $a$.
+    \item $LB, UB$ = lower and upper bounds on the total number of items in the wave.
+\end{itemize}
 
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi ultricies
-    eget libero ac ullamcorper. Integer et euismod ante. Aenean vestibulum
-    lobortis augue, ut lobortis turpis rhoncus sed. Proin feugiat nibh a
-    lacinia dignissim. Proin scelerisque, risus eget tempor fermentum, ex
-    turpis condimentum urna, quis malesuada sapien arcu eu purus.
+We want to select:
+\[
+O' \subseteq O \quad \text{(orders in the wave)}, \qquad
+A' \subseteq A \quad \text{(aisles to visit)}
+\]
+so as to maximize the ratio between collected units and visited aisles:
 
+\[
+\max_{O',A'} \; \frac{\displaystyle\sum_{o \in O'} \sum_{i \in I_o} u_{oi}}{|A'|}
+\]
+
+subject to:
+\begin{align}
+    &\sum_{o \in O'} \sum_{i \in I_o} u_{oi} \ge LB \tag{1}\\[3pt]
+    &\sum_{o \in O'} \sum_{i \in I_o} u_{oi} \le UB \tag{2}\\[3pt]
+    &\sum_{o \in O'} u_{oi} \le \sum_{a \in A'} u_{ai}, \quad \forall i \in I_o, \; o \in O' \tag{3}
+\end{align}
+
+A pair $(O',A')$ satisfying (1)--(3) defines a feasible wave, and the optimal wave maximizes the productivity ratio above.
   \end{block}
 
-  \begin{block}{A block containing a list}
+  \begin{block}{An Exact Parametric Approach}
 
     Nam vulputate nunc felis, non condimentum lacus porta ultrices. Nullam sed
     sagittis metus. Etiam consectetur gravida urna quis suscipit.
@@ -122,30 +136,7 @@
 
   \end{block}
 
-  \begin{alertblock}{A highlighted block}
-
-    This block catches your eye, so \textbf{important stuff} should probably go
-    here.
-
-    Curabitur eu libero vehicula, cursus est fringilla, luctus est. Morbi
-    consectetur mauris quam, at finibus elit auctor ac. Aliquam erat volutpat.
-    Aenean at nisl ut ex ullamcorper eleifend et eu augue. Aenean quis velit
-    tristique odio convallis ultrices a ac odio.
-
-    \begin{itemize}
-      \item \textbf{Fusce dapibus tellus} vel tellus semper finibus. In
-        consequat, nibh sed mattis luctus, augue diam fermentum lectus.
-      \item \textbf{In euismod erat metus} non ex. Vestibulum luctus augue in
-        mi condimentum, at sollicitudin lorem viverra.
-      \item \textbf{Suspendisse vulputate} mauris vel placerat consectetur.
-        Mauris semper, purus ac hendrerit molestie, elit mi dignissim odio, in
-        suscipit felis sapien vel ex.
-    \end{itemize}
-
-    Aenean tincidunt risus eros, at gravida lorem sagittis vel. Vestibulum ante
-    ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae.
-
-  \end{alertblock}
+  
 
 \end{column}
 
