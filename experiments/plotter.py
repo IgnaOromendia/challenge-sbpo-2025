@@ -1,18 +1,24 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def plot_standard_vs_not_local_search_obj():
-    instancias = [
-        ("standard_10_A.csv", "not_using_local_search_10_A.csv", "Instance 10 A"),
-        ("standard_04_B.csv", "not_using_local_search_04_B.csv", "Instance 4 B"),
-        ("standard_12_B.csv", "not_using_local_search_12_B.csv", "Instance 12 B"),
-        ("standard_15_B.csv", "not_using_local_search_15_B.csv", "Instance 15 B")
-    ]
+instancias_x4 = [
+    ("standard_10_A.csv", "not_using_greedy_10_A.csv", "Instance 10 A"),
+    ("standard_04_B.csv", "not_using_greedy_04_B.csv", "Instance 4 B"),
+    ("standard_12_B.csv", "not_using_greedy_12_B.csv", "Instance 12 B"),
+    ("standard_15_B.csv", "not_using_greedy_15_B.csv", "Instance 15 B")
+]
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+instancias_x2 = [
+    ("standard_10_A.csv", "not_using_local_search_10_A.csv", "Instance 10 A"),
+    ("standard_12_B.csv", "not_using_local_search_12_B.csv", "Instance 12 B")
+]
+
+
+def plot_standard_vs_not_local_search_obj():
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
     axes = axes.flatten()
 
-    for i, (std_file, ng_file, title) in enumerate(instancias):
+    for i, (std_file, ng_file, title) in enumerate(instancias_x2):
         standard = pd.read_csv(std_file)
         not_greedy = pd.read_csv(ng_file)
 
@@ -31,21 +37,14 @@ def plot_standard_vs_not_local_search_obj():
                 ax.axvline(x=it, color='red', linestyle='--', linewidth=1, alpha=0.2)
 
     plt.tight_layout()
-    plt.savefig("plots/local_search_cmp.png")
+    plt.savefig("plots/local_search_cmp.svg")
     plt.show()
 
 def plot_standard_vs_not_greedy_obj():
-    instancias = [
-        ("standard_10_A.csv", "not_using_greedy_10_A.csv", "Instance 10 A"),
-        ("standard_04_B.csv", "not_using_greedy_04_B.csv", "Instance 4 B"),
-        ("standard_12_B.csv", "not_using_greedy_12_B.csv", "Instance 12 B"),
-        ("standard_15_B.csv", "not_using_greedy_15_B.csv", "Instance 15 B")
-    ]
-
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
     axes = axes.flatten()
 
-    for i, (std_file, ng_file, title) in enumerate(instancias):
+    for i, (std_file, ng_file, title) in enumerate(instancias_x4):
         standard = pd.read_csv(std_file)
         not_greedy = pd.read_csv(ng_file)
 
@@ -60,21 +59,14 @@ def plot_standard_vs_not_greedy_obj():
         ax.legend()
 
     plt.tight_layout()
-    plt.savefig("plots/greedy_cmp.png")
+    plt.savefig("plots/greedy_cmp.svg")
     plt.show()
 
 def plot_standard_vs_not_local_search_time():
-    instancias = [
-        ("standard_10_A.csv", "not_using_local_search_10_A.csv", "Instance 10 A"),
-        ("standard_04_B.csv", "not_using_local_search_04_B.csv", "Instance 4 B"),
-        ("standard_12_B.csv", "not_using_local_search_12_B.csv", "Instance 12 B"),
-        ("standard_15_B.csv", "not_using_local_search_15_B.csv", "Instance 15 B")
-    ]
-
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
     axes = axes.flatten()
 
-    for i, (std_file, ng_file, title) in enumerate(instancias):
+    for i, (std_file, ng_file, title) in enumerate(instancias_x2):
         standard = pd.read_csv(std_file)
         not_local_search = pd.read_csv(ng_file)
 
@@ -96,21 +88,14 @@ def plot_standard_vs_not_local_search_time():
                 ax.axvline(x=it, color='red', linestyle='--', linewidth=1, alpha=0.2)
 
     plt.tight_layout()
-    plt.savefig("plots/local_search_cmp_time.png")
+    plt.savefig("plots/local_search_cmp_time.svg")
     plt.show()
 
 def plot_standard_vs_not_greedy_time():
-    instancias = [
-        ("standard_10_A.csv", "not_using_greedy_10_A.csv", "Instance 10 A"),
-        ("standard_04_B.csv", "not_using_greedy_04_B.csv", "Instance 4 B"),
-        ("standard_12_B.csv", "not_using_greedy_12_B.csv", "Instance 12 B"),
-        ("standard_15_B.csv", "not_using_greedy_15_B.csv", "Instance 15 B")
-    ]
-
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
     axes = axes.flatten()
 
-    for i, (std_file, ng_file, title) in enumerate(instancias):
+    for i, (std_file, ng_file, title) in enumerate(instancias_x4):
         standard = pd.read_csv(std_file)
         not_greedy = pd.read_csv(ng_file)
 
@@ -128,7 +113,10 @@ def plot_standard_vs_not_greedy_time():
         ax.legend()
 
     plt.tight_layout()
-    plt.savefig("plots/greedy_cmp_time.png")
+    plt.savefig("plots/greedy_cmp_time.svg")
     plt.show()
 
-plot_standard_vs_not_greedy_time()
+# plot_standard_vs_not_greedy_time()
+# plot_standard_vs_not_greedy_obj()
+plot_standard_vs_not_local_search_obj()
+plot_standard_vs_not_local_search_time()
