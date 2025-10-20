@@ -144,27 +144,38 @@ A pair $(O',A')$ satisfying (1)--(3) defines a feasible wave, and the optimal wa
 
 \begin{column}{\colwidth}
 
-  \begin{block}{A block containing an enumerated list}
+  \begin{block}{Warm start}
 
-    Vivamus congue volutpat elit non semper. Praesent molestie nec erat ac
-    interdum. In quis suscipit erat. \textbf{Phasellus mauris felis, molestie
-    ac pharetra quis}, tempus nec ante. Donec finibus ante vel purus mollis
-    fermentum. Sed felis mi, pharetra eget nibh a, feugiat eleifend dolor. Nam
-    mollis condimentum purus quis sodales. Nullam eu felis eu nulla eleifend
-    bibendum nec eu lorem. Vivamus felis velit, volutpat ut facilisis ac,
-    commodo in metus.
+    The Dinkelbach algorithm can benefit from a high quality initial solution, and thus we consider two simple greedy strategies to obtain them.
+    The first one prioritizes picking aisles of a big \textit{size} (i.e. those $a \in A$ that maximize $\sum_{i \in I_o} u_{ai}$) while the second one prioritizes aisles
+    with high \textit{diversity} (i.e. those $a \in A$ that maximize $|\{i \in I_o : u_{ai} > 0\}|$). As seen in Figure~\ref{fig:aisles_greedy} optimal solutions have these type of aisles.
+    
+    \begin{figure}
+      \centering
+      \includegraphics[width=0.8\textwidth]{greedy_instance_a.pdf}
+      \caption{Aisles sorted by size and diversity and optimal aisles for instance 8 from dataset A.}
+      \label{fig:aisles_greedy}
+    \end{figure}
 
-    \begin{enumerate}
-      \item \textbf{Morbi mauris purus}, egestas at vehicula et, convallis
-        accumsan orci. Orci varius natoque penatibus et magnis dis parturient
-        montes, nascetur ridiculus mus.
-      \item \textbf{Cras vehicula blandit urna ut maximus}. Aliquam blandit nec
-        massa ac sollicitudin. Curabitur cursus, metus nec imperdiet bibendum,
-        velit lectus faucibus dolor, quis gravida metus mauris gravida turpis.
-      \item \textbf{Vestibulum et massa diam}. Phasellus fermentum augue non
-        nulla accumsan, non rhoncus lectus condimentum.
-    \end{enumerate}
+    \begin{columns}
+  \begin{column}{0.45\textwidth}
+  \justify
+  Our algorithm fixes, for each possible $k$, the first $k$ aisles sorted based on each of these two criteria, and then picks orders greedily sorting them by size. Our implementation is efficient with complexity almost linear in the input size,
+    and usually finds solutions 10\%-close to the optimal one in the order of seconds, as can be seen in Figure~\ref{fig:greedy_vs_optimal}. In most cases the greedy approach based on diversity beats the one based on size.
+  \end{column}
+  \begin{column}{0.55\textwidth}  %%<--- here
+  \begin{center}
+        \begin{figure}
+        \includegraphics{greedy_vs_optimal.pdf}
+        \caption{Comparison between the optimal values and the results given by the greedy algorithms.}
+        \label{fig:greedy_vs_optimal}
+      \end{figure}
+    \end{center}
+     \end{column}
+  \end{columns}
 
+
+    
   \end{block}
 
   \begin{block}{Fusce aliquam magna velit}
@@ -176,34 +187,6 @@ A pair $(O',A')$ satisfying (1)--(3) defines a feasible wave, and the optimal wa
     posuere.
 
 \vspace{1em}
-
-\begin{columns}
-\begin{column}{0.4\textwidth}
-\begin{center}
-      \begin{figure}
-      \begin{tikzpicture}
-        \begin{axis}[
-            scale only axis,
-            no markers,
-            domain=0:2*pi,
-            samples=100,
-            axis lines=center,
-            axis line style={-},
-            ticks=none]
-          \addplot[red] {sin(deg(x))};
-          \addplot[blue] {cos(deg(x))};
-        \end{axis}
-      \end{tikzpicture}
-      \caption{Another figure caption.}
-    \end{figure}
-   \end{center}
-\end{column}
-\begin{column}{0.6\textwidth}  %%<--- here
-\justify
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam vel dapibus erat. Morbi quis leo congue, lobortis augue bibendum, malesuada neque. Duis ullamcorper quis orci sed consequat. Nam pellentesque ullamcorper tempor. Duis eget nulla blandit, vulputate orci vitae, ullamcorper ligula. Mauris a urna ac massa dignissim scelerisque sed et augue. Donec eget urna vitae neque elementum pellentesque et eget enim. Praesent a fermentum nibh. Nullam eu nibh neque. 
-\end{column}
-\end{columns}
-
 
   \end{block}
 
