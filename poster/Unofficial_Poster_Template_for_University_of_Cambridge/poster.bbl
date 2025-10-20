@@ -5,10 +5,11 @@
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
-\bibitem[Shannon(1948)]{shannon1948communication}
-Claude~E. Shannon.
-\newblock A mathematical theory of communication.
-\newblock \emph{Bell System Technical Journal}, 27\penalty0 (3):\penalty0
-  379--423, 1948.
+\bibitem[You et~al.(2009)You, Castro, and Grossmann]{You2009Dinkelbach}
+Fengqi You, Pedro~M. Castro, and Ignacio~E. Grossmann.
+\newblock Dinkelbach’s algorithm as an efficient method for solving a class
+  of minlp models for large-scale cyclic scheduling problems.
+\newblock \emph{Computers \& Chemical Engineering}, 33\penalty0 (11):\penalty0
+  1879--1889, 2009.
 
 \end{thebibliography}
